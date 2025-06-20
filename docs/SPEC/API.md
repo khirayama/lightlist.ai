@@ -19,11 +19,12 @@
 ```json
 {
   "email": "user@example.com",
-  "password": "TestPass123"
+  "password": "TestPass123",
+  "deviceId": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
-デバイス情報: User-AgentヘッダーとIPアドレスから自動生成
+デバイス情報: クライアントから送信されるdeviceIdを使用
 
 レスポンス（成功）:
 
@@ -60,11 +61,12 @@
 ```json
 {
   "email": "user@example.com",
-  "password": "TestPass123"
+  "password": "TestPass123",
+  "deviceId": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
-デバイス情報: User-AgentヘッダーとIPアドレスから自動生成
+デバイス情報: クライアントから送信されるdeviceIdを使用
 
 レスポンス（成功）:
 
@@ -523,9 +525,18 @@
 - 同時リクエスト制御: 重複リフレッシュ防止メカニズム実装
 - デバイス別セッション管理: デバイスごとのリフレッシュトークン管理
 - 複数端末対応: 最大5台のデバイスで同時ログイン可能
-- デバイス識別: サーバーサイドでUser-Agentから自動生成（SHA-256ハッシュ使用）
+- デバイス識別: クライアント生成のデバイスIDを使用（UUID形式またはランダム文字列）
 - CORS: 有効
 - Helmet: セキュリティヘッダー設定済み
+
+### デバイスID仕様
+
+- **生成方法**: クライアントサイドで生成
+- **Web**: localStorage永続化、crypto.randomUUID()またはランダム文字列（32文字）
+- **Native**: AsyncStorage永続化、expo-cryptoのUUID
+- **形式**: UUID v4形式またはランダム文字列（32文字以上）
+- **永続化**: デバイス固有のストレージに保存（Web: localStorage、Native: AsyncStorage）
+- **利点**: IPアドレス変動やUser-Agent更新に影響されない安定した識別
 
 ## データベーススキーマ
 
@@ -652,7 +663,7 @@ model RefreshToken {
   id            String   @id @default(cuid())
   userId        String
   token         String   @unique
-  deviceHash    String   // User-AgentとIPアドレスからのSHA-256ハッシュ
+  deviceId      String   // クライアント生成のデバイスID
   expiresAt     DateTime
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
@@ -662,6 +673,6 @@ model RefreshToken {
 
   @@index([userId])
   @@index([token])
-  @@index([deviceHash])
+  @@index([deviceId])
 }
 ```

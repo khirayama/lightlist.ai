@@ -8,6 +8,50 @@
 - 認証方式: JWT
 - ベースURL: http://localhost:3001
 
+### エンドポイント一覧
+
+#### 認証関連
+- `POST /api/auth/register` - ユーザー登録
+- `POST /api/auth/login` - ユーザーログイン
+- `POST /api/auth/logout` - ユーザーログアウト
+- `POST /api/auth/forgot-password` - パスワードリセット要求
+- `POST /api/auth/reset-password` - パスワードリセット実行
+
+#### ユーザー関連
+- `GET /api/users/:userId/profile` - ユーザープロフィール取得
+- `PUT /api/users/:userId/profile` - ユーザープロフィール更新
+- `DELETE /api/users/:userId` - アカウント削除
+- `PUT /api/users/:userId/change-password` - パスワード変更
+- `GET /api/users/:userId/app` - ユーザーのApp情報取得
+- `GET /api/users/:userId/settings` - ユーザー設定取得
+- `PUT /api/users/:userId/settings` - ユーザー設定更新
+- `PUT /api/users/:userId/task-lists/order` - タスクリストの順序更新
+
+#### タスクリスト関連
+- `GET /api/task-lists` - タスクリスト一覧取得
+- `POST /api/task-lists` - タスクリスト作成
+- `PUT /api/task-lists/:taskListId` - タスクリスト更新
+- `DELETE /api/task-lists/:taskListId` - タスクリスト削除
+
+#### タスク関連
+- `GET /api/task-lists/:taskListId/tasks` - タスク一覧取得
+- `POST /api/task-lists/:taskListId/tasks` - タスク作成
+- `PUT /api/tasks/:taskId` - タスク更新
+- `DELETE /api/tasks/:taskId` - タスク削除
+
+#### 共有関連
+- `POST /api/task-lists/:taskListId/share` - タスクリスト共有リンク生成
+- `GET /api/share/:shareToken` - 共有タスクリスト情報取得
+- `DELETE /api/task-lists/:taskListId/share` - タスクリスト共有解除
+
+#### 共同編集関連
+- `POST /api/task-lists/:taskListId/collaborative/initialize` - 共同編集機能の初期化
+- `GET /api/task-lists/:taskListId/collaborative/full-state` - タスクリストの完全な共同編集状態を取得
+- `POST /api/task-lists/:taskListId/collaborative/sync` - 共同編集の差分同期
+
+#### システム関連
+- `GET /health` - ヘルスチェック
+
 ### エンドポイント詳細
 
 #### POST /api/auth/register

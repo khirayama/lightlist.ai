@@ -189,7 +189,7 @@
 
 #### GET /api/task-lists
 
-説明: タスクリスト一覧取得（ユーザー設定の順序で返却）
+説明: タスクリスト一覧取得（ユーザーのApp.taskListOrderの順序で返却）
 
 レスポンス（成功）:
 
@@ -214,7 +214,7 @@
 
 #### POST /api/task-lists
 
-説明: タスクリスト作成（ユーザーの順序リストに自動追加）
+説明: タスクリスト作成（ユーザーのApp.taskListOrderに自動追加）
 
 リクエスト:
 
@@ -539,8 +539,9 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  app      App?
-  settings Settings?
+  app           App?
+  settings      Settings?
+  refreshTokens RefreshToken[]
 }
 ```
 
@@ -549,13 +550,12 @@ model User {
 ```sql
 model App {
   id            String   @id @default(cuid())
-  userId    String
+  userId        String   @unique
   taskListOrder String[] @default([])
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  taskLists       TaskList[]
 }
 ```
 
@@ -566,12 +566,10 @@ model TaskList {
   id        String   @id @default(cuid())
   name      String
   taskOrder String[] @default([])
-  background     String?  @default("")
+  background     String?  @default("") // 背景色は16進数カラーコード、透明は空文字
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  app      App?   @relation(fields: [appId], references: [id], onDelete: Cascade)
-  appId    String?
   tasks    Task[]
   share    TaskListShare?
   document TaskListDocument?
@@ -583,9 +581,9 @@ model TaskList {
 ```sql
 model Task {
   id         String    @id @default(cuid())
-  content    String
+  text       String
   completed  Boolean   @default(false)
-  date    String?
+  date       String? // 日付はISO 8601形式の文字列で保存
   taskListId String
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
@@ -623,6 +621,8 @@ model TaskListShare {
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  // permission    String // 全てviewのため不要
+  // expiresAt    DateTiem // 全て無期限のため不要
 
   taskList TaskList @relation(fields: [taskListId], references: [id], onDelete: Cascade)
 
@@ -642,5 +642,26 @@ model TaskListDocument {
   updatedAt     DateTime @updatedAt
 
   taskList TaskList @relation(fields: [taskListId], references: [id], onDelete: Cascade)
+}
+```
+
+### RefreshTokenテーブル
+
+```sql
+model RefreshToken {
+  id            String   @id @default(cuid())
+  userId        String
+  token         String   @unique
+  deviceHash    String   // User-AgentとIPアドレスからのSHA-256ハッシュ
+  expiresAt     DateTime
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([deviceHash])
 }
 ```

@@ -106,6 +106,63 @@
 }
 ```
 
+#### POST /api/auth/forgot-password
+
+説明: パスワードリセット要求
+
+リクエスト:
+
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+レスポンス（成功）:
+
+```json
+{
+  "message": "Password reset email sent successfully"
+}
+```
+
+エラーレスポンス:
+
+```json
+{
+  "error": "User not found with this email"
+}
+```
+
+#### POST /api/auth/reset-password
+
+説明: パスワードリセット実行
+
+リクエスト:
+
+```json
+{
+  "token": "reset-token-here",
+  "newPassword": "NewPass123"
+}
+```
+
+レスポンス（成功）:
+
+```json
+{
+  "message": "Password reset successfully"
+}
+```
+
+エラーレスポンス:
+
+```json
+{
+  "error": "Invalid or expired reset token"
+}
+```
+
 #### GET /api/users/:userId/profile
 
 説明: ユーザープロフィール取得
@@ -126,6 +183,42 @@
 }
 ```
 
+#### PUT /api/users/:userId/profile
+
+説明: ユーザープロフィール更新
+
+リクエスト:
+
+```json
+{
+  "email": "newemail@example.com"
+}
+```
+
+レスポンス（成功）:
+
+```json
+{
+  "message": "Profile updated successfully",
+  "data": {
+    "user": {
+      "id": "cmbz060iw0000ki5g9h2hwg8n",
+      "email": "newemail@example.com",
+      "createdAt": "2025-06-17T10:00:00.000Z",
+      "updatedAt": "2025-06-17T12:00:00.000Z"
+    }
+  }
+}
+```
+
+エラーレスポンス:
+
+```json
+{
+  "error": "Email already exists"
+}
+```
+
 #### DELETE /api/users/:userId
 
 説明: アカウント削除
@@ -135,6 +228,66 @@
 ```json
 {
   "message": "Account deleted successfully"
+}
+```
+
+#### PUT /api/users/:userId/change-password
+
+説明: パスワード変更
+
+リクエスト:
+
+```json
+{
+  "currentPassword": "CurrentPass123",
+  "newPassword": "NewPass456"
+}
+```
+
+レスポンス（成功）:
+
+```json
+{
+  "message": "Password changed successfully"
+}
+```
+
+エラーレスポンス:
+
+```json
+{
+  "error": "Current password is incorrect"
+}
+```
+
+#### GET /api/users/:userId/app
+
+説明: ユーザーのApp情報取得
+
+レスポンス（成功）:
+
+```json
+{
+  "message": "App data retrieved successfully",
+  "data": {
+    "app": {
+      "id": "cmbz060iw0000ki5g9h2hwg8n",
+      "taskListOrder": [
+        "cmbz060iw0001ki5g9h2hwg8n",
+        "cmbz060iw0000ki5g9h2hwg8n"
+      ],
+      "createdAt": "2025-06-17T10:00:00.000Z",
+      "updatedAt": "2025-06-17T10:30:00.000Z"
+    }
+  }
+}
+```
+
+エラーレスポンス（App未作成の場合）:
+
+```json
+{
+  "error": "App not found for this user"
 }
 ```
 
@@ -204,8 +357,6 @@
         "id": "cmbz060iw0000ki5g9h2hwg8n",
         "name": "📝個人",
         "background": "#FFE4E1",
-        "taskCount": 5,
-        "completedCount": 2,
         "createdAt": "2025-06-17T10:00:00.000Z",
         "updatedAt": "2025-06-17T10:30:00.000Z"
       }
@@ -235,7 +386,7 @@
     "taskList": {
       "id": "cmbz060iw0001ki5g9h2hwg8n",
       "name": "仕事",
-      "background": "#FFFFFF",
+      "background": "",
       "createdAt": "2025-06-17T10:00:00.000Z",
       "updatedAt": "2025-06-17T10:00:00.000Z"
     }
@@ -287,7 +438,7 @@
 
 #### GET /api/task-lists/:taskListId/tasks
 
-説明: タスク一覧取得（タスクリスト設定の順序で返却）
+説明: タスク一覧取得（共同編集機能が有効な場合はYjsドキュメントの順序、無効な場合はタスクリスト設定の順序で返却）
 
 レスポンス（成功）:
 
@@ -298,7 +449,7 @@
     "tasks": [
       {
         "id": "cmbz060iw0002ki5g9h2hwg8n",
-        "content": "買い物リスト作成",
+        "text": "買い物リスト作成",
         "completed": false,
         "date": "2025-06-18",
         "createdAt": "2025-06-17T10:00:00.000Z",
@@ -317,7 +468,7 @@
 
 ```json
 {
-  "content": "明日 ミーティング資料準備"
+  "text": "明日 ミーティング資料準備"
 }
 ```
 
@@ -329,7 +480,7 @@
   "data": {
     "task": {
       "id": "cmbz060iw0003ki5g9h2hwg8n",
-      "content": "ミーティング資料準備",
+      "text": "ミーティング資料準備",
       "completed": false,
       "date": "2025-06-19",
       "createdAt": "2025-06-17T10:00:00.000Z",
@@ -347,7 +498,7 @@
 
 ```json
 {
-  "content": "資料作成完了",
+  "text": "資料作成完了",
   "completed": true,
   "date": null
 }
@@ -361,7 +512,7 @@
   "data": {
     "task": {
       "id": "cmbz060iw0003ki5g9h2hwg8n",
-      "content": "資料作成完了",
+      "text": "資料作成完了",
       "completed": true,
       "date": null,
       "createdAt": "2025-06-17T10:00:00.000Z",
@@ -390,10 +541,10 @@
 リクエスト:
 
 ```json
-{
-  "permission": "edit"
-}
+{}
 ```
+
+**注意**: 現在の実装では全ての共有リンクはview権限のみです。
 
 レスポンス（成功）:
 
@@ -402,8 +553,7 @@
   "message": "Share link created successfully",
   "data": {
     "shareUrl": "https://lightlist.ai/share/abc123def456",
-    "shareToken": "abc123def456",
-    "permission": "edit"
+    "shareToken": "abc123def456"
   }
 }
 ```
@@ -421,11 +571,23 @@
     "taskList": {
       "id": "cmbz060iw0001ki5g9h2hwg8n",
       "name": "買い物リスト",
-      "permission": "edit"
+      "background": "#FFE4E1",
+      "tasks": [
+        {
+          "id": "cmbz060iw0002ki5g9h2hwg8n",
+          "text": "買い物リスト作成",
+          "completed": false,
+          "date": "2025-06-18",
+          "createdAt": "2025-06-17T10:00:00.000Z",
+          "updatedAt": "2025-06-17T10:00:00.000Z"
+        }
+      ]
     }
   }
 }
 ```
+
+**注意**: 共有タスクリストはview権限のみで、タスクの一覧も含めて返却されます。
 
 #### DELETE /api/task-lists/:taskListId/share
 
@@ -470,19 +632,71 @@
 }
 ```
 
-#### PUT /api/task-lists/:taskListId/tasks/order
 
-説明: タスクの順序更新
+#### POST /api/task-lists/:taskListId/collaborative/initialize
+
+説明: 共同編集機能の初期化
+
+リクエスト:
+
+```json
+{}
+```
+
+レスポンス（成功）:
+
+```json
+{
+  "message": "Collaborative editing initialized successfully",
+  "data": {
+    "state": "base64EncodedInitialState",
+    "stateVector": "base64EncodedStateVector"
+  }
+}
+```
+
+エラーレスポンス:
+
+```json
+{
+  "error": "Collaborative editing is already enabled for this task list"
+}
+```
+
+#### GET /api/task-lists/:taskListId/collaborative/full-state
+
+説明: タスクリストの完全な共同編集状態を取得
+
+レスポンス（成功）:
+
+```json
+{
+  "message": "Collaborative state retrieved successfully",
+  "data": {
+    "state": "base64EncodedYjsState",
+    "stateVector": "base64EncodedStateVector"
+  }
+}
+```
+
+エラーレスポンス:
+
+```json
+{
+  "error": "Collaborative editing is not enabled for this task list"
+}
+```
+
+#### POST /api/task-lists/:taskListId/collaborative/sync
+
+説明: 共同編集の差分同期
 
 リクエスト:
 
 ```json
 {
-  "taskIds": [
-    "cmbz060iw0003ki5g9h2hwg8n",
-    "cmbz060iw0002ki5g9h2hwg8n",
-    "cmbz060iw0004ki5g9h2hwg8n"
-  ]
+  "stateVector": "base64EncodedStateVector",
+  "update": "base64EncodedUpdate"
 }
 ```
 
@@ -490,14 +704,19 @@
 
 ```json
 {
-  "message": "Task order updated successfully",
+  "message": "Sync successful",
   "data": {
-    "taskOrder": [
-      "cmbz060iw0003ki5g9h2hwg8n",
-      "cmbz060iw0002ki5g9h2hwg8n",
-      "cmbz060iw0004ki5g9h2hwg8n"
-    ]
+    "update": "base64EncodedDiff",
+    "stateVector": "base64EncodedNewStateVector"
   }
+}
+```
+
+エラーレスポンス:
+
+```json
+{
+  "error": "Collaborative editing is not enabled for this task list"
 }
 ```
 
@@ -574,12 +793,11 @@ model App {
 
 ```sql
 model TaskList {
-  id        String   @id @default(cuid())
-  name      String
-  taskOrder String[] @default([])
-  background     String?  @default("") // 背景色は16進数カラーコード、透明は空文字
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  name       String
+  background String?  @default("") // 背景色は16進数カラーコード、透明は空文字
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   tasks    Task[]
   share    TaskListShare?
@@ -587,12 +805,14 @@ model TaskList {
 }
 ```
 
+**注意**: 現在のスキーマではTaskListとUserの直接的な関連付けがありません。所有権管理はAppテーブルのtaskListOrderフィールドを通じて行われています。これにより、ユーザーはApp.taskListOrderに含まれるタスクリストのみにアクセス可能です。タスクの並び順は共同編集機能が有効な場合はTaskListDocumentテーブルのYjsドキュメントで管理されます。
+
 ### Taskテーブル
 
 ```sql
 model Task {
   id         String    @id @default(cuid())
-  text       String
+  text    String
   completed  Boolean   @default(false)
   date       String? // 日付はISO 8601形式の文字列で保存
   taskListId String
@@ -626,12 +846,12 @@ model Settings {
 
 ```sql
 model TaskListShare {
-  id            String   @id @default(cuid())
-  taskListId    String   @unique
-  shareToken    String   @unique
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id         String   @id @default(cuid())
+  taskListId String   @unique
+  shareToken String   @unique
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
   // permission    String // 全てviewのため不要
   // expiresAt    DateTiem // 全て無期限のため不要
 
@@ -648,13 +868,15 @@ model TaskListDocument {
   id            String   @id @default(cuid())
   taskListId    String   @unique
   stateVector   Bytes    // Yjsの状態ベクター
-  documentState Bytes    // Yjsドキュメントの完全な状態
+  documentState Bytes    // Yjsドキュメントの完全な状態（タスクの並び順のみ）
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   taskList TaskList @relation(fields: [taskListId], references: [id], onDelete: Cascade)
 }
 ```
+
+**注意**: このテーブルはタスクの並び替え共同編集機能のためのYjsドキュメントを管理します。レコードが存在する場合は共同編集が有効、存在しない場合は無効です。
 
 ### RefreshTokenテーブル
 

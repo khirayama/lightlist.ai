@@ -353,7 +353,7 @@ CRDT（Conflict-free Replicated Data Type）ライブラリのYjsを使用する
 ```javascript
 // Y.Docルート構造
 {
-  tasks: Y.Array<Y.Map> // タスクの配列
+  tasks: Y.Array<Y.Map> // タスクの配列（配列の順序で表示順序を管理）
   metadata: Y.Map      // タスクリストのメタデータ
 }
 
@@ -363,9 +363,15 @@ CRDT（Conflict-free Replicated Data Type）ライブラリのYjsを使用する
   content: string     // タスク内容
   completed: boolean  // 完了状態
   dueDate: number?    // 期限（Unixタイムスタンプ）
-  order: number       // 表示順序
   createdAt: number   // 作成日時
   updatedAt: number   // 更新日時
+}
+
+// メタデータ（Y.Map）の構造
+{
+  name: string        // タスクリスト名
+  color: string       // 背景色
+  lastModified: number // 最終更新日時
 }
 ```
 
@@ -452,8 +458,8 @@ interface CollaborativeContextType {
 #### 使用例
 
 ```typescript
-// タスクの追加
-const addTask = (content: string) => {
+// タスクの追加（設定に応じて上または下に追加）
+const addTask = (content: string, insertPosition: 'top' | 'bottom' = 'top') => {
   const tasks = doc.getArray('tasks');
   const task = new Y.Map();
 
@@ -462,7 +468,12 @@ const addTask = (content: string) => {
     task.set('content', content);
     task.set('completed', false);
     task.set('createdAt', Date.now());
-    tasks.push([task]);
+    
+    if (insertPosition === 'top') {
+      tasks.unshift([task]); // 配列の先頭に追加
+    } else {
+      tasks.push([task]); // 配列の末尾に追加
+    }
   });
 };
 
@@ -479,6 +490,32 @@ const updateTask = (taskId: string, updates: Partial<Task>) => {
       task.set('updatedAt', Date.now());
     });
   }
+};
+
+// タスクの順序変更
+const moveTask = (taskId: string, newIndex: number) => {
+  const tasks = doc.getArray('tasks');
+  const taskArray = tasks.toArray();
+  const currentIndex = taskArray.findIndex((t) => t.get('id') === taskId);
+  
+  if (currentIndex !== -1 && currentIndex !== newIndex) {
+    doc.transact(() => {
+      const task = taskArray[currentIndex];
+      tasks.delete(currentIndex, 1); // 現在の位置から削除
+      tasks.insert(newIndex, [task]); // 新しい位置に挿入
+    });
+  }
+};
+
+// タスクリストのメタデータ更新
+const updateTaskListMetadata = (name?: string, color?: string) => {
+  const metadata = doc.getMap('metadata');
+  
+  doc.transact(() => {
+    if (name !== undefined) metadata.set('name', name);
+    if (color !== undefined) metadata.set('color', color);
+    metadata.set('lastModified', Date.now());
+  });
 };
 ```
 

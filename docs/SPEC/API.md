@@ -34,7 +34,6 @@
     "user": {
       "id": "cmbz060iw0000ki5g9h2hwg8n",
       "email": "user@example.com",
-      "name": null
     },
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -76,7 +75,6 @@
     "user": {
       "id": "cmbz060iw0000ki5g9h2hwg8n",
       "email": "user@example.com",
-      "name": null
     },
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -119,36 +117,6 @@
     "user": {
       "id": "cmbz060iw0000ki5g9h2hwg8n",
       "email": "user@example.com",
-      "name": "田中太郎",
-      "createdAt": "2025-06-17T10:00:00.000Z",
-      "updatedAt": "2025-06-17T10:30:00.000Z"
-    }
-  }
-}
-```
-
-#### PUT /api/users/:userId/profile
-
-説明: ユーザープロフィール更新
-
-リクエスト:
-
-```json
-{
-  "name": "田中太郎"
-}
-```
-
-レスポンス（成功）:
-
-```json
-{
-  "message": "Profile updated successfully",
-  "data": {
-    "user": {
-      "id": "cmbz060iw0000ki5g9h2hwg8n",
-      "email": "user@example.com",
-      "name": "田中太郎",
       "createdAt": "2025-06-17T10:00:00.000Z",
       "updatedAt": "2025-06-17T10:30:00.000Z"
     }
@@ -221,7 +189,7 @@
 
 #### GET /api/task-lists
 
-説明: タスクリスト一覧取得
+説明: タスクリスト一覧取得（ユーザー設定の順序で返却）
 
 レスポンス（成功）:
 
@@ -233,8 +201,7 @@
       {
         "id": "cmbz060iw0000ki5g9h2hwg8n",
         "name": "📝個人",
-        "order": 0,
-        "color": "#FFE4E1",
+        "background": "#FFE4E1",
         "taskCount": 5,
         "completedCount": 2,
         "createdAt": "2025-06-17T10:00:00.000Z",
@@ -247,7 +214,7 @@
 
 #### POST /api/task-lists
 
-説明: タスクリスト作成
+説明: タスクリスト作成（ユーザーの順序リストに自動追加）
 
 リクエスト:
 
@@ -266,8 +233,7 @@
     "taskList": {
       "id": "cmbz060iw0001ki5g9h2hwg8n",
       "name": "仕事",
-      "order": 1,
-      "color": "#FFFFFF",
+      "background": "#FFFFFF",
       "createdAt": "2025-06-17T10:00:00.000Z",
       "updatedAt": "2025-06-17T10:00:00.000Z"
     }
@@ -284,8 +250,7 @@
 ```json
 {
   "name": "プロジェクトA",
-  "order": 2,
-  "color": "#E6E6FA"
+  "background": "#E6E6FA"
 }
 ```
 
@@ -298,8 +263,7 @@
     "taskList": {
       "id": "cmbz060iw0001ki5g9h2hwg8n",
       "name": "プロジェクトA",
-      "order": 2,
-      "color": "#E6E6FA",
+      "background": "#E6E6FA",
       "createdAt": "2025-06-17T10:00:00.000Z",
       "updatedAt": "2025-06-17T11:00:00.000Z"
     }
@@ -321,7 +285,7 @@
 
 #### GET /api/task-lists/:taskListId/tasks
 
-説明: タスク一覧取得
+説明: タスク一覧取得（タスクリスト設定の順序で返却）
 
 レスポンス（成功）:
 
@@ -334,8 +298,7 @@
         "id": "cmbz060iw0002ki5g9h2hwg8n",
         "content": "買い物リスト作成",
         "completed": false,
-        "dueDate": "2025-06-18T00:00:00.000Z",
-        "order": 0,
+        "date": "2025-06-18",
         "createdAt": "2025-06-17T10:00:00.000Z",
         "updatedAt": "2025-06-17T10:00:00.000Z"
       }
@@ -346,7 +309,7 @@
 
 #### POST /api/task-lists/:taskListId/tasks
 
-説明: タスク作成
+説明: タスク作成（タスクリストの順序リストに自動追加）
 
 リクエスト:
 
@@ -366,8 +329,7 @@
       "id": "cmbz060iw0003ki5g9h2hwg8n",
       "content": "ミーティング資料準備",
       "completed": false,
-      "dueDate": "2025-06-19T00:00:00.000Z",
-      "order": 0,
+      "date": "2025-06-19",
       "createdAt": "2025-06-17T10:00:00.000Z",
       "updatedAt": "2025-06-17T10:00:00.000Z"
     }
@@ -385,7 +347,7 @@
 {
   "content": "資料作成完了",
   "completed": true,
-  "dueDate": null
+  "date": null
 }
 ```
 
@@ -399,8 +361,7 @@
       "id": "cmbz060iw0003ki5g9h2hwg8n",
       "content": "資料作成完了",
       "completed": true,
-      "dueDate": null,
-      "order": 0,
+      "date": null,
       "createdAt": "2025-06-17T10:00:00.000Z",
       "updatedAt": "2025-06-17T11:00:00.000Z"
     }
@@ -476,6 +437,68 @@
 }
 ```
 
+#### PUT /api/users/:userId/task-lists/order
+
+説明: タスクリストの順序更新
+
+リクエスト:
+
+```json
+{
+  "taskListIds": [
+    "cmbz060iw0001ki5g9h2hwg8n",
+    "cmbz060iw0000ki5g9h2hwg8n",
+    "cmbz060iw0002ki5g9h2hwg8n"
+  ]
+}
+```
+
+レスポンス（成功）:
+
+```json
+{
+  "message": "Task list order updated successfully",
+  "data": {
+    "taskListOrder": [
+      "cmbz060iw0001ki5g9h2hwg8n",
+      "cmbz060iw0000ki5g9h2hwg8n",
+      "cmbz060iw0002ki5g9h2hwg8n"
+    ]
+  }
+}
+```
+
+#### PUT /api/task-lists/:taskListId/tasks/order
+
+説明: タスクの順序更新
+
+リクエスト:
+
+```json
+{
+  "taskIds": [
+    "cmbz060iw0003ki5g9h2hwg8n",
+    "cmbz060iw0002ki5g9h2hwg8n",
+    "cmbz060iw0004ki5g9h2hwg8n"
+  ]
+}
+```
+
+レスポンス（成功）:
+
+```json
+{
+  "message": "Task order updated successfully",
+  "data": {
+    "taskOrder": [
+      "cmbz060iw0003ki5g9h2hwg8n",
+      "cmbz060iw0002ki5g9h2hwg8n",
+      "cmbz060iw0004ki5g9h2hwg8n"
+    ]
+  }
+}
+```
+
 #### GET /health
 
 説明: ヘルスチェック
@@ -510,16 +533,29 @@
 
 ```sql
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password      String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  taskLists      TaskList[]
-  sharedTaskLists SharedTaskList[]
-  userSettings    UserSettings?
+  app      App?
+  settings Settings?
+}
+```
+
+### Appテーブル
+
+```sql
+model App {
+  id            String   @id @default(cuid())
+  userId    String
+  taskListOrder String[] @default([])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskLists       TaskList[]
 }
 ```
 
@@ -529,17 +565,16 @@ model User {
 model TaskList {
   id        String   @id @default(cuid())
   name      String
-  userId    String
-  order     Int      @default(0)
-  color     String?  @default("#FFFFFF")
+  taskOrder String[] @default([])
+  background     String?  @default("")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tasks  Task[]
-  shares SharedTaskList[]
-
-  @@index([userId])
+  app      App?   @relation(fields: [appId], references: [id], onDelete: Cascade)
+  appId    String?
+  tasks    Task[]
+  share    TaskListShare?
+  document TaskListDocument?
 }
 ```
 
@@ -550,8 +585,7 @@ model Task {
   id         String    @id @default(cuid())
   content    String
   completed  Boolean   @default(false)
-  dueDate    DateTime?
-  order      Int       @default(0)
+  date    String?
   taskListId String
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
@@ -562,10 +596,10 @@ model Task {
 }
 ```
 
-### UserSettingsテーブル
+### Settingsテーブル
 
 ```sql
-model UserSettings {
+model Settings {
   id               String   @id @default(cuid())
   userId           String   @unique
   theme            String   @default("system")
@@ -579,23 +613,19 @@ model UserSettings {
 }
 ```
 
-### SharedTaskListテーブル
+### TaskListShareテーブル
 
 ```sql
-model SharedTaskList {
-  id         String   @id @default(cuid())
-  taskListId String
-  userId     String?
-  shareToken String   @unique
-  permission String   @default("view")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+model TaskListShare {
+  id            String   @id @default(cuid())
+  taskListId    String   @unique
+  shareToken    String   @unique
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   taskList TaskList @relation(fields: [taskListId], references: [id], onDelete: Cascade)
-  user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  @@index([taskListId])
-  @@index([userId])
   @@index([shareToken])
 }
 ```
@@ -612,25 +642,5 @@ model TaskListDocument {
   updatedAt     DateTime @updatedAt
 
   taskList TaskList @relation(fields: [taskListId], references: [id], onDelete: Cascade)
-
-  @@index([taskListId])
-}
-```
-
-### TaskListUpdateテーブル（オプション - 履歴保存用）
-
-```sql
-model TaskListUpdate {
-  id         String   @id @default(cuid())
-  taskListId String
-  update     Bytes    // Yjsの更新データ
-  userId     String?  // 更新を行ったユーザー
-  createdAt  DateTime @default(now())
-
-  taskList TaskList @relation(fields: [taskListId], references: [id], onDelete: Cascade)
-  user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  @@index([taskListId])
-  @@index([createdAt])
 }
 ```

@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import authRoutes from '../../routes/auth';
 import { generateTokenPair } from '../../utils/jwt';
+import type { AuthTokens } from '../../types/auth';
 import { hashPassword } from '../../utils/password';
 import { getDatabase } from '../../services/database';
 
@@ -116,6 +117,90 @@ export function generateUniqueUserData(overrides: Partial<{email: string, passwo
   };
 }
 
+// データベースの整合性確認用ヘルパー関数
+async function ensureUserExists(client: PrismaClient, userId: string, maxRetries: number = 3): Promise<void> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const user = await client.user.findUnique({
+        where: { id: userId },
+        include: {
+          app: true,
+          settings: true,
+        },
+      });
+
+      if (!user) {
+        throw new Error(`User with ID ${userId} not found in database`);
+      }
+
+      if (!user.app) {
+        throw new Error(`App configuration not found for user ${userId}`);
+      }
+
+      if (!user.settings) {
+        throw new Error(`Settings not found for user ${userId}`);
+      }
+
+      // ユーザーとその関連データが確実に存在することを確認
+      return;
+    } catch (error) {
+      if (attempt === maxRetries) {
+        throw new Error(`Failed to verify user existence after ${maxRetries} attempts: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+      
+      // 短時間待機してリトライ（待機時間を長くする）
+      await new Promise(resolve => setTimeout(resolve, 200 * attempt));
+    }
+  }
+}
+
+// 認証済みユーザーの整合性確認用ヘルパー関数
+async function ensureAuthenticatedUserExists(client: PrismaClient, userId: string, refreshToken: string, maxRetries: number = 3): Promise<void> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const user = await client.user.findUnique({
+        where: { id: userId },
+        include: {
+          app: true,
+          settings: true,
+          refreshTokens: {
+            where: {
+              token: refreshToken,
+              isActive: true,
+            },
+          },
+        },
+      });
+
+      if (!user) {
+        throw new Error(`User with ID ${userId} not found in database`);
+      }
+
+      if (!user.app) {
+        throw new Error(`App configuration not found for user ${userId}`);
+      }
+
+      if (!user.settings) {
+        throw new Error(`Settings not found for user ${userId}`);
+      }
+
+      if (!user.refreshTokens || user.refreshTokens.length === 0) {
+        throw new Error(`Refresh token not found for user ${userId}`);
+      }
+
+      // ユーザーとその関連データ（リフレッシュトークン含む）が確実に存在することを確認
+      return;
+    } catch (error) {
+      if (attempt === maxRetries) {
+        throw new Error(`Failed to verify authenticated user existence after ${maxRetries} attempts: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+      
+      // 短時間待機してリトライ（待機時間を長くする）
+      await new Promise(resolve => setTimeout(resolve, 200 * attempt));
+    }
+  }
+}
+
 // Database helpers
 export async function createTestUser(userData?: {email: string, password: string, deviceId: string}): Promise<User> {
   // userDataが渡されなかった場合のみ一意なデータを生成
@@ -159,6 +244,9 @@ export async function createTestUser(userData?: {email: string, password: string
       timeout: 10000, // 10秒のタイムアウト
     });
 
+    // トランザクション完了後、データベースから確実に読み取れることを確認
+    await ensureUserExists(client, user!.id, 5); // リトライ回数を5回に増加
+
     return user!;
   } catch (error) {
     console.error('Test user creation failed:', error);
@@ -176,7 +264,7 @@ export async function createAuthenticatedUser(userData?: Partial<{email: string,
     const client = getTestPrisma();
     
     let user: User;
-    let tokens: any;
+    let tokens: AuthTokens;
 
     // 全ての作成操作をトランザクションで実行（auth.tsと同じ順序）
     await client.$transaction(async (tx) => {
@@ -222,6 +310,9 @@ export async function createAuthenticatedUser(userData?: Partial<{email: string,
     }, {
       timeout: 10000, // 10秒のタイムアウト
     });
+
+    // トランザクション完了後、データベースから確実に読み取れることを確認
+    await ensureAuthenticatedUserExists(client, user!.id, tokens!.refreshToken, 5); // リトライ回数を5回に増加
 
     return {
       user: user!,

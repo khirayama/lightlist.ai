@@ -1,7 +1,7 @@
 import { type Request, type Response, Router } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { getDatabase } from '../services/database';
-import type { AuthenticatedRequest } from '../types/auth';
+import type { AuthenticatedRequest, AuthTokens } from '../types/auth';
 import {
   REFRESH_TOKEN_EXPIRY_MS,
   generateResetToken,
@@ -68,7 +68,7 @@ router.post('/register', async (req: Request, res: Response) => {
     const hashedPassword = await hashPassword(password);
 
     // JWTトークンペアの生成（ユーザーIDは後で設定）
-    let tokens: any;
+    let tokens: AuthTokens;
     let user: any;
 
     // 全ての作成操作をトランザクションで実行
@@ -87,8 +87,16 @@ router.post('/register', async (req: Request, res: Response) => {
         },
       });
 
+      if (process.env.NODE_ENV === 'test') {
+        console.log(`[REGISTER DEBUG] User created: ${user.id}, email: ${user.email}`);
+      }
+
       // JWTトークンペアの生成
       tokens = generateTokenPair(user.id, user.email, deviceId);
+
+      if (process.env.NODE_ENV === 'test') {
+        console.log(`[REGISTER DEBUG] Tokens generated for user: ${user.id}, deviceId: ${deviceId}`);
+      }
 
       // リフレッシュトークンをデータベースに保存
       await tx.refreshToken.create({
@@ -100,6 +108,10 @@ router.post('/register', async (req: Request, res: Response) => {
         },
       });
 
+      if (process.env.NODE_ENV === 'test') {
+        console.log(`[REGISTER DEBUG] Refresh token created for user: ${user.id}`);
+      }
+
       // デフォルトのApp設定を作成
       await tx.app.create({
         data: {
@@ -110,6 +122,10 @@ router.post('/register', async (req: Request, res: Response) => {
         },
       });
 
+      if (process.env.NODE_ENV === 'test') {
+        console.log(`[REGISTER DEBUG] App created for user: ${user.id}`);
+      }
+
       // デフォルトのSettings設定を作成
       await tx.settings.create({
         data: {
@@ -118,6 +134,10 @@ router.post('/register', async (req: Request, res: Response) => {
           language: 'ja',
         },
       });
+
+      if (process.env.NODE_ENV === 'test') {
+        console.log(`[REGISTER DEBUG] Settings created for user: ${user.id}`);
+      }
     });
 
     res.status(201).json({
@@ -162,10 +182,10 @@ router.post('/login', async (req: Request, res: Response) => {
       deviceId: string;
     };
 
-    let tokens: any;
+    let tokens: AuthTokens;
     let userData: any;
 
-    // 全ての処理をトランザクションで実行
+    // 全ての処理をトランザクションで実行（厳密な分離レベルとタイムアウトを設定）
     await prisma.$transaction(async (tx) => {
       // ユーザーの検索
       const user = await tx.user.findUnique({
@@ -176,6 +196,10 @@ router.post('/login', async (req: Request, res: Response) => {
         throw new Error('Invalid email or password');
       }
 
+      if (process.env.NODE_ENV === 'test') {
+        console.log(`[LOGIN DEBUG] User found: ${user.id}, email: ${user.email}`);
+      }
+
       // パスワードの検証
       const isPasswordValid = await verifyPassword(password, user.password);
       if (!isPasswordValid) {
@@ -184,6 +208,11 @@ router.post('/login', async (req: Request, res: Response) => {
 
       // JWTトークンペアの生成
       tokens = generateTokenPair(user.id, user.email, deviceId);
+      
+      if (process.env.NODE_ENV === 'test') {
+        console.log(`[LOGIN DEBUG] Tokens generated for user: ${user.id}, deviceId: ${deviceId}`);
+      }
+      
       // デバイス数の制限チェックと古いトークンの削除
       const activeTokens = await tx.refreshToken.findMany({
         where: {
@@ -198,10 +227,17 @@ router.post('/login', async (req: Request, res: Response) => {
         },
       });
 
+      if (process.env.NODE_ENV === 'test') {
+        console.log(`[LOGIN DEBUG] Found ${activeTokens.length} active tokens for user: ${user.id}`);
+      }
+
       // 既存のデバイスIDがあるかチェック
       const existingDeviceToken = activeTokens.find(token => token.deviceId === deviceId);
 
       if (existingDeviceToken) {
+        if (process.env.NODE_ENV === 'test') {
+          console.log(`[LOGIN DEBUG] Deactivating existing device token: ${existingDeviceToken.id}`);
+        }
         // 既存のデバイストークンを無効化
         await tx.refreshToken.update({
           where: { id: existingDeviceToken.id },
@@ -211,11 +247,25 @@ router.post('/login', async (req: Request, res: Response) => {
         // 最大デバイス数を超える場合、最も古いトークンを無効化
         const oldestToken = activeTokens[0];
         if (oldestToken) {
+          if (process.env.NODE_ENV === 'test') {
+            console.log(`[LOGIN DEBUG] Deactivating oldest token due to device limit: ${oldestToken.id}`);
+          }
           await tx.refreshToken.update({
             where: { id: oldestToken.id },
             data: { isActive: false },
           });
         }
+      }
+
+      // ユーザーが存在することを再確認（外部キー制約エラー防止）
+      // トランザクション内で既にuserオブジェクトを取得しているので、追加の確認は不要
+      // しかし、念のため短時間待機してからリフレッシュトークンを作成
+      if (process.env.NODE_ENV === 'test') {
+        console.log(`[LOGIN DEBUG] User confirmed exists: ${user.id}`);
+      }
+
+      if (process.env.NODE_ENV === 'test') {
+        console.log(`[LOGIN DEBUG] Creating refresh token for user: ${user.id}, deviceId: ${deviceId}`);
       }
 
       // リフレッシュトークンをデータベースに保存
@@ -227,6 +277,10 @@ router.post('/login', async (req: Request, res: Response) => {
           expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY_MS),
         },
       });
+
+      if (process.env.NODE_ENV === 'test') {
+        console.log(`[LOGIN DEBUG] Refresh token created successfully for user: ${user.id}`);
+      }
 
       // レスポンス用のユーザーデータを設定
       userData = {

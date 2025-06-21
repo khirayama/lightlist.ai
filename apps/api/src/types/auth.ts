@@ -75,7 +75,9 @@ export interface RefreshTokenResponse {
   message: string;
   data: {
     token: string;
+    refreshToken: string;
     expiresIn: number;
+    refreshExpiresIn: number;
   };
 }
 

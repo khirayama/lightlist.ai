@@ -1,0 +1,45 @@
+services:
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: lightlist-postgres-test
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: lightlist_test_db
+      POSTGRES_USER: lightlist_test_user
+      POSTGRES_PASSWORD: lightlist_test_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=C"
+    ports:
+      - "5433:5432"  # 本番用5432と分離
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+    command: >
+      postgres 
+      -c shared_preload_libraries=pg_stat_statements
+      -c log_statement=all
+      -c log_destination=stderr
+      -c logging_collector=off
+      -c log_min_duration_statement=0
+      -c fsync=off
+      -c synchronous_commit=off
+      -c full_page_writes=off
+      -c checkpoint_segments=32
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c shared_buffers=256MB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lightlist_test_user -d lightlist_test_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  postgres_test_data:
+    driver: local
+
+networks:
+  default:
+    name: lightlist-test-network

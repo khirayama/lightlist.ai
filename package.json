@@ -1,0 +1,47 @@
+{
+  "name": "lightlist",
+  "version": "1.0.0",
+  "description": "Lightlist - マルチプラットフォーム対応のタスクリスト管理アプリケーション",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:run": "turbo run test:run",
+    "check": "turbo run check",
+    "clean": "turbo run clean",
+    "setup": "turbo run setup",
+    "db:generate": "turbo run db:generate --filter=@lightlist/api",
+    "db:push": "turbo run db:push --filter=@lightlist/api",
+    "db:migrate": "turbo run db:migrate --filter=@lightlist/api",
+    "db:studio": "turbo run db:studio --filter=@lightlist/api",
+    "db:reset": "turbo run db:reset --filter=@lightlist/api",
+    "docker:up": "turbo run docker:up --filter=@lightlist/api",
+    "docker:down": "turbo run docker:down --filter=@lightlist/api"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.4.1",
+    "prettier": "^3.1.1",
+    "turbo": "^1.11.2",
+    "typescript": "^5.3.3"
+  },
+  "packageManager": "npm@10.2.4",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "monorepo",
+    "task-management",
+    "react",
+    "react-native",
+    "express",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT"
+}

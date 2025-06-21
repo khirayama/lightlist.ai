@@ -1,8 +1,8 @@
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 import { PrismaClient } from '@prisma/client';
+import cors from 'cors';
+import express from 'express';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -54,7 +54,7 @@ app.use((req, res) => {
 // Error handler
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Error:', err);
-  
+
   res.status(500).json({
     error: 'Internal Server Error',
     message: NODE_ENV === 'development' ? err.message : 'Something went wrong',

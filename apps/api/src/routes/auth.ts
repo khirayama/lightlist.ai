@@ -164,32 +164,28 @@ router.post('/login', async (req: Request, res: Response) => {
       deviceId: string;
     };
 
-    // ユーザーの検索
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
+    let tokens: any;
+    let userData: any;
 
-    if (!user) {
-      res.status(400).json({
-        error: 'Invalid email or password',
-      });
-      return;
-    }
-
-    // パスワードの検証
-    const isPasswordValid = await verifyPassword(password, user.password);
-    if (!isPasswordValid) {
-      res.status(400).json({
-        error: 'Invalid email or password',
-      });
-      return;
-    }
-
-    // JWTトークンペアの生成
-    const tokens = generateTokenPair(user.id, user.email, deviceId);
-
-    // デバイス管理とトークン作成をトランザクションで実行
+    // 全ての処理をトランザクションで実行
     await prisma.$transaction(async (tx) => {
+      // ユーザーの検索
+      const user = await tx.user.findUnique({
+        where: { email },
+      });
+
+      if (!user) {
+        throw new Error('Invalid email or password');
+      }
+
+      // パスワードの検証
+      const isPasswordValid = await verifyPassword(password, user.password);
+      if (!isPasswordValid) {
+        throw new Error('Invalid email or password');
+      }
+
+      // JWTトークンペアの生成
+      tokens = generateTokenPair(user.id, user.email, deviceId);
       // デバイス数の制限チェックと古いトークンの削除
       const activeTokens = await tx.refreshToken.findMany({
         where: {
@@ -233,14 +229,15 @@ router.post('/login', async (req: Request, res: Response) => {
           expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY_MS),
         },
       });
-    });
 
-    const userData = {
-      id: user.id,
-      email: user.email,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    };
+      // レスポンス用のユーザーデータを設定
+      userData = {
+        id: user.id,
+        email: user.email,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      };
+    });
 
     res.status(200).json({
       message: 'Login successful',
@@ -254,6 +251,15 @@ router.post('/login', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Login error:', error);
+    
+    // バリデーションエラーの場合は400を返す
+    if (error instanceof Error && error.message === 'Invalid email or password') {
+      res.status(400).json({
+        error: error.message,
+      });
+      return;
+    }
+    
     res.status(500).json({
       error: 'Internal server error during login',
     });

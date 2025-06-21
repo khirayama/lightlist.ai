@@ -16,21 +16,39 @@ export const REFRESH_TOKEN_EXPIRY_MS = 365 * 24 * 60 * 60 * 1000; // 1年
 /**
  * アクセストークンを生成
  */
-export function generateAccessToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): string {
+export function generateAccessToken(payload: Omit<JWTPayload, 'iat' | 'exp' | 'jti'>): string {
+  // ユニークなトークンIDを生成（各トークンがユニークになるように）
+  const jti = randomBytes(8).toString('hex');
+  const iat = Math.floor(Date.now() / 1000);
+  
+  const tokenPayload = {
+    ...payload,
+    jti,
+    iat,
+  };
+  
   const options: SignOptions = {
     expiresIn: '1h',
   };
-  return jwt.sign(payload, JWT_SECRET, options);
+  return jwt.sign(tokenPayload, JWT_SECRET, options);
 }
 
 /**
  * リフレッシュトークンを生成
  */
 export function generateRefreshToken(payload: Omit<RefreshTokenPayload, 'iat' | 'exp'>): string {
+  // 現在時刻を明示的に追加（ユニーク性を確保）
+  const iat = Math.floor(Date.now() / 1000);
+  
+  const tokenPayload = {
+    ...payload,
+    iat,
+  };
+  
   const options: SignOptions = {
     expiresIn: '1y',
   };
-  return jwt.sign(payload, JWT_SECRET, options);
+  return jwt.sign(tokenPayload, JWT_SECRET, options);
 }
 
 /**

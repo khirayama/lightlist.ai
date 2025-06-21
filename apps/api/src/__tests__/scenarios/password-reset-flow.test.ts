@@ -11,7 +11,7 @@ import {
   teardownTestDatabase
 } from '../setup';
 
-describe('Password Reset Flow Scenarios', () => {
+describe('パスワードリセットフローシナリオ', () => {
   const request = getTestRequest();
   const prisma = getTestPrisma();
 
@@ -25,8 +25,8 @@ describe('Password Reset Flow Scenarios', () => {
     await teardownTestDatabase();
   });
 
-  describe('Complete Password Reset Journey', () => {
-    it('should handle complete password reset flow', async () => {
+  describe('完全なパスワードリセットジャーニー', () => {
+    it('完全なパスワードリセットフローを処理すること', async () => {
       const userData = generateUniqueUserData({
         password: 'OriginalPass123',
       });
@@ -99,7 +99,7 @@ describe('Password Reset Flow Scenarios', () => {
       expect(newPasswordLoginResponse.body.data.user.email).toBe(userData.email);
     });
 
-    it('should handle multiple password reset requests', async () => {
+    it('複数のパスワードリセットリクエストを処理すること', async () => {
       const userData = generateUniqueUserData({
         password: 'OriginalPass123',
       });
@@ -174,8 +174,8 @@ describe('Password Reset Flow Scenarios', () => {
     });
   });
 
-  describe('Security Scenarios', () => {
-    it('should not reveal if user exists in forgot-password', async () => {
+  describe('セキュリティシナリオ', () => {
+    it('パスワード忘れでユーザーの存在を明かさないこと', async () => {
       // Test with non-existent email
       const nonExistentEmailResponse = await request
         .post('/api/auth/forgot-password')
@@ -198,7 +198,7 @@ describe('Password Reset Flow Scenarios', () => {
       expect(tokens).toHaveLength(0);
     });
 
-    it('should invalidate all refresh tokens after password reset', async () => {
+    it('パスワードリセット後に全てのリフレッシュトークンを無効化すること', async () => {
       const userData = generateUniqueUserData({
         password: 'OriginalPass123',
       });
@@ -279,7 +279,7 @@ describe('Password Reset Flow Scenarios', () => {
       expect(refreshResponse.status).toBe(401);
     });
 
-    it('should prevent token reuse', async () => {
+    it('トークンの再利用を防ぐこと', async () => {
       const userData = generateUniqueUserData({
         password: 'OriginalPass123',
       });
@@ -322,7 +322,7 @@ describe('Password Reset Flow Scenarios', () => {
       expect(secondResetResponse.body.error).toBe('Invalid or expired reset token');
     });
 
-    it('should handle expired tokens', async () => {
+    it('期限切れトークンを処理すること', async () => {
       const userData = generateUniqueUserData({
         password: 'OriginalPass123',
       });
@@ -351,8 +351,8 @@ describe('Password Reset Flow Scenarios', () => {
     });
   });
 
-  describe('Validation and Error Handling', () => {
-    it('should validate email format in forgot-password', async () => {
+  describe('バリデーションとエラーハンドリング', () => {
+    it('パスワード忘れでメール形式を検証すること', async () => {
       const invalidEmailResponse = await request
         .post('/api/auth/forgot-password')
         .send({
@@ -364,7 +364,7 @@ describe('Password Reset Flow Scenarios', () => {
       expect(invalidEmailResponse.body.details).toContain('Invalid email address');
     });
 
-    it('should validate password strength in reset-password', async () => {
+    it('パスワードリセットでパスワード強度を検証すること', async () => {
       const userData = generateUniqueUserData();
       const user = await createTestUser(userData);
 
@@ -394,7 +394,7 @@ describe('Password Reset Flow Scenarios', () => {
       expect(weakPasswordResponse.body.error).toBe('Password does not meet requirements');
     });
 
-    it('should handle invalid token format', async () => {
+    it('無効なトークン形式を処理すること', async () => {
       const invalidTokenResponse = await request
         .post('/api/auth/reset-password')
         .send({
@@ -406,7 +406,7 @@ describe('Password Reset Flow Scenarios', () => {
       expect(invalidTokenResponse.body.error).toBe('Invalid or expired reset token');
     });
 
-    it('should handle missing required fields', async () => {
+    it('必須フィールドの不足を処理すること', async () => {
       // Missing email in forgot-password
       const missingEmailResponse = await request
         .post('/api/auth/forgot-password')
@@ -437,8 +437,8 @@ describe('Password Reset Flow Scenarios', () => {
     });
   });
 
-  describe('Concurrent and Edge Cases', () => {
-    it('should handle concurrent password reset requests', async () => {
+  describe('同時実行とエッジケース', () => {
+    it('同時パスワードリセットリクエストを処理すること', async () => {
       const userData = generateUniqueUserData();
       const user = await createTestUser(userData);
 
@@ -484,7 +484,7 @@ describe('Password Reset Flow Scenarios', () => {
       expect(resetResponse.status).toBe(200);
     });
 
-    it('should handle database errors gracefully', async () => {
+    it('データベースエラーを適切に処理すること', async () => {
       // This test would require more complex setup to simulate database errors
       // For now, we test basic error recovery scenarios
       
@@ -503,7 +503,7 @@ describe('Password Reset Flow Scenarios', () => {
       expect(malformedTokenResponse.body.error).toBe('Validation failed');
     });
 
-    it('should handle password reset with special characters', async () => {
+    it('特殊文字を含むパスワードリセットを処理すること', async () => {
       const userData = generateUniqueUserData();
       const user = await createTestUser(userData);
 

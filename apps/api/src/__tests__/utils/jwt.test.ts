@@ -14,7 +14,7 @@ import {
 } from '../../utils/jwt';
 import type { JWTPayload, RefreshTokenPayload } from '../../types/auth';
 
-describe('JWT Utils', () => {
+describe('JWTユーティリティ', () => {
   const testPayload: Omit<JWTPayload, 'iat' | 'exp'> = {
     userId: 'test-user-id',
     email: 'test@example.com',
@@ -30,7 +30,7 @@ describe('JWT Utils', () => {
   const testEmail = 'test@example.com';
 
   describe('generateAccessToken', () => {
-    it('should generate a valid access token', () => {
+    it('有効なアクセストークンを生成すること', () => {
       const token = generateAccessToken(testPayload);
       
       expect(token).toBeDefined();
@@ -38,7 +38,7 @@ describe('JWT Utils', () => {
       expect(token.split('.')).toHaveLength(3); // JWT format: header.payload.signature
     });
 
-    it('should generate different tokens for different payloads', () => {
+    it('異なるペイロードに対して異なるトークンを生成すること', () => {
       const token1 = generateAccessToken(testPayload);
       const token2 = generateAccessToken({
         ...testPayload,
@@ -48,7 +48,7 @@ describe('JWT Utils', () => {
       expect(token1).not.toBe(token2);
     });
 
-    it('should include correct payload data', () => {
+    it('正しいペイロードデータを含むこと', () => {
       const token = generateAccessToken(testPayload);
       const decoded = jwt.decode(token) as JWTPayload;
       
@@ -60,7 +60,7 @@ describe('JWT Utils', () => {
   });
 
   describe('generateRefreshToken', () => {
-    it('should generate a valid refresh token', () => {
+    it('有効なリフレッシュトークンを生成すること', () => {
       const token = generateRefreshToken(testRefreshPayload);
       
       expect(token).toBeDefined();
@@ -68,7 +68,7 @@ describe('JWT Utils', () => {
       expect(token.split('.')).toHaveLength(3);
     });
 
-    it('should include correct payload data', () => {
+    it('正しいペイロードデータを含むこと', () => {
       const token = generateRefreshToken(testRefreshPayload);
       const decoded = jwt.decode(token) as RefreshTokenPayload;
       
@@ -81,7 +81,7 @@ describe('JWT Utils', () => {
   });
 
   describe('verifyAccessToken', () => {
-    it('should verify a valid access token', () => {
+    it('有効なアクセストークンを検証できること', () => {
       const token = generateAccessToken(testPayload);
       const verified = verifyAccessToken(token);
       
@@ -90,28 +90,28 @@ describe('JWT Utils', () => {
       expect(verified?.email).toBe(testPayload.email);
     });
 
-    it('should return null for invalid token', () => {
+    it('無効なトークンに対してnullを返すこと', () => {
       const invalidToken = 'invalid.token.here';
       const verified = verifyAccessToken(invalidToken);
       
       expect(verified).toBeNull();
     });
 
-    it('should return null for malformed token', () => {
+    it('不正な形式のトークンに対してnullを返すこと', () => {
       const malformedToken = 'not-a-jwt-token';
       const verified = verifyAccessToken(malformedToken);
       
       expect(verified).toBeNull();
     });
 
-    it('should return null for token with wrong secret', () => {
+    it('間違ったシークレットのトークンに対してnullを返すこと', () => {
       const tokenWithWrongSecret = jwt.sign(testPayload, 'wrong-secret');
       const verified = verifyAccessToken(tokenWithWrongSecret);
       
       expect(verified).toBeNull();
     });
 
-    it('should return null for expired token', () => {
+    it('期限切れのトークンに対してnullを返すこと', () => {
       // Create an expired token
       const expiredToken = jwt.sign(
         { ...testPayload, exp: Math.floor(Date.now() / 1000) - 1 },
@@ -124,7 +124,7 @@ describe('JWT Utils', () => {
   });
 
   describe('verifyRefreshToken', () => {
-    it('should verify a valid refresh token', () => {
+    it('有効なリフレッシュトークンを検証できること', () => {
       const token = generateRefreshToken(testRefreshPayload);
       const verified = verifyRefreshToken(token);
       
@@ -134,7 +134,7 @@ describe('JWT Utils', () => {
       expect(verified?.tokenId).toBe(testRefreshPayload.tokenId);
     });
 
-    it('should return null for invalid refresh token', () => {
+    it('無効なリフレッシュトークンに対してnullを返すこと', () => {
       const invalidToken = 'invalid.refresh.token';
       const verified = verifyRefreshToken(invalidToken);
       
@@ -143,7 +143,7 @@ describe('JWT Utils', () => {
   });
 
   describe('generateTokenPair', () => {
-    it('should generate both access and refresh tokens', () => {
+    it('アクセストークンとリフレッシュトークンの両方を生成すること', () => {
       const tokens = generateTokenPair('user-id', testEmail, testDeviceId);
       
       expect(tokens).toBeDefined();
@@ -153,7 +153,7 @@ describe('JWT Utils', () => {
       expect(tokens.refreshExpiresIn).toBe(REFRESH_TOKEN_EXPIRY_MS);
     });
 
-    it('should generate valid tokens', () => {
+    it('有効なトークンを生成すること', () => {
       const tokens = generateTokenPair('user-id', testEmail, testDeviceId);
       
       const accessVerified = verifyAccessToken(tokens.token);
@@ -167,7 +167,7 @@ describe('JWT Utils', () => {
       expect(refreshVerified?.deviceId).toBe(testDeviceId);
     });
 
-    it('should generate different refresh tokens each time', () => {
+    it('毎回異なるリフレッシュトークンを生成すること', () => {
       const tokens1 = generateTokenPair('user-id', testEmail, testDeviceId);
       const tokens2 = generateTokenPair('user-id', testEmail, testDeviceId);
       
@@ -182,7 +182,7 @@ describe('JWT Utils', () => {
   });
 
   describe('getTokenExpiry', () => {
-    it('should return expiry date for valid token', () => {
+    it('有効なトークンの有効期限を返すこと', () => {
       const token = generateAccessToken(testPayload);
       const expiry = getTokenExpiry(token);
       
@@ -191,17 +191,17 @@ describe('JWT Utils', () => {
       expect(expiry!.getTime()).toBeGreaterThan(Date.now());
     });
 
-    it('should return null for invalid token', () => {
+    it('無効なトークンに対してnullを返すこと', () => {
       const expiry = getTokenExpiry('invalid.token');
       expect(expiry).toBeNull();
     });
 
-    it('should return null for malformed token', () => {
+    it('不正な形式のトークンに対してnullを返すこと', () => {
       const expiry = getTokenExpiry('not-a-jwt');
       expect(expiry).toBeNull();
     });
 
-    it('should handle decode exceptions gracefully', () => {
+    it('デコード例外を適切に処理すること', () => {
       // Test with various inputs that should cause jwt.decode to throw
       const malformedInputs = [
         'malformed..token..with..multiple.dots',
@@ -219,7 +219,7 @@ describe('JWT Utils', () => {
   });
 
   describe('generateResetToken', () => {
-    it('should generate a random reset token', () => {
+    it('ランダムなリセットトークンを生成すること', () => {
       const token = generateResetToken();
       
       expect(token).toBeDefined();
@@ -227,21 +227,21 @@ describe('JWT Utils', () => {
       expect(token.length).toBe(64); // 32 bytes * 2 (hex encoding)
     });
 
-    it('should generate different tokens each time', () => {
+    it('毎回異なるトークンを生成すること', () => {
       const token1 = generateResetToken();
       const token2 = generateResetToken();
       
       expect(token1).not.toBe(token2);
     });
 
-    it('should generate hexadecimal string', () => {
+    it('16進数文字列を生成すること', () => {
       const token = generateResetToken();
       expect(/^[a-f0-9]+$/i.test(token)).toBe(true);
     });
   });
 
   describe('isValidDeviceId', () => {
-    it('should validate UUID format', () => {
+    it('UUID形式を検証できること', () => {
       const validUUIDs = [
         '550e8400-e29b-41d4-a716-446655440000',
         '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
@@ -255,7 +255,7 @@ describe('JWT Utils', () => {
       });
     });
 
-    it('should validate random string format (32+ chars)', () => {
+    it('ランダム文字列形式（32文字以上）を検証できること', () => {
       const validRandomStrings = [
         'abcd1234567890abcd1234567890abcd', // exactly 32 chars
         'abcd1234567890abcd1234567890abcdef', // 34 chars
@@ -267,7 +267,7 @@ describe('JWT Utils', () => {
       });
     });
 
-    it('should reject invalid device IDs', () => {
+    it('無効なデバイスIDを拒否すること', () => {
       const invalidDeviceIds = [
         '', // empty
         'short', // too short
@@ -285,8 +285,8 @@ describe('JWT Utils', () => {
     });
   });
 
-  describe('Constants', () => {
-    it('should have correct expiry constants', () => {
+  describe('定数', () => {
+    it('正しい有効期限定数を持つこと', () => {
       expect(ACCESS_TOKEN_EXPIRY_MS).toBe(60 * 60 * 1000); // 1 hour
       expect(REFRESH_TOKEN_EXPIRY_MS).toBe(365 * 24 * 60 * 60 * 1000); // 1 year
     });

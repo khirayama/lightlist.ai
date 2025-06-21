@@ -17,7 +17,7 @@ import {
 import { verifyPassword } from '../../utils/password';
 import { verifyAccessToken, verifyRefreshToken } from '../../utils/jwt';
 
-describe('Auth Routes', () => {
+describe('認証ルート', () => {
   const request = getTestRequest();
   const prisma = getTestPrisma();
 
@@ -34,7 +34,7 @@ describe('Auth Routes', () => {
   });
 
   describe('POST /api/auth/register', () => {
-    it('should register a new user successfully', async () => {
+    it('新しいユーザーを正常に登録すること', async () => {
       const userData = generateUniqueUserData();
       
       const response = await request
@@ -89,7 +89,7 @@ describe('Auth Routes', () => {
       expect(refreshToken?.isActive).toBe(true);
     });
 
-    it('should reject registration with duplicate email', async () => {
+    it('重複したメールでの登録を拒否すること', async () => {
       const userData = generateUniqueUserData();
       
       // Create user first
@@ -104,7 +104,7 @@ describe('Auth Routes', () => {
       expect(response.body.error).toBe('User already exists with this email');
     });
 
-    it('should reject registration with invalid email', async () => {
+    it('無効なメールでの登録を拒否すること', async () => {
       const userData = {
         email: 'invalid-email',
         password: 'ValidPass123',
@@ -120,7 +120,7 @@ describe('Auth Routes', () => {
       expect(response.body.details).toContain('Invalid email address');
     });
 
-    it('should reject registration with weak password', async () => {
+    it('弱いパスワードでの登録を拒否すること', async () => {
       const userData = generateUniqueUserData({
         password: 'weak'
       });
@@ -135,7 +135,7 @@ describe('Auth Routes', () => {
       expect(response.body.details.length).toBeGreaterThan(0);
     });
 
-    it('should reject registration with invalid device ID', async () => {
+    it('無効なデバイスIDでの登録を拒否すること', async () => {
       const userData = {
         email: 'valid@example.com',
         password: 'ValidPass123',
@@ -151,7 +151,7 @@ describe('Auth Routes', () => {
       expect(response.body.details).toContain('Invalid device ID format');
     });
 
-    it('should reject registration with missing fields', async () => {
+    it('フィールド不足での登録を拒否すること', async () => {
       const response = await request
         .post('/api/auth/register')
         .send({
@@ -163,7 +163,7 @@ describe('Auth Routes', () => {
       expect(response.body.error).toBe('Validation failed');
     });
 
-    it('should accept random string device ID format', async () => {
+    it('ランダム文字列のデバイスID形式を受け入れること', async () => {
       const userData = generateUniqueUserData({
         deviceId: 'abc123def456ghi789jkl012mno345pqr',
       });
@@ -178,7 +178,7 @@ describe('Auth Routes', () => {
   });
 
   describe('POST /api/auth/login', () => {
-    it('should login successfully with correct credentials', async () => {
+    it('正しい認証情報で正常にログインすること', async () => {
       const userData = generateUniqueUserData();
       await createTestUser(userData);
 
@@ -203,7 +203,7 @@ describe('Auth Routes', () => {
       expect(refreshTokenPayload?.deviceId).toBe(userData.deviceId);
     });
 
-    it('should reject login with incorrect email', async () => {
+    it('間違ったメールでのログインを拒否すること', async () => {
       const userData = generateUniqueUserData();
       await createTestUser(userData);
 
@@ -218,7 +218,7 @@ describe('Auth Routes', () => {
       expect(response.body.error).toBe('Invalid email or password');
     });
 
-    it('should reject login with incorrect password', async () => {
+    it('間違ったパスワードでのログインを拒否すること', async () => {
       const userData = generateUniqueUserData();
       await createTestUser(userData);
 
@@ -233,7 +233,7 @@ describe('Auth Routes', () => {
       expect(response.body.error).toBe('Invalid email or password');
     });
 
-    it('should handle multiple device logins', async () => {
+    it('複数デバイスのログインを処理すること', async () => {
       const userData = generateUniqueUserData();
       const user = await createTestUser(userData);
 
@@ -266,7 +266,7 @@ describe('Auth Routes', () => {
       expect(activeTokens).toHaveLength(2);
     });
 
-    it('should replace existing device token on re-login', async () => {
+    it('再ログイン時に既存のデバイストークンを置き換えること', async () => {
       const userData = generateUniqueUserData();
       const user = await createTestUser(userData);
 
@@ -301,7 +301,7 @@ describe('Auth Routes', () => {
       expect(activeTokens[0]?.token).toBe(secondRefreshToken);
     });
 
-    it('should enforce maximum device limit', async () => {
+    it('最大デバイス数制限を強制すること', async () => {
       const userData = generateUniqueUserData();
       const user = await createTestUser(userData);
 
@@ -330,7 +330,7 @@ describe('Auth Routes', () => {
       expect(activeTokens).toHaveLength(5);
     });
 
-    it('should reject login with invalid input format', async () => {
+    it('無効な入力形式でのログインを拒否すること', async () => {
       const response = await request
         .post('/api/auth/login')
         .send({
@@ -345,7 +345,7 @@ describe('Auth Routes', () => {
   });
 
   describe('POST /api/auth/logout', () => {
-    it('should logout successfully with refresh token', async () => {
+    it('リフレッシュトークンで正常にログアウトすること', async () => {
       const { user, tokens } = await createAuthenticatedUser();
 
       const response = await request
@@ -368,7 +368,7 @@ describe('Auth Routes', () => {
       expect(refreshToken?.isActive).toBe(false);
     });
 
-    it('should logout successfully with device ID', async () => {
+    it('デバイスIDで正常にログアウトすること', async () => {
       const { user, tokens, deviceId } = await createAuthenticatedUser();
 
       const response = await request
@@ -392,7 +392,7 @@ describe('Auth Routes', () => {
       expect(refreshTokens.every(token => !token.isActive)).toBe(true);
     });
 
-    it('should require authentication', async () => {
+    it('認証を必要とすること', async () => {
       const response = await request
         .post('/api/auth/logout')
         .send({
@@ -403,7 +403,7 @@ describe('Auth Routes', () => {
       expect(response.body.error).toBe('Access token is required');
     });
 
-    it('should handle logout without token or device ID', async () => {
+    it('トークンやデバイスIDなしのログアウトを処理すること', async () => {
       const { tokens } = await createAuthenticatedUser();
 
       const response = await request
@@ -417,7 +417,7 @@ describe('Auth Routes', () => {
   });
 
   describe('POST /api/auth/refresh', () => {
-    it('should refresh token successfully', async () => {
+    it('トークンを正常にリフレッシュすること', async () => {
       const { user, tokens, deviceId } = await createAuthenticatedUser();
 
       // Add delay to ensure different timestamp in JWT
@@ -458,7 +458,7 @@ describe('Auth Routes', () => {
       expect(newRefreshToken?.isActive).toBe(true);
     });
 
-    it('should reject invalid refresh token', async () => {
+    it('無効なリフレッシュトークンを拒否すること', async () => {
       const response = await request
         .post('/api/auth/refresh')
         .send({
@@ -470,7 +470,7 @@ describe('Auth Routes', () => {
       expect(response.body.error).toBe('Invalid or expired refresh token');
     });
 
-    it('should reject refresh token not in database', async () => {
+    it('データベースにないリフレッシュトークンを拒否すること', async () => {
       const { tokens, deviceId } = await createAuthenticatedUser();
 
       // Manually deactivate the refresh token
@@ -490,7 +490,7 @@ describe('Auth Routes', () => {
       expect(response.body.error).toBe('Invalid refresh token');
     });
 
-    it('should reject device ID mismatch', async () => {
+    it('デバイスIDの不一致を拒否すること', async () => {
       const { tokens } = await createAuthenticatedUser();
 
       // Create different device ID (generate a new UUID)
@@ -507,7 +507,7 @@ describe('Auth Routes', () => {
       expect(response.body.error).toBe('Device ID mismatch');
     });
 
-    it('should reject malformed request', async () => {
+    it('不正な形式のリクエストを拒否すること', async () => {
       const response = await request
         .post('/api/auth/refresh')
         .send({
@@ -521,7 +521,7 @@ describe('Auth Routes', () => {
   });
 
   describe('POST /api/auth/forgot-password', () => {
-    it('should handle forgot password for existing user', async () => {
+    it('既存ユーザーのパスワード忘れを処理すること', async () => {
       const userData = generateUniqueUserData();
       await createTestUser(userData);
 
@@ -535,7 +535,7 @@ describe('Auth Routes', () => {
       expect(response.body.message).toBe('Password reset email sent successfully');
     });
 
-    it('should handle forgot password for non-existent user (security)', async () => {
+    it('存在しないユーザーのパスワード忘れを処理すること（セキュリティ）', async () => {
       const response = await request
         .post('/api/auth/forgot-password')
         .send({
@@ -547,7 +547,7 @@ describe('Auth Routes', () => {
       expect(response.body.message).toBe('Password reset email sent successfully');
     });
 
-    it('should reject invalid email format', async () => {
+    it('無効なメール形式を拒否すること', async () => {
       const response = await request
         .post('/api/auth/forgot-password')
         .send({
@@ -559,7 +559,7 @@ describe('Auth Routes', () => {
       expect(response.body.details).toContain('Invalid email address');
     });
 
-    it('should reject missing email', async () => {
+    it('メールの不足を拒否すること', async () => {
       const response = await request
         .post('/api/auth/forgot-password')
         .send({});
@@ -570,7 +570,7 @@ describe('Auth Routes', () => {
   });
 
   describe('POST /api/auth/reset-password', () => {
-    it('should reject reset password (not implemented)', async () => {
+    it('パスワードリセットを拒否すること（未実装）', async () => {
       const response = await request
         .post('/api/auth/reset-password')
         .send({
@@ -583,7 +583,7 @@ describe('Auth Routes', () => {
       expect(response.body.error).toBe('Invalid or expired reset token');
     });
 
-    it('should reject weak password', async () => {
+    it('弱いパスワードを拒否すること', async () => {
       const response = await request
         .post('/api/auth/reset-password')
         .send({
@@ -595,7 +595,7 @@ describe('Auth Routes', () => {
       expect(response.body.error).toBe('Password does not meet requirements');
     });
 
-    it('should reject malformed request', async () => {
+    it('不正な形式のリクエストを拒否すること', async () => {
       const response = await request
         .post('/api/auth/reset-password')
         .send({
@@ -608,8 +608,8 @@ describe('Auth Routes', () => {
     });
   });
 
-  describe('Error Handling and Edge Cases', () => {
-    it('should handle malformed JSON', async () => {
+  describe('エラーハンドリングとエッジケース', () => {
+    it('不正な形式のJSONを処理すること', async () => {
       const response = await request
         .post('/api/auth/register')
         .send('invalid-json')
@@ -618,7 +618,7 @@ describe('Auth Routes', () => {
       expect(response.status).toBe(500);
     });
 
-    it('should handle very long inputs', async () => {
+    it('非常に長い入力を処理すること', async () => {
       const veryLongString = 'a'.repeat(1000);
       
       const response = await request
@@ -632,7 +632,7 @@ describe('Auth Routes', () => {
       expect(response.status).toBe(400);
     });
 
-    it('should handle special characters in inputs', async () => {
+    it('入力内の特殊文字を処理すること', async () => {
       const response = await request
         .post('/api/auth/register')
         .send({
@@ -645,7 +645,7 @@ describe('Auth Routes', () => {
       expect(response.body.data.user.email).toBe('test+special@example.com');
     });
 
-    it('should handle concurrent requests', async () => {
+    it('同時リクエストを処理すること', async () => {
       const timestamp = Date.now();
       
       // Send multiple concurrent registration requests with unique emails and device IDs

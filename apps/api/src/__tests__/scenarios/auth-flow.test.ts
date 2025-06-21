@@ -12,7 +12,7 @@ import {
 } from '../setup';
 import { verifyAccessToken, verifyRefreshToken } from '../../utils/jwt';
 
-describe('Authentication Flow Scenarios', () => {
+describe('認証フローシナリオ', () => {
   const request = getTestRequest();
   const prisma = getTestPrisma();
 
@@ -28,8 +28,8 @@ describe('Authentication Flow Scenarios', () => {
     await teardownTestDatabase();
   });
 
-  describe('Complete User Journey', () => {
-    it('should handle complete user registration and login flow', async () => {
+  describe('完全なユーザージャーニー', () => {
+    it('完全なユーザー登録とログインフローを処理すること', async () => {
       const userData = generateUniqueUserData({
         password: 'JourneyPass123',
       });
@@ -98,7 +98,7 @@ describe('Authentication Flow Scenarios', () => {
       expect(invalidRefreshResponse.status).toBe(401);
     });
 
-    it('should handle login after registration', async () => {
+    it('登録後のログインを処理すること', async () => {
       const userData = generateUniqueUserData({
         password: 'LoginAfter123',
       });
@@ -137,8 +137,8 @@ describe('Authentication Flow Scenarios', () => {
     });
   });
 
-  describe('Multi-Device Scenarios', () => {
-    it('should handle user login from multiple devices', async () => {
+  describe('マルチデバイスシナリオ', () => {
+    it('複数デバイスからのユーザーログインを処理すること', async () => {
       const baseUserData = generateUniqueUserData({
         password: 'MultiDevice123',
       });
@@ -195,7 +195,7 @@ describe('Authentication Flow Scenarios', () => {
       }
     });
 
-    it('should enforce device limit and remove oldest device', async () => {
+    it('デバイス制限を強制し最古のデバイスを削除すること', async () => {
       const baseUserData = generateUniqueUserData({
         password: 'DeviceLimit123',
       });
@@ -264,7 +264,7 @@ describe('Authentication Flow Scenarios', () => {
       expect(oldestToken?.isActive).toBe(false);
     });
 
-    it('should handle cross-device logout scenarios', async () => {
+    it('クロスデバイスログアウトシナリオを処理すること', async () => {
       const baseUserData = generateUniqueUserData({
         password: 'CrossLogout123',
       });
@@ -320,8 +320,8 @@ describe('Authentication Flow Scenarios', () => {
     });
   });
 
-  describe('Security Scenarios', () => {
-    it('should prevent token reuse after refresh', async () => {
+  describe('セキュリティシナリオ', () => {
+    it('リフレッシュ後のトークンの再利用を防ぐこと', async () => {
       const userData = generateUniqueUserData({
         password: 'TokenReuse123',
       });
@@ -365,7 +365,7 @@ describe('Authentication Flow Scenarios', () => {
       expect(thirdRefreshResponse.status).toBe(200);
     });
 
-    it('should handle concurrent refresh requests gracefully', async () => {
+    it('同時リフレッシュリクエストを適切に処理すること', async () => {
       const userData = generateUniqueUserData({
         password: 'Concurrent123',
       });
@@ -403,7 +403,7 @@ describe('Authentication Flow Scenarios', () => {
       }
     });
 
-    it('should handle expired access token scenario', async () => {
+    it('期限切れアクセストークンシナリオを処理すること', async () => {
       const userData = generateUniqueUserData({
         password: 'Expired123',
       });
@@ -444,8 +444,8 @@ describe('Authentication Flow Scenarios', () => {
     });
   });
 
-  describe('Error Recovery Scenarios', () => {
-    it('should handle network interruption during registration', async () => {
+  describe('エラー復旧シナリオ', () => {
+    it('登録中のネットワーク中断を処理すること', async () => {
       const userData = generateUniqueUserData({
         password: 'Interruption123',
       });
@@ -482,7 +482,7 @@ describe('Authentication Flow Scenarios', () => {
       expect(loginResponse.status).toBe(200);
     });
 
-    it('should handle partial logout scenarios', async () => {
+    it('部分的ログアウトシナリオを処理すること', async () => {
       const userData = generateUniqueUserData({
         password: 'PartialLogout123',
       });

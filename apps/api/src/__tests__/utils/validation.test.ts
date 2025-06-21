@@ -13,7 +13,7 @@ import {
   isValidCUID,
 } from '../../utils/validation';
 
-describe('Validation Utils', () => {
+describe('バリデーションユーティリティ', () => {
   describe('registerSchema', () => {
     const validRegisterData = {
       email: 'test@example.com',
@@ -21,7 +21,7 @@ describe('Validation Utils', () => {
       deviceId: '550e8400-e29b-41d4-a716-446655440000',
     };
 
-    it('should validate correct registration data', () => {
+    it('正しい登録データを検証できること', () => {
       const result = validateData(registerSchema, validRegisterData);
       
       expect(result.success).toBe(true);
@@ -29,7 +29,7 @@ describe('Validation Utils', () => {
       expect(result.errors).toBeUndefined();
     });
 
-    it('should reject invalid email format', () => {
+    it('無効なメール形式を拒否すること', () => {
       const invalidData = { ...validRegisterData, email: 'invalid-email' };
       const result = validateData(registerSchema, invalidData);
       
@@ -37,7 +37,7 @@ describe('Validation Utils', () => {
       expect(result.errors).toContain('Invalid email address');
     });
 
-    it('should reject weak password', () => {
+    it('弱いパスワードを拒否すること', () => {
       const invalidData = { ...validRegisterData, password: 'weak' };
       const result = validateData(registerSchema, invalidData);
       
@@ -45,7 +45,7 @@ describe('Validation Utils', () => {
       expect(result.errors?.some(error => error.includes('Password'))).toBe(true);
     });
 
-    it('should reject invalid device ID', () => {
+    it('無効なデバイスIDを拒否すること', () => {
       const invalidData = { ...validRegisterData, deviceId: 'invalid-device' };
       const result = validateData(registerSchema, invalidData);
       
@@ -53,7 +53,7 @@ describe('Validation Utils', () => {
       expect(result.errors).toContain('Invalid device ID format');
     });
 
-    it('should reject missing required fields', () => {
+    it('必須フィールドの不足を拒否すること', () => {
       const missingEmailResult = validateData(registerSchema, {
         password: 'TestPass123',
         deviceId: '550e8400-e29b-41d4-a716-446655440000',
@@ -76,7 +76,7 @@ describe('Validation Utils', () => {
       expect(missingDeviceIdResult.success).toBe(false);
     });
 
-    it('should handle long email addresses', () => {
+    it('長いメールアドレスを処理できること', () => {
       const longEmail = 'a'.repeat(310) + '@example.com'; // Over 320 chars
       const invalidData = { ...validRegisterData, email: longEmail };
       const result = validateData(registerSchema, invalidData);
@@ -85,7 +85,7 @@ describe('Validation Utils', () => {
       expect(result.errors).toContain('Email address is too long');
     });
 
-    it('should accept random string device ID format', () => {
+    it('ランダム文字列のデバイスID形式を受け入れること', () => {
       const randomStringDeviceId = 'abcd1234567890abcd1234567890abcd'; // 32 chars
       const validData = { ...validRegisterData, deviceId: randomStringDeviceId };
       const result = validateData(registerSchema, validData);
@@ -101,21 +101,21 @@ describe('Validation Utils', () => {
       deviceId: '550e8400-e29b-41d4-a716-446655440000',
     };
 
-    it('should validate correct login data', () => {
+    it('正しいログインデータを検証できること', () => {
       const result = validateData(loginSchema, validLoginData);
       
       expect(result.success).toBe(true);
       expect(result.data).toEqual(validLoginData);
     });
 
-    it('should accept weak passwords for login', () => {
+    it('ログイン時に弱いパスワードを受け入れること', () => {
       const weakPasswordData = { ...validLoginData, password: 'weak' };
       const result = validateData(loginSchema, weakPasswordData);
       
       expect(result.success).toBe(true);
     });
 
-    it('should reject empty password', () => {
+    it('空のパスワードを拒否すること', () => {
       const emptyPasswordData = { ...validLoginData, password: '' };
       const result = validateData(loginSchema, emptyPasswordData);
       
@@ -123,7 +123,7 @@ describe('Validation Utils', () => {
       expect(result.errors).toContain('Password is required');
     });
 
-    it('should reject invalid email', () => {
+    it('無効なメールを拒否すること', () => {
       const invalidEmailData = { ...validLoginData, email: 'not-an-email' };
       const result = validateData(loginSchema, invalidEmailData);
       
@@ -133,21 +133,21 @@ describe('Validation Utils', () => {
   });
 
   describe('forgotPasswordSchema', () => {
-    it('should validate correct email', () => {
+    it('正しいメールを検証できること', () => {
       const result = validateData(forgotPasswordSchema, { email: 'test@example.com' });
       
       expect(result.success).toBe(true);
       expect(result.data?.email).toBe('test@example.com');
     });
 
-    it('should reject invalid email', () => {
+    it('無効なメールを拒否すること', () => {
       const result = validateData(forgotPasswordSchema, { email: 'invalid-email' });
       
       expect(result.success).toBe(false);
       expect(result.errors).toContain('Invalid email address');
     });
 
-    it('should reject missing email', () => {
+    it('メールの不足を拒否すること', () => {
       const result = validateData(forgotPasswordSchema, {});
       
       expect(result.success).toBe(false);
@@ -160,14 +160,14 @@ describe('Validation Utils', () => {
       newPassword: 'NewTestPass123',
     };
 
-    it('should validate correct reset data', () => {
+    it('正しいリセットデータを検証できること', () => {
       const result = validateData(resetPasswordSchema, validResetData);
       
       expect(result.success).toBe(true);
       expect(result.data).toEqual(validResetData);
     });
 
-    it('should reject weak new password', () => {
+    it('弱い新パスワードを拒否すること', () => {
       const weakPasswordData = { ...validResetData, newPassword: 'weak' };
       const result = validateData(resetPasswordSchema, weakPasswordData);
       
@@ -175,7 +175,7 @@ describe('Validation Utils', () => {
       expect(result.errors?.some(error => error.includes('Password'))).toBe(true);
     });
 
-    it('should reject empty token', () => {
+    it('空のトークンを拒否すること', () => {
       const emptyTokenData = { ...validResetData, token: '' };
       const result = validateData(resetPasswordSchema, emptyTokenData);
       
@@ -190,14 +190,14 @@ describe('Validation Utils', () => {
       newPassword: 'NewTestPass123',
     };
 
-    it('should validate correct change password data', () => {
+    it('正しいパスワード変更データを検証できること', () => {
       const result = validateData(changePasswordSchema, validChangeData);
       
       expect(result.success).toBe(true);
       expect(result.data).toEqual(validChangeData);
     });
 
-    it('should reject weak new password', () => {
+    it('弱い新パスワードを拒否すること', () => {
       const weakPasswordData = { ...validChangeData, newPassword: 'weak' };
       const result = validateData(changePasswordSchema, weakPasswordData);
       
@@ -205,7 +205,7 @@ describe('Validation Utils', () => {
       expect(result.errors?.some(error => error.includes('Password'))).toBe(true);
     });
 
-    it('should reject empty current password', () => {
+    it('空の現在パスワードを拒否すること', () => {
       const emptyCurrentPasswordData = { ...validChangeData, currentPassword: '' };
       const result = validateData(changePasswordSchema, emptyCurrentPasswordData);
       
@@ -220,14 +220,14 @@ describe('Validation Utils', () => {
       deviceId: '550e8400-e29b-41d4-a716-446655440000',
     };
 
-    it('should validate correct refresh token data', () => {
+    it('正しいリフレッシュトークンデータを検証できること', () => {
       const result = validateData(refreshTokenSchema, validRefreshData);
       
       expect(result.success).toBe(true);
       expect(result.data).toEqual(validRefreshData);
     });
 
-    it('should reject empty refresh token', () => {
+    it('空のリフレッシュトークンを拒否すること', () => {
       const emptyTokenData = { ...validRefreshData, refreshToken: '' };
       const result = validateData(refreshTokenSchema, emptyTokenData);
       
@@ -235,7 +235,7 @@ describe('Validation Utils', () => {
       expect(result.errors).toContain('Refresh token is required');
     });
 
-    it('should reject invalid device ID', () => {
+    it('無効なデバイスIDを拒否すること', () => {
       const invalidDeviceData = { ...validRefreshData, deviceId: 'invalid' };
       const result = validateData(refreshTokenSchema, invalidDeviceData);
       
@@ -245,21 +245,21 @@ describe('Validation Utils', () => {
   });
 
   describe('updateProfileSchema', () => {
-    it('should validate correct profile update', () => {
+    it('正しいプロフィール更新を検証できること', () => {
       const result = validateData(updateProfileSchema, { email: 'new@example.com' });
       
       expect(result.success).toBe(true);
       expect(result.data?.email).toBe('new@example.com');
     });
 
-    it('should validate empty update', () => {
+    it('空の更新を検証できること', () => {
       const result = validateData(updateProfileSchema, {});
       
       expect(result.success).toBe(true);
       expect(result.data).toEqual({});
     });
 
-    it('should reject invalid email', () => {
+    it('無効なメールを拒否すること', () => {
       const result = validateData(updateProfileSchema, { email: 'invalid-email' });
       
       expect(result.success).toBe(false);
@@ -267,8 +267,8 @@ describe('Validation Utils', () => {
     });
   });
 
-  describe('validateData function', () => {
-    it('should handle unknown errors', () => {
+  describe('validateData関数', () => {
+    it('未知のエラーを処理できること', () => {
       // Simulate an error that's not a ZodError
       const mockSchema = {
         parse: () => {
@@ -284,7 +284,7 @@ describe('Validation Utils', () => {
   });
 
   describe('isValidEmail', () => {
-    it('should validate correct email addresses', () => {
+    it('正しいメールアドレスを検証できること', () => {
       const validEmails = [
         'test@example.com',
         'user123@domain.co.uk',
@@ -298,7 +298,7 @@ describe('Validation Utils', () => {
       });
     });
 
-    it('should reject invalid email addresses', () => {
+    it('無効なメールアドレスを拒否すること', () => {
       const invalidEmails = [
         'invalid-email',
         '@domain.com',
@@ -317,7 +317,7 @@ describe('Validation Utils', () => {
   });
 
   describe('isValidUUID', () => {
-    it('should validate correct UUIDs', () => {
+    it('正しいUUIDを検証できること', () => {
       const validUUIDs = [
         '550e8400-e29b-41d4-a716-446655440000',
         '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
@@ -331,7 +331,7 @@ describe('Validation Utils', () => {
       });
     });
 
-    it('should reject invalid UUIDs', () => {
+    it('無効なUUIDを拒否すること', () => {
       const invalidUUIDs = [
         'invalid-uuid',
         '550e8400-e29b-41d4-a716-44665544000', // too short
@@ -349,7 +349,7 @@ describe('Validation Utils', () => {
   });
 
   describe('isValidCUID', () => {
-    it('should validate correct CUIDs', () => {
+    it('正しいCUIDを検証できること', () => {
       const validCUIDs = [
         'c123456789012345678901234', // 25 chars total, starts with 'c'
         'cabcdefghijklmnopqrstuvwx',
@@ -362,7 +362,7 @@ describe('Validation Utils', () => {
       });
     });
 
-    it('should reject invalid CUIDs', () => {
+    it('無効なCUIDを拒否すること', () => {
       const invalidCUIDs = [
         'invalid-cuid',
         'a123456789012345678901234', // doesn't start with 'c'
@@ -380,8 +380,8 @@ describe('Validation Utils', () => {
     });
   });
 
-  describe('Edge Cases', () => {
-    it('should handle null and undefined inputs', () => {
+  describe('エッジケース', () => {
+    it('nullとundefinedの入力を処理できること', () => {
       const nullResult = validateData(registerSchema, null);
       expect(nullResult.success).toBe(false);
       
@@ -389,7 +389,7 @@ describe('Validation Utils', () => {
       expect(undefinedResult.success).toBe(false);
     });
 
-    it('should handle non-object inputs', () => {
+    it('オブジェクト以外の入力を処理できること', () => {
       const stringResult = validateData(registerSchema, 'string');
       expect(stringResult.success).toBe(false);
       
@@ -400,7 +400,7 @@ describe('Validation Utils', () => {
       expect(arrayResult.success).toBe(false);
     });
 
-    it('should handle extra fields', () => {
+    it('余分なフィールドを処理できること', () => {
       const dataWithExtraFields = {
         email: 'test@example.com',
         password: 'TestPass123',

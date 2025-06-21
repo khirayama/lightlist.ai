@@ -17,7 +17,7 @@ import {
   teardownTestDatabase
 } from '../setup';
 
-describe('Password Reset Utils', () => {
+describe('パスワードリセットユーティリティ', () => {
   const prisma = getTestPrisma();
 
   // Cleanup before each test
@@ -31,7 +31,7 @@ describe('Password Reset Utils', () => {
   });
 
   describe('createPasswordResetToken', () => {
-    it('should create a valid password reset token', async () => {
+    it('有効なパスワードリセットトークンを作成すること', async () => {
       const userData = generateUniqueUserData();
       const user = await createTestUser(userData);
 
@@ -55,7 +55,7 @@ describe('Password Reset Utils', () => {
       );
     });
 
-    it('should invalidate existing tokens when creating new one', async () => {
+    it('新しいトークン作成時に既存のトークンを無効化すること', async () => {
       const userData = generateUniqueUserData();
       const user = await createTestUser(userData);
 
@@ -87,7 +87,7 @@ describe('Password Reset Utils', () => {
       expect(firstToken).not.toBe(secondToken);
     });
 
-    it('should only invalidate unused tokens', async () => {
+    it('未使用のトークンのみを無効化すること', async () => {
       const userData = generateUniqueUserData();
       const user = await createTestUser(userData);
 
@@ -125,7 +125,7 @@ describe('Password Reset Utils', () => {
       expect(newDbToken?.isUsed).toBe(false); // Should be active
     });
 
-    it('should generate unique tokens', async () => {
+    it('ユニークなトークンを生成すること', async () => {
       const userData1 = generateUniqueUserData();
       const userData2 = generateUniqueUserData();
       const user1 = await createTestUser(userData1);
@@ -142,7 +142,7 @@ describe('Password Reset Utils', () => {
   });
 
   describe('validatePasswordResetToken', () => {
-    it('should validate valid token', async () => {
+    it('有効なトークンを検証すること', async () => {
       const userData = generateUniqueUserData();
       const user = await createTestUser(userData);
 
@@ -154,7 +154,7 @@ describe('Password Reset Utils', () => {
       expect(validation.error).toBeUndefined();
     });
 
-    it('should reject invalid token', async () => {
+    it('無効なトークンを拒否すること', async () => {
       const validation = await validatePasswordResetToken(prisma, 'invalid-token');
 
       expect(validation.isValid).toBe(false);
@@ -162,7 +162,7 @@ describe('Password Reset Utils', () => {
       expect(validation.error).toBe('Invalid or expired reset token');
     });
 
-    it('should reject used token', async () => {
+    it('使用済みトークンを拒否すること', async () => {
       const userData = generateUniqueUserData();
       const user = await createTestUser(userData);
 
@@ -176,7 +176,7 @@ describe('Password Reset Utils', () => {
       expect(validation.error).toBe('Invalid or expired reset token');
     });
 
-    it('should reject expired token', async () => {
+    it('期限切れトークンを拒否すること', async () => {
       const userData = generateUniqueUserData();
       const user = await createTestUser(userData);
 
@@ -197,7 +197,7 @@ describe('Password Reset Utils', () => {
       expect(validation.error).toBe('Invalid or expired reset token');
     });
 
-    it('should handle database errors gracefully', async () => {
+    it('データベースエラーを適切に処理すること', async () => {
       // Test with empty token
       const validation = await validatePasswordResetToken(prisma, '');
 
@@ -207,7 +207,7 @@ describe('Password Reset Utils', () => {
   });
 
   describe('markPasswordResetTokenAsUsed', () => {
-    it('should mark token as used', async () => {
+    it('トークンを使用済みとしてマークすること', async () => {
       const userData = generateUniqueUserData();
       const user = await createTestUser(userData);
 
@@ -230,12 +230,12 @@ describe('Password Reset Utils', () => {
       expect(dbToken?.isUsed).toBe(true);
     });
 
-    it('should return false for invalid token', async () => {
+    it('無効なトークンに対してfalseを返すこと', async () => {
       const result = await markPasswordResetTokenAsUsed(prisma, 'invalid-token');
       expect(result).toBe(false);
     });
 
-    it('should return false for already used token', async () => {
+    it('既に使用済みのトークンに対してfalseを返すこと', async () => {
       const userData = generateUniqueUserData();
       const user = await createTestUser(userData);
 
@@ -252,7 +252,7 @@ describe('Password Reset Utils', () => {
   });
 
   describe('cleanupExpiredPasswordResetTokens', () => {
-    it('should remove expired tokens', async () => {
+    it('期限切れトークンを削除すること', async () => {
       const userData = generateUniqueUserData();
       const user = await createTestUser(userData);
 
@@ -295,7 +295,7 @@ describe('Password Reset Utils', () => {
       expect(allTokens[0].token).toBe(validToken);
     });
 
-    it('should return 0 when no expired tokens exist', async () => {
+    it('期限切れトークンが存在しない場合に0を返すこと', async () => {
       const userData = generateUniqueUserData();
       const user = await createTestUser(userData);
 
@@ -306,14 +306,14 @@ describe('Password Reset Utils', () => {
       expect(cleanedCount).toBe(0);
     });
 
-    it('should handle empty database gracefully', async () => {
+    it('空のデータベースを適切に処理すること', async () => {
       const cleanedCount = await cleanupExpiredPasswordResetTokens(prisma);
       expect(cleanedCount).toBe(0);
     });
   });
 
   describe('getUserActiveResetTokenCount', () => {
-    it('should return correct count of active tokens', async () => {
+    it('アクティブトークンの正しい数を返すこと', async () => {
       const userData = generateUniqueUserData();
       const user = await createTestUser(userData);
 
@@ -332,7 +332,7 @@ describe('Password Reset Utils', () => {
       expect(count).toBe(1); // Still 1 because old one was invalidated
     });
 
-    it('should not count used tokens', async () => {
+    it('使用済みトークンをカウントしないこと', async () => {
       const userData = generateUniqueUserData();
       const user = await createTestUser(userData);
 
@@ -347,7 +347,7 @@ describe('Password Reset Utils', () => {
       expect(count).toBe(0);
     });
 
-    it('should not count expired tokens', async () => {
+    it('期限切れトークンをカウントしないこと', async () => {
       const userData = generateUniqueUserData();
       const user = await createTestUser(userData);
 
@@ -365,14 +365,14 @@ describe('Password Reset Utils', () => {
       expect(count).toBe(0);
     });
 
-    it('should return 0 for non-existent user', async () => {
+    it('存在しないユーザーに対して0を返すこと', async () => {
       const count = await getUserActiveResetTokenCount(prisma, 'non-existent-user-id');
       expect(count).toBe(0);
     });
   });
 
-  describe('Integration Tests', () => {
-    it('should handle complete token lifecycle', async () => {
+  describe('統合テスト', () => {
+    it('完全なトークンライフサイクルを処理すること', async () => {
       const userData = generateUniqueUserData();
       const user = await createTestUser(userData);
 
@@ -402,7 +402,7 @@ describe('Password Reset Utils', () => {
       expect(count).toBe(0);
     });
 
-    it('should handle token replacement scenario', async () => {
+    it('トークン置き換えシナリオを処理すること', async () => {
       const userData = generateUniqueUserData();
       const user = await createTestUser(userData);
 

@@ -9,7 +9,7 @@ import {
 } from '../setup';
 import type { AuthenticatedRequest } from '../../types/auth';
 
-describe('Auth Middleware', () => {
+describe('認証ミドルウェア', () => {
   const prisma = getTestPrisma();
   let testUser: any;
   let validToken: string;
@@ -41,7 +41,7 @@ describe('Auth Middleware', () => {
   const createMockNext = () => vi.fn() as NextFunction;
 
   describe('authenticateToken', () => {
-    it('should authenticate user with valid Bearer token', async () => {
+    it('有効なBearerトークンでユーザーを認証すること', async () => {
       const req = {
         headers: {
           authorization: `Bearer ${validToken}`,
@@ -59,7 +59,7 @@ describe('Auth Middleware', () => {
       expect(res.status).not.toHaveBeenCalled();
     });
 
-    it('should reject request without authorization header', async () => {
+    it('認証ヘッダーなしのリクエストを拒否すること', async () => {
       const req = {
         headers: {},
       } as AuthenticatedRequest;
@@ -77,7 +77,7 @@ describe('Auth Middleware', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('should reject request with malformed authorization header', async () => {
+    it('不正な形式の認証ヘッダーのリクエストを拒否すること', async () => {
       const req = {
         headers: {
           authorization: 'InvalidFormat token',
@@ -95,7 +95,7 @@ describe('Auth Middleware', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('should reject request with invalid token', async () => {
+    it('無効なトークンのリクエストを拒否すること', async () => {
       const req = {
         headers: {
           authorization: 'Bearer invalid.token.here',
@@ -113,7 +113,7 @@ describe('Auth Middleware', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('should reject request when user does not exist', async () => {
+    it('ユーザーが存在しない場合にリクエストを拒否すること', async () => {
       // Create token for non-existent user
       const nonExistentUserToken = generateAccessToken({
         userId: 'non-existent-user-id',
@@ -137,7 +137,7 @@ describe('Auth Middleware', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('should handle database errors gracefully', async () => {
+    it('データベースエラーを適切に処理すること', async () => {
       // Mock prisma to throw an error
       const originalFindUnique = prisma.user.findUnique;
       prisma.user.findUnique = vi.fn().mockRejectedValue(new Error('Database error'));
@@ -162,7 +162,7 @@ describe('Auth Middleware', () => {
       prisma.user.findUnique = originalFindUnique;
     });
 
-    it('should handle empty Bearer token', async () => {
+    it('空のBearerトークンを処理すること', async () => {
       const req = {
         headers: {
           authorization: 'Bearer ',
@@ -182,7 +182,7 @@ describe('Auth Middleware', () => {
   });
 
   describe('optionalAuth', () => {
-    it('should authenticate user with valid token', async () => {
+    it('有効なトークンでユーザーを認証すること', async () => {
       const req = {
         headers: {
           authorization: `Bearer ${validToken}`,
@@ -199,7 +199,7 @@ describe('Auth Middleware', () => {
       expect(res.status).not.toHaveBeenCalled();
     });
 
-    it('should continue without authentication when no token provided', async () => {
+    it('トークンが提供されない場合に認証なしで続行すること', async () => {
       const req = {
         headers: {},
       } as AuthenticatedRequest;
@@ -214,7 +214,7 @@ describe('Auth Middleware', () => {
       expect(res.status).not.toHaveBeenCalled();
     });
 
-    it('should continue without authentication when token is invalid', async () => {
+    it('トークンが無効な場合に認証なしで続行すること', async () => {
       const req = {
         headers: {
           authorization: 'Bearer invalid.token',
@@ -231,7 +231,7 @@ describe('Auth Middleware', () => {
       expect(res.status).not.toHaveBeenCalled();
     });
 
-    it('should continue without authentication when user does not exist', async () => {
+    it('ユーザーが存在しない場合に認証なしで続行すること', async () => {
       const nonExistentUserToken = generateAccessToken({
         userId: 'non-existent-user-id',
         email: 'nonexistent@example.com',
@@ -253,7 +253,7 @@ describe('Auth Middleware', () => {
       expect(res.status).not.toHaveBeenCalled();
     });
 
-    it('should continue without authentication on database error', async () => {
+    it('データベースエラー時に認証なしで続行すること', async () => {
       // Mock prisma to throw an error
       const originalFindUnique = prisma.user.findUnique;
       prisma.user.findUnique = vi.fn().mockRejectedValue(new Error('Database error'));
@@ -279,7 +279,7 @@ describe('Auth Middleware', () => {
   });
 
   describe('requireOwnership', () => {
-    it('should allow access when user ID matches', () => {
+    it('ユーザーIDが一致する場合にアクセスを許可すること', () => {
       const req = {
         params: { userId: testUser.id },
         userId: testUser.id,
@@ -294,7 +294,7 @@ describe('Auth Middleware', () => {
       expect(res.status).not.toHaveBeenCalled();
     });
 
-    it('should deny access when user ID does not match', () => {
+    it('ユーザーIDが一致しない場合にアクセスを拒否すること', () => {
       const req = {
         params: { userId: 'different-user-id' },
         userId: testUser.id,
@@ -312,7 +312,7 @@ describe('Auth Middleware', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('should deny access when user is not authenticated', () => {
+    it('ユーザーが認証されていない場合にアクセスを拒否すること', () => {
       const req = {
         params: { userId: testUser.id },
         // No userId or user properties
@@ -329,7 +329,7 @@ describe('Auth Middleware', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('should handle missing userId in params', () => {
+    it('パラメータにuserIDが不足している場合を処理すること', () => {
       const req = {
         params: {}, // No userId in params
         userId: testUser.id,
@@ -349,7 +349,7 @@ describe('Auth Middleware', () => {
   });
 
   describe('requireAuth', () => {
-    it('should allow access when user is authenticated', () => {
+    it('ユーザーが認証されている場合にアクセスを許可すること', () => {
       const req = {
         userId: testUser.id,
         user: testUser,
@@ -363,7 +363,7 @@ describe('Auth Middleware', () => {
       expect(res.status).not.toHaveBeenCalled();
     });
 
-    it('should deny access when userId is missing', () => {
+    it('userIDが不足している場合にアクセスを拒否すること', () => {
       const req = {
         user: testUser,
         // No userId
@@ -380,7 +380,7 @@ describe('Auth Middleware', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('should deny access when user is missing', () => {
+    it('ユーザーが不足している場合にアクセスを拒否すること', () => {
       const req = {
         userId: testUser.id,
         // No user
@@ -397,7 +397,7 @@ describe('Auth Middleware', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('should deny access when both userId and user are missing', () => {
+    it('userIDとユーザーの両方が不足している場合にアクセスを拒否すること', () => {
       const req = {} as AuthenticatedRequest;
       const res = createMockResponse();
       const next = createMockNext();
@@ -412,8 +412,8 @@ describe('Auth Middleware', () => {
     });
   });
 
-  describe('Integration Tests', () => {
-    it('should work with middleware chain', async () => {
+  describe('統合テスト', () => {
+    it('ミドルウェアチェーンで動作すること', async () => {
       const req = {
         headers: {
           authorization: `Bearer ${validToken}`,
@@ -439,7 +439,7 @@ describe('Auth Middleware', () => {
       expect(res.status).not.toHaveBeenCalled();
     });
 
-    it('should fail middleware chain at authentication step', async () => {
+    it('認証ステップでミドルウェアチェーンが失敗すること', async () => {
       const req = {
         headers: {
           authorization: 'Bearer invalid.token',
@@ -461,7 +461,7 @@ describe('Auth Middleware', () => {
       expect(next2).not.toHaveBeenCalled();
     });
 
-    it('should fail middleware chain at ownership step', async () => {
+    it('所有権ステップでミドルウェアチェーンが失敗すること', async () => {
       const req = {
         headers: {
           authorization: `Bearer ${validToken}`,

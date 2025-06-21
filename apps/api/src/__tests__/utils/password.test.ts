@@ -7,13 +7,13 @@ import {
   validatePassword,
 } from '../../utils/password';
 
-describe('Password Utils', () => {
+describe('パスワードユーティリティ', () => {
   const validPassword = 'TestPass123';
   const weakPassword = 'weak';
   const commonPassword = 'password';
   
   describe('hashPassword', () => {
-    it('should hash a password successfully', async () => {
+    it('パスワードが正常にハッシュ化されること', async () => {
       const hashedPassword = await hashPassword(validPassword);
       
       expect(hashedPassword).toBeDefined();
@@ -22,14 +22,14 @@ describe('Password Utils', () => {
       expect(hashedPassword.length).toBeGreaterThan(50); // bcrypt hashes are typically 60 chars
     });
 
-    it('should generate different hashes for the same password', async () => {
+    it('同じパスワードに対して異なるハッシュを生成すること', async () => {
       const hash1 = await hashPassword(validPassword);
       const hash2 = await hashPassword(validPassword);
       
       expect(hash1).not.toBe(hash2); // Due to salt
     });
 
-    it('should handle empty password', async () => {
+    it('空のパスワードを処理できること', async () => {
       const hashedPassword = await hashPassword('');
       
       expect(hashedPassword).toBeDefined();
@@ -38,34 +38,34 @@ describe('Password Utils', () => {
   });
 
   describe('verifyPassword', () => {
-    it('should verify correct password', async () => {
+    it('正しいパスワードを検証できること', async () => {
       const hashedPassword = await hashPassword(validPassword);
       const isValid = await verifyPassword(validPassword, hashedPassword);
       
       expect(isValid).toBe(true);
     });
 
-    it('should reject incorrect password', async () => {
+    it('間違ったパスワードを拒否すること', async () => {
       const hashedPassword = await hashPassword(validPassword);
       const isValid = await verifyPassword('WrongPassword123', hashedPassword);
       
       expect(isValid).toBe(false);
     });
 
-    it('should reject empty password against hash', async () => {
+    it('ハッシュに対して空のパスワードを拒否すること', async () => {
       const hashedPassword = await hashPassword(validPassword);
       const isValid = await verifyPassword('', hashedPassword);
       
       expect(isValid).toBe(false);
     });
 
-    it('should handle empty hash', async () => {
+    it('空のハッシュを処理できること', async () => {
       const isValid = await verifyPassword(validPassword, '');
       
       expect(isValid).toBe(false);
     });
 
-    it('should handle invalid hash format', async () => {
+    it('無効なハッシュ形式を処理できること', async () => {
       const isValid = await verifyPassword(validPassword, 'invalid-hash');
       
       expect(isValid).toBe(false);
@@ -73,42 +73,42 @@ describe('Password Utils', () => {
   });
 
   describe('validatePasswordStrength', () => {
-    it('should validate strong password', () => {
+    it('強力なパスワードを検証できること', () => {
       const result = validatePasswordStrength('StrongPass123');
       
       expect(result.isValid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should reject password without uppercase letter', () => {
+    it('大文字が含まれないパスワードを拒否すること', () => {
       const result = validatePasswordStrength('weakpass123');
       
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain('Password must contain at least one uppercase letter');
     });
 
-    it('should reject password without lowercase letter', () => {
+    it('小文字が含まれないパスワードを拒否すること', () => {
       const result = validatePasswordStrength('WEAKPASS123');
       
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain('Password must contain at least one lowercase letter');
     });
 
-    it('should reject password without number', () => {
+    it('数字が含まれないパスワードを拒否すること', () => {
       const result = validatePasswordStrength('WeakPassword');
       
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain('Password must contain at least one number');
     });
 
-    it('should reject password too short', () => {
+    it('短すぎるパスワードを拒否すること', () => {
       const result = validatePasswordStrength('Weak1');
       
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain('Password must be at least 8 characters long');
     });
 
-    it('should reject password too long', () => {
+    it('長すぎるパスワードを拒否すること', () => {
       const veryLongPassword = 'A'.repeat(129) + 'a1'; // 131 chars total
       const result = validatePasswordStrength(veryLongPassword);
       
@@ -116,14 +116,14 @@ describe('Password Utils', () => {
       expect(result.errors).toContain('Password must not exceed 128 characters');
     });
 
-    it('should handle exactly minimum length password', () => {
+    it('最小長さのパスワードを処理できること', () => {
       const result = validatePasswordStrength('MinPass1'); // exactly 8 chars
       
       expect(result.isValid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should handle exactly maximum length password', () => {
+    it('最大長さのパスワードを処理できること', () => {
       const exactlyMaxPassword = 'A' + 'a'.repeat(125) + '12'; // exactly 128 chars
       const result = validatePasswordStrength(exactlyMaxPassword);
       
@@ -131,7 +131,7 @@ describe('Password Utils', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should accumulate multiple errors', () => {
+    it('複数のエラーを蓄積すること', () => {
       const result = validatePasswordStrength('abc'); // too short, no uppercase, no number
       
       expect(result.isValid).toBe(false);
@@ -143,7 +143,7 @@ describe('Password Utils', () => {
   });
 
   describe('isCommonPassword', () => {
-    it('should detect common passwords', () => {
+    it('一般的なパスワードを検出すること', () => {
       const commonPasswords = [
         'password',
         'Password',
@@ -164,7 +164,7 @@ describe('Password Utils', () => {
       });
     });
 
-    it('should not flag unique passwords as common', () => {
+    it('ユニークなパスワードを一般的として判定しないこと', () => {
       const uniquePasswords = [
         'MyUniquePass123',
         'ComplexPassword456',
@@ -177,7 +177,7 @@ describe('Password Utils', () => {
       });
     });
 
-    it('should be case insensitive for common passwords', () => {
+    it('一般的なパスワードで大文字小文字を区別しないこと', () => {
       expect(isCommonPassword('PASSWORD')).toBe(true);
       expect(isCommonPassword('Password')).toBe(true);
       expect(isCommonPassword('pAsSwOrD')).toBe(true);
@@ -185,28 +185,28 @@ describe('Password Utils', () => {
   });
 
   describe('validatePassword', () => {
-    it('should validate strong, non-common password', () => {
+    it('強力で一般的でないパスワードを検証できること', () => {
       const result = validatePassword('StrongUniquePass123');
       
       expect(result.isValid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should reject password that fails strength requirements', () => {
+    it('強度要件を満たさないパスワードを拒否すること', () => {
       const result = validatePassword('weak');
       
       expect(result.isValid).toBe(false);
       expect(result.errors.length).toBeGreaterThan(0);
     });
 
-    it('should reject common password even if strong', () => {
+    it('強力でも一般的なパスワードを拒否すること', () => {
       const result = validatePassword('Password123'); // strong but contains "password"
       
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain('Password is too common, please choose a more secure password');
     });
 
-    it('should accumulate both strength and common password errors', () => {
+    it('強度エラーと一般的パスワードエラーの両方を蓄積すること', () => {
       const result = validatePassword('password'); // weak AND common
       
       expect(result.isValid).toBe(false);
@@ -214,7 +214,7 @@ describe('Password Utils', () => {
       expect(result.errors).toContain('Password is too common, please choose a more secure password');
     });
 
-    it('should handle edge cases', () => {
+    it('エッジケースを処理できること', () => {
       const edgeCases = [
         '',
         ' ',
@@ -231,7 +231,7 @@ describe('Password Utils', () => {
       });
     });
 
-    it('should validate complex passwords', () => {
+    it('複雑なパスワードを検証できること', () => {
       const complexPasswords = [
         'MySecure#Pass2023!',
         'Complex$Password456',
@@ -247,8 +247,8 @@ describe('Password Utils', () => {
     });
   });
 
-  describe('Integration Tests', () => {
-    it('should handle complete password workflow', async () => {
+  describe('統合テスト', () => {
+    it('完全なパスワードワークフローを処理できること', async () => {
       const password = 'SecureTestPass123';
       
       // Validate password
@@ -268,7 +268,7 @@ describe('Password Utils', () => {
       expect(isValidIncorrect).toBe(false);
     });
 
-    it('should reject and not hash invalid passwords', () => {
+    it('無効なパスワードを拒否してハッシュ化しないこと', () => {
       const invalidPasswords = [
         'weak',
         'password',

@@ -3,6 +3,7 @@ import cors from 'cors';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+import authRoutes from './routes/auth';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -42,6 +43,9 @@ app.get('/api/hello', (_req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// Auth routes
+app.use('/api/auth', authRoutes);
 
 // 404 handler
 app.use((req, res) => {

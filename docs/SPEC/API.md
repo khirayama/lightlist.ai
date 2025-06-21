@@ -153,7 +153,7 @@
 
 #### POST /api/auth/forgot-password
 
-説明: パスワードリセット要求
+説明: パスワードリセット要求。ユーザーのメールアドレスにパスワードリセット用のトークンを送信します。
 
 リクエスト:
 
@@ -171,23 +171,26 @@
 }
 ```
 
+**注意**: セキュリティ上の理由により、ユーザーが存在しない場合でも成功レスポンスを返します。
+
 エラーレスポンス:
 
 ```json
 {
-  "error": "User not found with this email"
+  "error": "Validation failed",
+  "details": ["Invalid email address"]
 }
 ```
 
 #### POST /api/auth/reset-password
 
-説明: パスワードリセット実行
+説明: パスワードリセット実行。有効なリセットトークンを使用して新しいパスワードを設定します。
 
 リクエスト:
 
 ```json
 {
-  "token": "reset-token-here",
+  "token": "64文字の16進数トークン",
   "newPassword": "NewPass123"
 }
 ```
@@ -200,11 +203,20 @@
 }
 ```
 
+**注意**: パスワードリセット成功時、該当ユーザーの全てのリフレッシュトークンが無効化されます。
+
 エラーレスポンス:
 
 ```json
 {
   "error": "Invalid or expired reset token"
+}
+```
+
+```json
+{
+  "error": "Password does not meet requirements",
+  "details": ["Password must be at least 8 characters long", "..."]
 }
 ```
 
@@ -852,9 +864,10 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  app           App?
-  settings      Settings?
-  refreshTokens RefreshToken[]
+  app                  App?
+  settings             Settings?
+  refreshTokens        RefreshToken[]
+  passwordResetTokens  PasswordResetToken[]
 
   @@map("users")
 }
@@ -994,3 +1007,26 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 ```
+
+### PasswordResetTokenテーブル
+
+```sql
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
+```
+
+**注意**: パスワードリセットトークンは1時間の有効期限を持ち、使用後は`isUsed`がtrueにマークされます。ユーザーが新しいリセット要求を行うと、既存の未使用トークンは自動的に無効化されます。

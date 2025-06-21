@@ -116,6 +116,18 @@ export function generateResetToken(): string {
 }
 
 /**
+ * パスワードリセットトークンの有効期限（ミリ秒）
+ */
+export const PASSWORD_RESET_TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1時間
+
+/**
+ * パスワードリセットトークンの有効期限を計算
+ */
+export function getPasswordResetTokenExpiry(): Date {
+  return new Date(Date.now() + PASSWORD_RESET_TOKEN_EXPIRY_MS);
+}
+
+/**
  * デバイスIDの形式を検証
  */
 export function isValidDeviceId(deviceId: string): boolean {

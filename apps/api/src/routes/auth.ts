@@ -4,11 +4,15 @@ import { getDatabase } from '../services/database';
 import type { AuthenticatedRequest, AuthTokens } from '../types/auth';
 import {
   REFRESH_TOKEN_EXPIRY_MS,
-  generateResetToken,
   generateTokenPair,
   verifyRefreshToken,
 } from '../utils/jwt';
-import { hashPassword, validatePassword, verifyPassword } from '../utils/password';
+import { 
+  createPasswordResetToken, 
+  validatePasswordResetToken, 
+  markPasswordResetTokenAsUsed 
+} from '../utils/password-reset';
+import { hashPassword, verifyPassword } from '../utils/password';
 import {
   forgotPasswordSchema,
   loginSchema,
@@ -68,7 +72,7 @@ router.post('/register', async (req: Request, res: Response) => {
     const hashedPassword = await hashPassword(password);
 
     // JWTトークンペアの生成（ユーザーIDは後で設定）
-    let tokens: AuthTokens;
+    let tokens: AuthTokens | undefined;
     let user: any;
 
     // 全ての作成操作をトランザクションで実行
@@ -144,10 +148,10 @@ router.post('/register', async (req: Request, res: Response) => {
       message: 'User registered successfully',
       data: {
         user,
-        token: tokens.token,
-        refreshToken: tokens.refreshToken,
-        expiresIn: tokens.expiresIn,
-        refreshExpiresIn: tokens.refreshExpiresIn,
+        token: tokens!.token,
+        refreshToken: tokens!.refreshToken,
+        expiresIn: tokens!.expiresIn,
+        refreshExpiresIn: tokens!.refreshExpiresIn,
       },
     });
   } catch (error) {
@@ -182,7 +186,7 @@ router.post('/login', async (req: Request, res: Response) => {
       deviceId: string;
     };
 
-    let tokens: AuthTokens;
+    let tokens: AuthTokens | undefined;
     let userData: any;
 
     // 全ての処理をトランザクションで実行（厳密な分離レベルとタイムアウトを設定）
@@ -295,10 +299,10 @@ router.post('/login', async (req: Request, res: Response) => {
       message: 'Login successful',
       data: {
         user: userData,
-        token: tokens.token,
-        refreshToken: tokens.refreshToken,
-        expiresIn: tokens.expiresIn,
-        refreshExpiresIn: tokens.refreshExpiresIn,
+        token: tokens!.token,
+        refreshToken: tokens!.refreshToken,
+        expiresIn: tokens!.expiresIn,
+        refreshExpiresIn: tokens!.refreshExpiresIn,
       },
     });
   } catch (error) {
@@ -503,14 +507,18 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
       return;
     }
 
-    // パスワードリセットトークンの生成
-    const resetToken = generateResetToken();
-    // TODO: パスワードリセットトークンテーブルを作成して保存
-    // const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1時間後
-
-    // 現在はコンソールに出力（実際の実装では、メール送信サービスを使用）
-    console.log(`Password reset token for ${email}: ${resetToken}`);
-    console.log(`Reset URL: ${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`);
+    // パスワードリセットトークンの生成・保存
+    const resetToken = await createPasswordResetToken(prisma, user.id);
+    
+    // メール送信（開発環境ではコンソール出力）
+    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
+      console.log(`Password reset token for ${email}: ${resetToken}`);
+      console.log(`Reset URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`);
+    } else {
+      // 本番環境では実際のメール送信サービスを使用
+      // TODO: メール送信サービスの実装
+      console.log(`Password reset email would be sent to: ${email}`);
+    }
 
     res.status(200).json({
       message: 'Password reset email sent successfully',
@@ -545,16 +553,48 @@ router.post('/reset-password', async (req: Request, res: Response) => {
       return;
     }
 
-    const { token: _token, newPassword } = validation.data as {
+    const { token, newPassword } = validation.data as {
       token: string;
       newPassword: string;
     };
 
+    // パスワードリセットトークンの検証
+    const tokenValidation = await validatePasswordResetToken(prisma, token);
+    if (!tokenValidation.isValid || !tokenValidation.userId) {
+      res.status(400).json({
+        error: tokenValidation.error || 'Invalid or expired reset token',
+      });
+      return;
+    }
 
-    // TODO: パスワードリセットトークンの検証
-    // 現在は簡易実装（実際の実装では、データベースからトークンを検証）
-    res.status(400).json({
-      error: 'Invalid or expired reset token',
+    // トランザクションでパスワード更新と関連トークンの無効化を実行
+    await prisma.$transaction(async (tx) => {
+      // パスワードをハッシュ化
+      const hashedPassword = await hashPassword(newPassword);
+
+      // ユーザーのパスワードを更新
+      await tx.user.update({
+        where: { id: tokenValidation.userId! },
+        data: { password: hashedPassword },
+      });
+
+      // 使用したリセットトークンを無効化
+      await markPasswordResetTokenAsUsed(tx, token);
+
+      // ユーザーの全てのリフレッシュトークンを無効化（セキュリティ対策）
+      await tx.refreshToken.updateMany({
+        where: {
+          userId: tokenValidation.userId!,
+          isActive: true,
+        },
+        data: {
+          isActive: false,
+        },
+      });
+    });
+
+    res.status(200).json({
+      message: 'Password reset successfully',
     });
   } catch (error) {
     console.error('Reset password error:', error);

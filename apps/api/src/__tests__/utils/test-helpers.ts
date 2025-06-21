@@ -79,60 +79,59 @@ export function getTestPrisma(): PrismaClient {
   return client;
 }
 
-// Test data generators
-export const testData = {
-  users: {
-    validUser1: {
-      email: 'test1@example.com',
-      password: 'TestPass123',
-      deviceId: '550e8400-e29b-41d4-a716-446655440001',
-    },
-    validUser2: {
-      email: 'test2@example.com',
-      password: 'TestPass456',
-      deviceId: '550e8400-e29b-41d4-a716-446655440002',
-    },
-    invalidEmail: {
-      email: 'invalid-email',
-      password: 'TestPass123',
-      deviceId: '550e8400-e29b-41d4-a716-446655440001',
-    },
-    weakPassword: {
-      email: 'test@example.com',
-      password: 'weak',
-      deviceId: '550e8400-e29b-41d4-a716-446655440001',
-    },
-    invalidDeviceId: {
-      email: 'test@example.com',
-      password: 'TestPass123',
-      deviceId: 'invalid-device-id',
-    },
-  },
+// Test data generators with unique values
+function generateUniqueId(): string {
+  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
+function generateUniqueEmail(prefix: string = 'test'): string {
+  return `${prefix}-${generateUniqueId()}@example.com`;
+}
+
+function generateUniqueDeviceId(): string {
+  // Generate a UUID for device ID
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
   
-  deviceIds: {
-    device1: '550e8400-e29b-41d4-a716-446655440001',
-    device2: '550e8400-e29b-41d4-a716-446655440002',
-    device3: '550e8400-e29b-41d4-a716-446655440003',
-    device4: '550e8400-e29b-41d4-a716-446655440004',
-    device5: '550e8400-e29b-41d4-a716-446655440005',
-    device6: '550e8400-e29b-41d4-a716-446655440006', // This will exceed the limit
-    randomString: 'abcd1234567890abcd1234567890abcd', // 32 char random string format
-  },
-};
+  // Fallback for older Node.js versions
+  const randomHex = () => Math.floor(Math.random() * 16).toString(16);
+  const segments = [
+    Array(8).fill(0).map(() => randomHex()).join(''),
+    Array(4).fill(0).map(() => randomHex()).join(''),
+    Array(4).fill(0).map(() => randomHex()).join(''),
+    Array(4).fill(0).map(() => randomHex()).join(''),
+    Array(12).fill(0).map(() => randomHex()).join('')
+  ];
+  return segments.join('-');
+}
+
+
+// Dynamic test data generators for unique values
+export function generateUniqueUserData(overrides: Partial<{email: string, password: string, deviceId: string}> = {}) {
+  return {
+    email: overrides.email || generateUniqueEmail(),
+    password: overrides.password || 'TestPass123',
+    deviceId: overrides.deviceId || generateUniqueDeviceId(),
+  };
+}
 
 // Database helpers
-export async function createTestUser(userData = testData.users.validUser1): Promise<User> {
-  const hashedPassword = await hashPassword(userData.password);
+export async function createTestUser(userData?: {email: string, password: string, deviceId: string}): Promise<User> {
+  // userDataが渡されなかった場合のみ一意なデータを生成
+  const userToCreate = userData || generateUniqueUserData();
+  const hashedPassword = await hashPassword(userToCreate.password);
+  const client = getTestPrisma(); // 確実に初期化されたPrismaクライアントを使用
   
-  const user = await prisma.user.create({
+  const user = await client.user.create({
     data: {
-      email: userData.email,
+      email: userToCreate.email,
       password: hashedPassword,
     },
   });
 
   // Create default App and Settings
-  await prisma.app.create({
+  await client.app.create({
     data: {
       userId: user.id,
       taskListOrder: [],
@@ -141,7 +140,7 @@ export async function createTestUser(userData = testData.users.validUser1): Prom
     },
   });
 
-  await prisma.settings.create({
+  await client.settings.create({
     data: {
       userId: user.id,
       theme: 'system',
@@ -152,16 +151,19 @@ export async function createTestUser(userData = testData.users.validUser1): Prom
   return user;
 }
 
-export async function createAuthenticatedUser(userData = testData.users.validUser1) {
-  const user = await createTestUser(userData);
-  const tokens = generateTokenPair(user.id, user.email, userData.deviceId);
+export async function createAuthenticatedUser(userData?: Partial<{email: string, password: string, deviceId: string}>) {
+  // ユーザーデータを生成し、createTestUserに渡す
+  const uniqueUserData = generateUniqueUserData(userData);
+  const user = await createTestUser(uniqueUserData);
+  const tokens = generateTokenPair(user.id, user.email, uniqueUserData.deviceId);
+  const client = getTestPrisma();
   
   // Save refresh token to database
-  await prisma.refreshToken.create({
+  await client.refreshToken.create({
     data: {
       userId: user.id,
       token: tokens.refreshToken,
-      deviceId: userData.deviceId,
+      deviceId: uniqueUserData.deviceId,
       expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
     },
   });
@@ -169,7 +171,7 @@ export async function createAuthenticatedUser(userData = testData.users.validUse
   return {
     user,
     tokens,
-    deviceId: userData.deviceId,
+    deviceId: uniqueUserData.deviceId,
   };
 }
 
@@ -187,13 +189,13 @@ export function delay(ms: number): Promise<void> {
 // Helper to generate multiple devices for testing device limits
 export async function createMultipleDevicesForUser(user: User, count: number = 5) {
   const devices = [];
-  const deviceIds = Object.values(testData.deviceIds).slice(0, count);
+  const client = getTestPrisma();
 
   for (let i = 0; i < count; i++) {
-    const deviceId = deviceIds[i] || `test-device-${i}`;
+    const deviceId = generateUniqueDeviceId();
     const tokens = generateTokenPair(user.id, user.email, deviceId);
     
-    await prisma.refreshToken.create({
+    await client.refreshToken.create({
       data: {
         userId: user.id,
         token: tokens.refreshToken,
@@ -213,13 +215,14 @@ export async function createMultipleDevicesForUser(user: User, count: number = 5
 
 // Cleanup helpers
 export async function cleanupUser(email: string) {
-  const user = await prisma.user.findUnique({ where: { email } });
+  const client = getTestPrisma();
+  const user = await client.user.findUnique({ where: { email } });
   if (user) {
-    await prisma.$transaction([
-      prisma.refreshToken.deleteMany({ where: { userId: user.id } }),
-      prisma.settings.deleteMany({ where: { userId: user.id } }),
-      prisma.app.deleteMany({ where: { userId: user.id } }),
-      prisma.user.delete({ where: { id: user.id } }),
+    await client.$transaction([
+      client.refreshToken.deleteMany({ where: { userId: user.id } }),
+      client.settings.deleteMany({ where: { userId: user.id } }),
+      client.app.deleteMany({ where: { userId: user.id } }),
+      client.user.delete({ where: { id: user.id } }),
     ]);
   }
 }

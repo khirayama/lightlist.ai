@@ -2,7 +2,6 @@ import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { 
   getTestRequest, 
   getTestPrisma, 
-  testData, 
   generateAuthHeader,
   delay 
 } from '../utils/test-helpers';
@@ -143,17 +142,20 @@ describe('Authentication Flow Scenarios', () => {
 
   describe('Multi-Device Scenarios', () => {
     it('should handle user login from multiple devices', async () => {
+      const timestamp = Date.now();
       const baseUserData = {
-        email: 'multidevice@example.com',
+        email: `multidevice_${timestamp}@example.com`,
         password: 'MultiDevice123',
       };
+
+      const baseDeviceId = `multidevice-${timestamp}`;
 
       // Register user
       const registerResponse = await request
         .post('/api/auth/register')
         .send({
           ...baseUserData,
-          deviceId: testData.deviceIds.device1,
+          deviceId: `${baseDeviceId}-1`,
         });
 
       expect(registerResponse.status).toBe(201);
@@ -161,10 +163,10 @@ describe('Authentication Flow Scenarios', () => {
 
       // Login from multiple devices
       const devices = [
-        testData.deviceIds.device2,
-        testData.deviceIds.device3,
-        testData.deviceIds.device4,
-        testData.deviceIds.device5,
+        `${baseDeviceId}-2`,
+        `${baseDeviceId}-3`,
+        `${baseDeviceId}-4`,
+        `${baseDeviceId}-5`,
       ];
 
       const deviceTokens = [];
@@ -208,17 +210,20 @@ describe('Authentication Flow Scenarios', () => {
     });
 
     it('should enforce device limit and remove oldest device', async () => {
+      const timestamp = Date.now();
       const baseUserData = {
-        email: 'devicelimit@example.com',
+        email: `devicelimit_${timestamp}@example.com`,
         password: 'DeviceLimit123',
       };
+
+      const baseDeviceId = `devicelimit-${timestamp}`;
 
       // Register user (device 1)
       const registerResponse = await request
         .post('/api/auth/register')
         .send({
           ...baseUserData,
-          deviceId: testData.deviceIds.device1,
+          deviceId: `${baseDeviceId}-1`,
         });
 
       expect(registerResponse.status).toBe(201);
@@ -226,10 +231,10 @@ describe('Authentication Flow Scenarios', () => {
 
       // Login from 4 more devices (total 5, which is the limit)
       const devices = [
-        testData.deviceIds.device2,
-        testData.deviceIds.device3,
-        testData.deviceIds.device4,
-        testData.deviceIds.device5,
+        `${baseDeviceId}-2`,
+        `${baseDeviceId}-3`,
+        `${baseDeviceId}-4`,
+        `${baseDeviceId}-5`,
       ];
 
       for (const deviceId of devices) {
@@ -258,7 +263,7 @@ describe('Authentication Flow Scenarios', () => {
         .post('/api/auth/login')
         .send({
           ...baseUserData,
-          deviceId: testData.deviceIds.device6,
+          deviceId: `${baseDeviceId}-6`,
         });
 
       expect(sixthDeviceResponse.status).toBe(200);
@@ -282,17 +287,21 @@ describe('Authentication Flow Scenarios', () => {
     });
 
     it('should handle cross-device logout scenarios', async () => {
+      const timestamp = Date.now();
       const baseUserData = {
-        email: 'crosslogout@example.com',
+        email: `crosslogout_${timestamp}@example.com`,
         password: 'CrossLogout123',
       };
+
+      const device1Id = `crosslogout-device1-${timestamp}`;
+      const device2Id = `crosslogout-device2-${timestamp}`;
 
       // Register and login from multiple devices
       const registerResponse = await request
         .post('/api/auth/register')
         .send({
           ...baseUserData,
-          deviceId: testData.deviceIds.device1,
+          deviceId: device1Id,
         });
 
       const device1Tokens = registerResponse.body.data;
@@ -301,7 +310,7 @@ describe('Authentication Flow Scenarios', () => {
         .post('/api/auth/login')
         .send({
           ...baseUserData,
-          deviceId: testData.deviceIds.device2,
+          deviceId: device2Id,
         });
 
       const device2Tokens = device2Response.body.data;
@@ -321,7 +330,7 @@ describe('Authentication Flow Scenarios', () => {
         .post('/api/auth/refresh')
         .send({
           refreshToken: device1Tokens.refreshToken,
-          deviceId: testData.deviceIds.device1,
+          deviceId: device1Id,
         });
 
       expect(device1RefreshResponse.status).toBe(401);
@@ -331,7 +340,7 @@ describe('Authentication Flow Scenarios', () => {
         .post('/api/auth/refresh')
         .send({
           refreshToken: device2Tokens.refreshToken,
-          deviceId: testData.deviceIds.device2,
+          deviceId: device2Id,
         });
 
       expect(device2RefreshResponse.status).toBe(200);

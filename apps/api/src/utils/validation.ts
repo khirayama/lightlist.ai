@@ -19,10 +19,10 @@ const deviceIdSchema = z
   .min(1, 'Device ID is required')
   .refine(isValidDeviceId, 'Invalid device ID format');
 
-// ユーザー登録のスキーマ
+// ユーザー登録のスキーマ（パスワード検証は別途実施）
 export const registerSchema = z.object({
   email: emailSchema,
-  password: passwordSchema,
+  password: z.string().min(1, 'Password is required'),
   deviceId: deviceIdSchema,
 });
 
@@ -38,16 +38,16 @@ export const forgotPasswordSchema = z.object({
   email: emailSchema,
 });
 
-// パスワードリセットのスキーマ
+// パスワードリセットのスキーマ（パスワード検証は別途実施）
 export const resetPasswordSchema = z.object({
   token: z.string().min(1, 'Reset token is required'),
-  newPassword: passwordSchema,
+  newPassword: z.string().min(1, 'New password is required'),
 });
 
-// パスワード変更のスキーマ
+// パスワード変更のスキーマ（パスワード検証は別途実施）
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
-  newPassword: passwordSchema,
+  newPassword: z.string().min(1, 'New password is required'),
 });
 
 // リフレッシュトークンのスキーマ

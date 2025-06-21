@@ -12,17 +12,39 @@ let prisma: PrismaClient;
 // Database cleanup function
 export async function cleanupTestDatabase() {
   if (prisma) {
-    // Clean up all test data in proper order (respecting foreign key constraints)
-    await prisma.$transaction([
-      prisma.refreshToken.deleteMany(),
-      prisma.taskListDocument.deleteMany(),
-      prisma.taskListShare.deleteMany(),
-      prisma.task.deleteMany(),
-      prisma.taskList.deleteMany(),
-      prisma.settings.deleteMany(),
-      prisma.app.deleteMany(),
-      prisma.user.deleteMany(),
-    ]);
+    try {
+      // Clean up all test data in proper order (respecting foreign key constraints)
+      await prisma.$transaction(async (tx) => {
+        await tx.refreshToken.deleteMany();
+        await tx.taskListDocument.deleteMany();
+        await tx.taskListShare.deleteMany();
+        await tx.task.deleteMany();
+        await tx.taskList.deleteMany();
+        await tx.settings.deleteMany();
+        await tx.app.deleteMany();
+        await tx.user.deleteMany();
+      }, {
+        timeout: 10000, // 10秒のタイムアウト
+      });
+      
+      // 確実にコミットされるまで少し待機
+      await new Promise(resolve => setTimeout(resolve, 100));
+    } catch (error) {
+      console.warn('Database cleanup warning:', error);
+      // クリーンアップが失敗した場合、個別に削除を試行
+      try {
+        await prisma.refreshToken.deleteMany();
+        await prisma.taskListDocument.deleteMany();
+        await prisma.taskListShare.deleteMany();
+        await prisma.task.deleteMany();
+        await prisma.taskList.deleteMany();
+        await prisma.settings.deleteMany();
+        await prisma.app.deleteMany();
+        await prisma.user.deleteMany();
+      } catch (secondError) {
+        console.error('Failed to cleanup database:', secondError);
+      }
+    }
   }
 }
 

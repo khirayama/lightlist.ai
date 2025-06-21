@@ -30,7 +30,7 @@ const MAX_DEVICES_PER_USER = 5;
  */
 router.post('/register', async (req: Request, res: Response) => {
   try {
-    // リクエストデータの検証
+    // 基本的なリクエストデータの検証
     const validation = validateData(registerSchema, req.body);
     if (!validation.success) {
       res.status(400).json({
@@ -46,7 +46,7 @@ router.post('/register', async (req: Request, res: Response) => {
       deviceId: string;
     };
 
-    // パスワードの強度チェック
+    // パスワードの強度チェック（Zod検証後に実施して具体的なエラーを返す）
     const passwordCheck = validatePassword(password);
     if (!passwordCheck.isValid) {
       res.status(400).json({
@@ -71,50 +71,57 @@ router.post('/register', async (req: Request, res: Response) => {
     // パスワードのハッシュ化
     const hashedPassword = await hashPassword(password);
 
-    // ユーザー作成
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-      },
-      select: {
-        id: true,
-        email: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    // JWTトークンペアの生成（ユーザーIDは後で設定）
+    let tokens: any;
+    let user: any;
 
-    // JWTトークンペアの生成
-    const tokens = generateTokenPair(user.id, user.email, deviceId);
+    // 全ての作成操作をトランザクションで実行
+    await prisma.$transaction(async (tx) => {
+      // ユーザー作成
+      user = await tx.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+        },
+        select: {
+          id: true,
+          email: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
 
-    // リフレッシュトークンをデータベースに保存
-    await prisma.refreshToken.create({
-      data: {
-        userId: user.id,
-        token: tokens.refreshToken,
-        deviceId,
-        expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY_MS),
-      },
-    });
+      // JWTトークンペアの生成
+      tokens = generateTokenPair(user.id, user.email, deviceId);
 
-    // デフォルトのApp設定を作成
-    await prisma.app.create({
-      data: {
-        userId: user.id,
-        taskListOrder: [],
-        taskInsertPosition: 'top',
-        autoSort: false,
-      },
-    });
+      // リフレッシュトークンをデータベースに保存
+      await tx.refreshToken.create({
+        data: {
+          userId: user.id,
+          token: tokens.refreshToken,
+          deviceId,
+          expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY_MS),
+        },
+      });
 
-    // デフォルトのSettings設定を作成
-    await prisma.settings.create({
-      data: {
-        userId: user.id,
-        theme: 'system',
-        language: 'ja',
-      },
+      // デフォルトのApp設定を作成
+      await tx.app.create({
+        data: {
+          userId: user.id,
+          taskListOrder: [],
+          taskInsertPosition: 'top',
+          autoSort: false,
+        },
+      });
+
+      // デフォルトのSettings設定を作成
+      await tx.settings.create({
+        data: {
+          userId: user.id,
+          theme: 'system',
+          language: 'ja',
+        },
+      });
     });
 
     res.status(201).json({
@@ -178,51 +185,54 @@ router.post('/login', async (req: Request, res: Response) => {
       return;
     }
 
-    // デバイス数の制限チェックと古いトークンの削除
-    const activeTokens = await prisma.refreshToken.findMany({
-      where: {
-        userId: user.id,
-        isActive: true,
-        expiresAt: {
-          gt: new Date(),
-        },
-      },
-      orderBy: {
-        createdAt: 'asc',
-      },
-    });
-
-    // 既存のデバイスIDがあるかチェック
-    const existingDeviceToken = activeTokens.find(token => token.deviceId === deviceId);
-
-    if (existingDeviceToken) {
-      // 既存のデバイストークンを無効化
-      await prisma.refreshToken.update({
-        where: { id: existingDeviceToken.id },
-        data: { isActive: false },
-      });
-    } else if (activeTokens.length >= MAX_DEVICES_PER_USER) {
-      // 最大デバイス数を超える場合、最も古いトークンを無効化
-      const oldestToken = activeTokens[0];
-      if (oldestToken) {
-        await prisma.refreshToken.update({
-          where: { id: oldestToken.id },
-          data: { isActive: false },
-        });
-      }
-    }
-
     // JWTトークンペアの生成
     const tokens = generateTokenPair(user.id, user.email, deviceId);
 
-    // リフレッシュトークンをデータベースに保存
-    await prisma.refreshToken.create({
-      data: {
-        userId: user.id,
-        token: tokens.refreshToken,
-        deviceId,
-        expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY_MS),
-      },
+    // デバイス管理とトークン作成をトランザクションで実行
+    await prisma.$transaction(async (tx) => {
+      // デバイス数の制限チェックと古いトークンの削除
+      const activeTokens = await tx.refreshToken.findMany({
+        where: {
+          userId: user.id,
+          isActive: true,
+          expiresAt: {
+            gt: new Date(),
+          },
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      });
+
+      // 既存のデバイスIDがあるかチェック
+      const existingDeviceToken = activeTokens.find(token => token.deviceId === deviceId);
+
+      if (existingDeviceToken) {
+        // 既存のデバイストークンを無効化
+        await tx.refreshToken.update({
+          where: { id: existingDeviceToken.id },
+          data: { isActive: false },
+        });
+      } else if (activeTokens.length >= MAX_DEVICES_PER_USER) {
+        // 最大デバイス数を超える場合、最も古いトークンを無効化
+        const oldestToken = activeTokens[0];
+        if (oldestToken) {
+          await tx.refreshToken.update({
+            where: { id: oldestToken.id },
+            data: { isActive: false },
+          });
+        }
+      }
+
+      // リフレッシュトークンをデータベースに保存
+      await tx.refreshToken.create({
+        data: {
+          userId: user.id,
+          token: tokens.refreshToken,
+          deviceId,
+          expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY_MS),
+        },
+      });
     });
 
     const userData = {

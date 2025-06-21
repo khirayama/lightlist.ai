@@ -6,7 +6,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    setupFiles: ['./src/__tests__/setup-unit.ts'], // Default to lightweight setup
+    setupFiles: ['./src/__tests__/setup.ts'], // Use full database setup for integration tests
     testTimeout: 30000,
     hookTimeout: 30000,
     teardownTimeout: 30000,

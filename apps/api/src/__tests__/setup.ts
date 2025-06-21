@@ -2,15 +2,24 @@ import { config } from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import path from 'path';
 import { beforeAll, beforeEach, afterAll } from 'vitest';
+import { getDatabase, resetDatabase } from '../services/database';
 
-// Load test environment variables
-config({ path: path.resolve(__dirname, '../../.env.test') });
+// Load test environment variables (override existing values)
+const envPath = path.resolve(__dirname, '../../.env.test');
+console.log('Loading env from:', envPath);
+const result = config({ path: envPath, override: true });
+if (result.error) {
+  console.error('Failed to load .env.test:', result.error);
+} else {
+  console.log('Loaded DATABASE_URL:', process.env.DATABASE_URL);
+}
 
 // Global test database client
 let prisma: PrismaClient;
 
 // Database cleanup function
 export async function cleanupTestDatabase() {
+  const prisma = getDatabase();
   if (prisma) {
     try {
       // Clean up all test data in proper order (respecting foreign key constraints)
@@ -49,32 +58,15 @@ export async function cleanupTestDatabase() {
 }
 
 export function getTestPrismaClient(): PrismaClient {
-  if (!prisma) {
-    const databaseUrl = process.env.DATABASE_URL;
-    if (!databaseUrl) {
-      throw new Error('DATABASE_URL environment variable is required for tests');
-    }
-    
-    prisma = new PrismaClient({
-      datasources: {
-        db: {
-          url: databaseUrl,
-        },
-      },
-      log: process.env.NODE_ENV === 'test' ? [] : ['query', 'error', 'warn'],
-    });
-  }
-  return prisma;
+  return getDatabase();
 }
 
 export async function teardownTestDatabase() {
-  if (prisma) {
-    try {
-      await prisma.$disconnect();
-      console.log('Database connection closed successfully.');
-    } catch (error) {
-      console.warn('Failed to disconnect from database:', error);
-    }
+  try {
+    await resetDatabase();
+    console.log('Database connection closed successfully.');
+  } catch (error) {
+    console.warn('Failed to disconnect from database:', error);
   }
 }
 
@@ -88,9 +80,7 @@ beforeAll(async () => {
 // Cleanup before each test
 beforeEach(async () => {
   // Clean test data before each test
-  if (prisma) {
-    await cleanupTestDatabase();
-  }
+  await cleanupTestDatabase();
 });
 
 // Global teardown

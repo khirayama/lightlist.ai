@@ -1,9 +1,7 @@
-import { PrismaClient } from '@prisma/client';
 import type { NextFunction, Response } from 'express';
+import { getDatabase } from '../services/database';
 import type { AuthenticatedRequest } from '../types/auth';
 import { verifyAccessToken } from '../utils/jwt';
-
-const prisma = new PrismaClient();
 
 /**
  * JWTトークンからユーザー情報を抽出してリクエストオブジェクトに追加
@@ -32,6 +30,7 @@ export async function authenticateToken(
   }
 
   try {
+    const prisma = getDatabase();
     // データベースからユーザー情報を取得
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
@@ -86,6 +85,7 @@ export async function optionalAuth(
   }
 
   try {
+    const prisma = getDatabase();
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
       select: {

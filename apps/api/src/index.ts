@@ -1,12 +1,11 @@
-import { PrismaClient } from '@prisma/client';
 import cors from 'cors';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import authRoutes from './routes/auth';
+import { disconnectDatabase } from './services/database';
 
 const app = express();
-const prisma = new PrismaClient();
 
 const PORT = process.env.PORT || 3001;
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -68,13 +67,13 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 // Graceful shutdown
 process.on('SIGINT', async () => {
   console.log('Received SIGINT, shutting down gracefully...');
-  await prisma.$disconnect();
+  await disconnectDatabase();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
   console.log('Received SIGTERM, shutting down gracefully...');
-  await prisma.$disconnect();
+  await disconnectDatabase();
   process.exit(0);
 });
 

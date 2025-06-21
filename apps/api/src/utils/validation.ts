@@ -1,17 +1,23 @@
 import { z } from 'zod';
 import { isValidDeviceId } from './jwt';
+import { validatePasswordStrength } from './password';
 
 // メールアドレスのバリデーション
 const emailSchema = z.string().email('Invalid email address').max(320, 'Email address is too long');
 
-// パスワードのバリデーション
+// パスワードのバリデーション（強度チェック付き）
 const passwordSchema = z
   .string()
-  .min(8, 'Password must be at least 8 characters long')
-  .max(128, 'Password must not exceed 128 characters')
-  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-  .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-  .regex(/\d/, 'Password must contain at least one number');
+  .min(1, 'Password is required')
+  .refine(
+    (password) => {
+      const { isValid } = validatePasswordStrength(password);
+      return isValid;
+    },
+    {
+      message: 'Password does not meet requirements'
+    }
+  );
 
 // デバイスIDのバリデーション
 const deviceIdSchema = z
@@ -19,10 +25,10 @@ const deviceIdSchema = z
   .min(1, 'Device ID is required')
   .refine(isValidDeviceId, 'Invalid device ID format');
 
-// ユーザー登録のスキーマ（パスワード検証は別途実施）
+// ユーザー登録のスキーマ
 export const registerSchema = z.object({
   email: emailSchema,
-  password: z.string().min(1, 'Password is required'),
+  password: passwordSchema,
   deviceId: deviceIdSchema,
 });
 
@@ -38,16 +44,16 @@ export const forgotPasswordSchema = z.object({
   email: emailSchema,
 });
 
-// パスワードリセットのスキーマ（パスワード検証は別途実施）
+// パスワードリセットのスキーマ
 export const resetPasswordSchema = z.object({
   token: z.string().min(1, 'Reset token is required'),
-  newPassword: z.string().min(1, 'New password is required'),
+  newPassword: passwordSchema,
 });
 
-// パスワード変更のスキーマ（パスワード検証は別途実施）
+// パスワード変更のスキーマ
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
-  newPassword: z.string().min(1, 'New password is required'),
+  newPassword: passwordSchema,
 });
 
 // リフレッシュトークンのスキーマ

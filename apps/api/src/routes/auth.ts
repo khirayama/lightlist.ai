@@ -1,6 +1,6 @@
-import { PrismaClient } from '@prisma/client';
 import { type Request, type Response, Router } from 'express';
 import { authenticateToken } from '../middleware/auth';
+import { getDatabase } from '../services/database';
 import type { AuthenticatedRequest } from '../types/auth';
 import {
   REFRESH_TOKEN_EXPIRY_MS,
@@ -19,7 +19,6 @@ import {
 } from '../utils/validation';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // 最大デバイス数の制限
 const MAX_DEVICES_PER_USER = 5;
@@ -30,11 +29,17 @@ const MAX_DEVICES_PER_USER = 5;
  */
 router.post('/register', async (req: Request, res: Response) => {
   try {
+    const prisma = getDatabase();
+    
     // 基本的なリクエストデータの検証
     const validation = validateData(registerSchema, req.body);
     if (!validation.success) {
+      // パスワード強度エラーのみ特別なメッセージを使用（空パスワードなど他のエラーは除外）
+      const isPasswordStrengthError = validation.errors?.length === 1 && 
+        validation.errors[0] === 'Password does not meet requirements';
+      
       res.status(400).json({
-        error: 'Validation failed',
+        error: isPasswordStrengthError ? 'Password does not meet requirements' : 'Validation failed',
         details: validation.errors,
       });
       return;
@@ -46,15 +51,6 @@ router.post('/register', async (req: Request, res: Response) => {
       deviceId: string;
     };
 
-    // パスワードの強度チェック（Zod検証後に実施して具体的なエラーを返す）
-    const passwordCheck = validatePassword(password);
-    if (!passwordCheck.isValid) {
-      res.status(400).json({
-        error: 'Password does not meet requirements',
-        details: passwordCheck.errors,
-      });
-      return;
-    }
 
     // メールアドレスの重複チェック
     const existingUser = await prisma.user.findUnique({
@@ -148,6 +144,8 @@ router.post('/register', async (req: Request, res: Response) => {
  */
 router.post('/login', async (req: Request, res: Response) => {
   try {
+    const prisma = getDatabase();
+    
     // リクエストデータの検証
     const validation = validateData(loginSchema, req.body);
     if (!validation.success) {
@@ -272,6 +270,7 @@ router.post('/login', async (req: Request, res: Response) => {
  */
 router.post('/logout', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
+    const prisma = getDatabase();
     const { refreshToken, deviceId } = req.body;
 
     if (refreshToken) {
@@ -317,6 +316,8 @@ router.post('/logout', authenticateToken, async (req: AuthenticatedRequest, res:
  */
 router.post('/refresh', async (req: Request, res: Response) => {
   try {
+    const prisma = getDatabase();
+    
     // リクエストデータの検証
     const validation = validateData(refreshTokenSchema, req.body);
     if (!validation.success) {
@@ -421,6 +422,8 @@ router.post('/refresh', async (req: Request, res: Response) => {
  */
 router.post('/forgot-password', async (req: Request, res: Response) => {
   try {
+    const prisma = getDatabase();
+    
     // リクエストデータの検証
     const validation = validateData(forgotPasswordSchema, req.body);
     if (!validation.success) {
@@ -472,11 +475,17 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
  */
 router.post('/reset-password', async (req: Request, res: Response) => {
   try {
+    const prisma = getDatabase();
+    
     // リクエストデータの検証
     const validation = validateData(resetPasswordSchema, req.body);
     if (!validation.success) {
+      // パスワード強度エラーのみ特別なメッセージを使用（空パスワードなど他のエラーは除外）
+      const isPasswordStrengthError = validation.errors?.length === 1 && 
+        validation.errors[0] === 'Password does not meet requirements';
+      
       res.status(400).json({
-        error: 'Validation failed',
+        error: isPasswordStrengthError ? 'Password does not meet requirements' : 'Validation failed',
         details: validation.errors,
       });
       return;
@@ -487,15 +496,6 @@ router.post('/reset-password', async (req: Request, res: Response) => {
       newPassword: string;
     };
 
-    // パスワードの強度チェック
-    const passwordCheck = validatePassword(newPassword);
-    if (!passwordCheck.isValid) {
-      res.status(400).json({
-        error: 'Password does not meet requirements',
-        details: passwordCheck.errors,
-      });
-      return;
-    }
 
     // TODO: パスワードリセットトークンの検証
     // 現在は簡易実装（実際の実装では、データベースからトークンを検証）

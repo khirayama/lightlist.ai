@@ -7,7 +7,7 @@ import rateLimit from 'express-rate-limit';
 import authRoutes from '../../routes/auth';
 import { generateTokenPair } from '../../utils/jwt';
 import { hashPassword } from '../../utils/password';
-import { getTestPrismaClient } from '../setup';
+import { getDatabase } from '../../services/database';
 
 let app: express.Application;
 let prisma: PrismaClient;
@@ -15,7 +15,7 @@ let prisma: PrismaClient;
 export function getTestApp(): express.Application {
   if (!app) {
     app = express();
-    prisma = getTestPrismaClient();
+    prisma = getDatabase();
 
     // Middleware setup (same as main app but with relaxed rate limiting)
     app.use(helmet());
@@ -72,7 +72,7 @@ export function getTestRequest() {
 }
 
 export function getTestPrisma(): PrismaClient {
-  const client = getTestPrismaClient();
+  const client = getDatabase();
   if (!client) {
     throw new Error('Database not available for testing. Docker may not be running.');
   }
@@ -120,59 +120,119 @@ export function generateUniqueUserData(overrides: Partial<{email: string, passwo
 export async function createTestUser(userData?: {email: string, password: string, deviceId: string}): Promise<User> {
   // userDataが渡されなかった場合のみ一意なデータを生成
   const userToCreate = userData || generateUniqueUserData();
-  const hashedPassword = await hashPassword(userToCreate.password);
-  const client = getTestPrisma(); // 確実に初期化されたPrismaクライアントを使用
   
-  const user = await client.user.create({
-    data: {
-      email: userToCreate.email,
-      password: hashedPassword,
-    },
-  });
+  try {
+    const hashedPassword = await hashPassword(userToCreate.password);
+    const client = getTestPrisma(); // 確実に初期化されたPrismaクライアントを使用
+    
+    let user: User;
 
-  // Create default App and Settings
-  await client.app.create({
-    data: {
-      userId: user.id,
-      taskListOrder: [],
-      taskInsertPosition: 'top',
-      autoSort: false,
-    },
-  });
+    // 全ての作成操作をトランザクションで実行（auth.tsと同じ順序）
+    await client.$transaction(async (tx) => {
+      // ユーザー作成
+      user = await tx.user.create({
+        data: {
+          email: userToCreate.email,
+          password: hashedPassword,
+        },
+      });
 
-  await client.settings.create({
-    data: {
-      userId: user.id,
-      theme: 'system',
-      language: 'ja',
-    },
-  });
+      // デフォルトのApp設定を作成
+      await tx.app.create({
+        data: {
+          userId: user.id,
+          taskListOrder: [],
+          taskInsertPosition: 'top',
+          autoSort: false,
+        },
+      });
 
-  return user;
+      // デフォルトのSettings設定を作成
+      await tx.settings.create({
+        data: {
+          userId: user.id,
+          theme: 'system',
+          language: 'ja',
+        },
+      });
+    }, {
+      timeout: 10000, // 10秒のタイムアウト
+    });
+
+    return user!;
+  } catch (error) {
+    console.error('Test user creation failed:', error);
+    console.error('User data:', { email: userToCreate.email, deviceId: userToCreate.deviceId });
+    throw new Error(`Failed to create test user: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 export async function createAuthenticatedUser(userData?: Partial<{email: string, password: string, deviceId: string}>) {
-  // ユーザーデータを生成し、createTestUserに渡す
+  // ユーザーデータを生成
   const uniqueUserData = generateUniqueUserData(userData);
-  const user = await createTestUser(uniqueUserData);
-  const tokens = generateTokenPair(user.id, user.email, uniqueUserData.deviceId);
-  const client = getTestPrisma();
   
-  // Save refresh token to database
-  await client.refreshToken.create({
-    data: {
-      userId: user.id,
-      token: tokens.refreshToken,
-      deviceId: uniqueUserData.deviceId,
-      expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
-    },
-  });
+  try {
+    const hashedPassword = await hashPassword(uniqueUserData.password);
+    const client = getTestPrisma();
+    
+    let user: User;
+    let tokens: any;
 
-  return {
-    user,
-    tokens,
-    deviceId: uniqueUserData.deviceId,
-  };
+    // 全ての作成操作をトランザクションで実行（auth.tsと同じ順序）
+    await client.$transaction(async (tx) => {
+      // ユーザー作成
+      user = await tx.user.create({
+        data: {
+          email: uniqueUserData.email,
+          password: hashedPassword,
+        },
+      });
+
+      // JWTトークンペアの生成
+      tokens = generateTokenPair(user.id, user.email, uniqueUserData.deviceId);
+
+      // リフレッシュトークンをデータベースに保存
+      await tx.refreshToken.create({
+        data: {
+          userId: user.id,
+          token: tokens.refreshToken,
+          deviceId: uniqueUserData.deviceId,
+          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
+        },
+      });
+
+      // デフォルトのApp設定を作成
+      await tx.app.create({
+        data: {
+          userId: user.id,
+          taskListOrder: [],
+          taskInsertPosition: 'top',
+          autoSort: false,
+        },
+      });
+
+      // デフォルトのSettings設定を作成
+      await tx.settings.create({
+        data: {
+          userId: user.id,
+          theme: 'system',
+          language: 'ja',
+        },
+      });
+    }, {
+      timeout: 10000, // 10秒のタイムアウト
+    });
+
+    return {
+      user: user!,
+      tokens,
+      deviceId: uniqueUserData.deviceId,
+    };
+  } catch (error) {
+    console.error('Authenticated user creation failed:', error);
+    console.error('User data:', { email: uniqueUserData.email, deviceId: uniqueUserData.deviceId });
+    throw new Error(`Failed to create authenticated user: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 export function generateAuthHeader(token: string): Record<string, string> {

@@ -1,6 +1,7 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vitest/config';
 import path from 'path';
+import os from 'os';
 
 export default defineConfig({
   test: {
@@ -11,7 +12,7 @@ export default defineConfig({
     hookTimeout: 30000,
     teardownTimeout: 30000,
     isolate: true,
-    // 統合テストの部分的並列化設定
+    // 統合テストの並列化設定（中級レベル）
     threads: false, // PostgreSQL接続の安定性のためスレッドは無効のまま
     pool: 'forks',
     poolOptions: {
@@ -19,8 +20,8 @@ export default defineConfig({
         singleFork: false, // 複数フォークを許可
       },
     },
-    maxConcurrency: 1, // 安定性のため一旦1に戻す（データベース競合対策）
-    fileParallelism: false, // ファイルレベルの並列化も無効にして安定化
+    maxConcurrency: 1, // 安定性を最優先（並列化は一旦無効）
+    fileParallelism: false, // ファイルレベルの並列化も無効化
     sequence: {
       hooks: 'stack',
       shuffle: false, // テスト順序の予測可能性を保持

@@ -83,14 +83,71 @@
    npm install
    ```
 
-2. **各アプリケーションのセットアップ**
+2. **環境ファイルのセットアップ**
    ```bash
    npm run setup
    ```
    このコマンドは以下を実行します：
-   - apps/api: .envファイル作成、PostgreSQL起動、Prismaクライアント生成、データベーススキーマ適用
-   - apps/web: .envファイル作成
+   - apps/api: .envファイル作成
+   - apps/web: .envファイル作成  
    - apps/native: .envファイル作成
+
+3. **データベースのセットアップ**
+   ```bash
+   # 開発用データベースの起動とセットアップ（推奨）
+   npm run setup:dev
+   
+   # または個別に実行
+   npm run db:start          # データベースコンテナ起動
+   npm run db:setup          # スキーマ適用とクライアント生成
+   ```
+
+### データベース管理
+
+#### 開発用データベース
+```bash
+# データベースコンテナの起動
+npm run db:start
+
+# データベースコンテナの停止
+npm run db:stop
+
+# スキーマ適用とPrismaクライアント生成
+npm run db:setup
+
+# 開発用データベースの完全セットアップ
+npm run setup:dev
+```
+
+#### テスト用データベース
+```bash
+# テスト用データベースコンテナの起動
+npm run db:start:test
+
+# テスト用データベースコンテナの停止
+npm run db:stop:test
+
+# テスト用データベースのスキーマ適用
+npm run db:setup:test
+
+# テスト用データベースの完全セットアップ
+npm run setup:test
+```
+
+#### セットアップオプション
+```bash
+# 最小セットアップ（環境ファイルのみ）
+npm run setup
+
+# 開発環境の完全セットアップ
+npm run setup:dev
+
+# テスト環境の完全セットアップ  
+npm run setup:test
+
+# 全体の完全セットアップ（従来のsetup相当）
+npm run setup:full
+```
 
 ### 環境変数
 
@@ -157,6 +214,35 @@ npm run check
 # クリーンアップ
 npm run clean
 ```
+
+### テスト実行
+
+#### 通常のテスト実行
+```bash
+# 全テストを実行（テスト用DBを自動管理）
+npm run test
+
+# APIのテストのみ実行
+npm run test --filter=@lightlist/api
+```
+
+#### テスト用データベースの事前準備
+テストの度にデータベースコンテナの起動・停止を避けたい場合：
+
+```bash
+# 1. テスト用データベースを事前に起動
+npm run db:start:test
+
+# 2. 環境変数を設定してテスト実行（DB起動・停止をスキップ）
+SKIP_DB_SETUP=true SKIP_DB_CLEANUP=true npm run test --filter=@lightlist/api
+
+# 3. テスト完了後、必要に応じてデータベースを停止
+npm run db:stop:test
+```
+
+#### 環境変数オプション
+- `SKIP_DB_SETUP=true`: テスト用DB起動をスキップ
+- `SKIP_DB_CLEANUP=true`: テスト完了後のDB停止をスキップ
 
 ### Nativeアプリのプラットフォーム別起動
 

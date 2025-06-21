@@ -1,4 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
+import { 
+  cleanupTestDatabase, 
+  teardownTestDatabase,
+  getTestPrismaClient
+} from '../setup';
 import { 
   getTestRequest, 
   getTestPrisma, 
@@ -15,6 +20,18 @@ import { verifyAccessToken, verifyRefreshToken } from '../../utils/jwt';
 describe('Auth Routes', () => {
   const request = getTestRequest();
   const prisma = getTestPrisma();
+
+  // Database setup is handled by setup.ts
+
+  // Cleanup before each test
+  beforeEach(async () => {
+    await cleanupTestDatabase();
+  });
+
+  // Global teardown
+  afterAll(async () => {
+    await teardownTestDatabase();
+  });
 
   describe('POST /api/auth/register', () => {
     it('should register a new user successfully', async () => {

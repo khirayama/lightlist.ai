@@ -1,21 +1,33 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterAll, vi } from 'vitest';
 import { Request, Response, NextFunction } from 'express';
 import { authenticateToken, optionalAuth, requireAuth, requireOwnership } from '../../middleware/auth';
 import { generateAccessToken } from '../../utils/jwt';
 import { createTestUser, getTestPrisma } from '../utils/test-helpers';
+import { 
+  cleanupTestDatabase, 
+  teardownTestDatabase
+} from '../setup';
 import type { AuthenticatedRequest } from '../../types/auth';
 
 describe('Auth Middleware', () => {
   const prisma = getTestPrisma();
   let testUser: any;
   let validToken: string;
+
+  // Database setup is handled by setup.ts
   
   beforeEach(async () => {
+    await cleanupTestDatabase();
     testUser = await createTestUser();
     validToken = generateAccessToken({
       userId: testUser.id,
       email: testUser.email,
     });
+  });
+
+  // Global teardown
+  afterAll(async () => {
+    await teardownTestDatabase();
   });
 
   const createMockResponse = () => {

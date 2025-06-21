@@ -6,7 +6,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    setupFiles: ['./src/__tests__/setup.ts'],
+    setupFiles: ['./src/__tests__/setup-unit.ts'], // Default to lightweight setup
     testTimeout: 30000,
     hookTimeout: 30000,
     teardownTimeout: 30000,

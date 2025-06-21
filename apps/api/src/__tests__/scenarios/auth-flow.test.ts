@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { 
   getTestRequest, 
   getTestPrisma, 
@@ -6,11 +6,27 @@ import {
   generateAuthHeader,
   delay 
 } from '../utils/test-helpers';
+import { 
+  cleanupTestDatabase, 
+  teardownTestDatabase
+} from '../setup';
 import { verifyAccessToken, verifyRefreshToken } from '../../utils/jwt';
 
 describe('Authentication Flow Scenarios', () => {
   const request = getTestRequest();
   const prisma = getTestPrisma();
+
+  // Database setup is handled by setup.ts
+
+  // Cleanup before each test
+  beforeEach(async () => {
+    await cleanupTestDatabase();
+  });
+
+  // Global teardown
+  afterAll(async () => {
+    await teardownTestDatabase();
+  });
 
   describe('Complete User Journey', () => {
     it('should handle complete user registration and login flow', async () => {

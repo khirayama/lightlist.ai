@@ -1,0 +1,126 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  app           App?
+  settings      Settings?
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model App {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  taskListOrder      String[] @default([])
+  taskInsertPosition String   @default("top")
+  autoSort           Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("apps")
+}
+
+model TaskList {
+  id         String   @id @default(cuid())
+  name       String
+  background String?  @default("") // 背景色は16進数カラーコード、透明は空文字
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tasks    Task[]
+  share    TaskListShare?
+  document TaskListDocument?
+
+  @@map("task_lists")
+}
+
+model Task {
+  id         String   @id @default(cuid())
+  text       String
+  completed  Boolean  @default(false)
+  date       String? // 日付はISO 8601形式の文字列で保存
+  taskListId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  taskList TaskList @relation(fields: [taskListId], references: [id], onDelete: Cascade)
+
+  @@index([taskListId])
+  @@map("tasks")
+}
+
+model Settings {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  theme     String   @default("system")
+  language  String   @default("ja")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("settings")
+}
+
+model TaskListShare {
+  id         String   @id @default(cuid())
+  taskListId String   @unique
+  shareToken String   @unique
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  taskList TaskList @relation(fields: [taskListId], references: [id], onDelete: Cascade)
+
+  @@index([shareToken])
+  @@map("task_list_shares")
+}
+
+model TaskListDocument {
+  id            String   @id @default(cuid())
+  taskListId    String   @unique
+  stateVector   Bytes    // Yjsの状態ベクター
+  documentState Bytes    // Yjsドキュメントの完全な状態（タスクの並び順のみ）
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  taskList TaskList @relation(fields: [taskListId], references: [id], onDelete: Cascade)
+
+  @@map("task_list_documents")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  deviceId  String   // クライアント生成のデバイスID
+  expiresAt DateTime
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([deviceId])
+  @@map("refresh_tokens")
+}

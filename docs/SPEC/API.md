@@ -855,6 +855,8 @@ model User {
   app           App?
   settings      Settings?
   refreshTokens RefreshToken[]
+
+  @@map("users")
 }
 ```
 
@@ -871,6 +873,8 @@ model App {
   updatedAt          DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("apps")
 }
 ```
 
@@ -887,6 +891,8 @@ model TaskList {
   tasks    Task[]
   share    TaskListShare?
   document TaskListDocument?
+
+  @@map("task_lists")
 }
 ```
 
@@ -897,7 +903,7 @@ model TaskList {
 ```sql
 model Task {
   id         String    @id @default(cuid())
-  text    String
+  text       String
   completed  Boolean   @default(false)
   date       String? // 日付はISO 8601形式の文字列で保存
   taskListId String
@@ -907,6 +913,7 @@ model Task {
   taskList TaskList @relation(fields: [taskListId], references: [id], onDelete: Cascade)
 
   @@index([taskListId])
+  @@map("tasks")
 }
 ```
 
@@ -922,6 +929,8 @@ model Settings {
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("settings")
 }
 ```
 
@@ -941,6 +950,7 @@ model TaskListShare {
   taskList TaskList @relation(fields: [taskListId], references: [id], onDelete: Cascade)
 
   @@index([shareToken])
+  @@map("task_list_shares")
 }
 ```
 
@@ -956,6 +966,8 @@ model TaskListDocument {
   updatedAt     DateTime @updatedAt
 
   taskList TaskList @relation(fields: [taskListId], references: [id], onDelete: Cascade)
+
+  @@map("task_list_documents")
 }
 ```
 
@@ -979,5 +991,6 @@ model RefreshToken {
   @@index([userId])
   @@index([token])
   @@index([deviceId])
+  @@map("refresh_tokens")
 }
 ```

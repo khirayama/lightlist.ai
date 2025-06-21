@@ -23,6 +23,7 @@
 - `DELETE /api/users/:userId` - アカウント削除
 - `PUT /api/users/:userId/change-password` - パスワード変更
 - `GET /api/users/:userId/app` - ユーザーのApp情報取得
+- `PUT /api/users/:userId/app` - ユーザーのApp設定更新
 - `GET /api/users/:userId/settings` - ユーザー設定取得
 - `PUT /api/users/:userId/settings` - ユーザー設定更新
 - `PUT /api/users/:userId/task-lists/order` - タスクリストの順序更新
@@ -320,8 +321,52 @@
         "cmbz060iw0001ki5g9h2hwg8n",
         "cmbz060iw0000ki5g9h2hwg8n"
       ],
+      "taskInsertPosition": "top",
+      "autoSort": false,
       "createdAt": "2025-06-17T10:00:00.000Z",
       "updatedAt": "2025-06-17T10:30:00.000Z"
+    }
+  }
+}
+```
+
+エラーレスポンス（App未作成の場合）:
+
+```json
+{
+  "error": "App not found for this user"
+}
+```
+
+#### PUT /api/users/:userId/app
+
+説明: ユーザーのApp設定更新
+
+リクエスト:
+
+```json
+{
+  "taskInsertPosition": "bottom",
+  "autoSort": true
+}
+```
+
+レスポンス（成功）:
+
+```json
+{
+  "message": "App settings updated successfully",
+  "data": {
+    "app": {
+      "id": "cmbz060iw0000ki5g9h2hwg8n",
+      "taskListOrder": [
+        "cmbz060iw0001ki5g9h2hwg8n",
+        "cmbz060iw0000ki5g9h2hwg8n"
+      ],
+      "taskInsertPosition": "bottom",
+      "autoSort": true,
+      "createdAt": "2025-06-17T10:00:00.000Z",
+      "updatedAt": "2025-06-17T12:00:00.000Z"
     }
   }
 }
@@ -347,9 +392,7 @@
   "data": {
     "settings": {
       "theme": "system",
-      "language": "ja",
-      "taskInsertPosition": "top",
-      "autoSort": false
+      "language": "ja"
     }
   }
 }
@@ -364,9 +407,7 @@
 ```json
 {
   "theme": "dark",
-  "language": "en",
-  "taskInsertPosition": "bottom",
-  "autoSort": true
+  "language": "en"
 }
 ```
 
@@ -378,9 +419,7 @@
   "data": {
     "settings": {
       "theme": "dark",
-      "language": "en",
-      "taskInsertPosition": "bottom",
-      "autoSort": true
+      "language": "en"
     }
   }
 }
@@ -823,11 +862,13 @@ model User {
 
 ```sql
 model App {
-  id            String   @id @default(cuid())
-  userId        String   @unique
-  taskListOrder String[] @default([])
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  taskListOrder      String[] @default([])
+  taskInsertPosition String   @default("top")
+  autoSort           Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -873,14 +914,12 @@ model Task {
 
 ```sql
 model Settings {
-  id               String   @id @default(cuid())
-  userId           String   @unique
-  theme            String   @default("system")
-  language         String   @default("ja")
-  taskInsertPosition String @default("top")
-  autoSort         Boolean  @default(false)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  theme     String   @default("system")
+  language  String   @default("ja")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

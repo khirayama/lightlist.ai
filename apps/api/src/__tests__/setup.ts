@@ -18,40 +18,45 @@ if (result.error) {
 let prisma: PrismaClient;
 
 
-// シンプルで安全なデータベースクリーンアップ
+// 並列テスト対応のデータベースクリーンアップ
 export async function cleanupTestDatabase() {
   const prisma = getDatabase();
   if (!prisma) return;
 
   try {
-    // 外部キー制約の順序で順次削除（適度な待機時間）
-    await prisma.refreshToken.deleteMany();
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    await prisma.taskListDocument.deleteMany();
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    await prisma.taskListShare.deleteMany();
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    await prisma.task.deleteMany();
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    await prisma.taskList.deleteMany();
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    await prisma.settings.deleteMany();
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    await prisma.app.deleteMany();
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    await prisma.user.deleteMany();
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // トランザクション内で効率的にクリーンアップ
+    await prisma.$transaction(async (tx) => {
+      // 外部キー制約の順序で削除（待機時間を最小化）
+      await tx.refreshToken.deleteMany();
+      await tx.passwordResetToken.deleteMany(); // パスワードリセットトークンも削除
+      await tx.taskListDocument.deleteMany();
+      await tx.taskListShare.deleteMany();
+      await tx.task.deleteMany();
+      await tx.taskList.deleteMany();
+      await tx.settings.deleteMany();
+      await tx.app.deleteMany();
+      await tx.user.deleteMany();
+    }, {
+      timeout: 30000, // トランザクションタイムアウトを30秒に設定
+    });
     
   } catch (error) {
     console.warn('Database cleanup failed:', error instanceof Error ? error.message : error);
-    // エラーが発生してもテストは続行
+    
+    // フォールバック：個別削除（並列実行時の競合対策）
+    try {
+      await prisma.refreshToken.deleteMany();
+      await prisma.passwordResetToken.deleteMany();
+      await prisma.taskListDocument.deleteMany();
+      await prisma.taskListShare.deleteMany();
+      await prisma.task.deleteMany();
+      await prisma.taskList.deleteMany();
+      await prisma.settings.deleteMany();
+      await prisma.app.deleteMany();
+      await prisma.user.deleteMany();
+    } catch (fallbackError) {
+      console.warn('Fallback cleanup also failed:', fallbackError instanceof Error ? fallbackError.message : fallbackError);
+    }
   }
 }
 

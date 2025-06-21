@@ -11,18 +11,19 @@ export default defineConfig({
     hookTimeout: 60000,
     teardownTimeout: 60000,
     isolate: true,
-    threads: false, // PostgreSQL connections work better without threads
+    // 統合テストの部分的並列化設定（メイン設定）
+    threads: false, // PostgreSQL接続の安定性のためスレッドは無効
     pool: 'forks',
     poolOptions: {
       forks: {
-        singleFork: true, // Force single process execution
+        singleFork: false, // 複数フォークを許可（統合テスト設定と統一）
       },
     },
-    maxConcurrency: 1, // Prevent database conflicts
-    fileParallelism: false, // Disable file-level parallelism
+    maxConcurrency: 1, // 安定性のため一旦1に戻す（データベース競合対策）
+    fileParallelism: false, // ファイルレベルの並列化も無効にして安定化
     sequence: {
       hooks: 'stack',
-      shuffle: false, // Disable test shuffling for predictable execution
+      shuffle: false, // テスト順序の予測可能性を保持
     },
     env: {
       NODE_ENV: 'test',

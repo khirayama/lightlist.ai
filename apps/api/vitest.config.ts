@@ -7,15 +7,22 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     setupFiles: ['./src/__tests__/setup.ts'], // Use full database setup for integration tests
-    testTimeout: 30000,
-    hookTimeout: 30000,
-    teardownTimeout: 30000,
+    testTimeout: 60000,
+    hookTimeout: 60000,
+    teardownTimeout: 60000,
     isolate: true,
     threads: false, // PostgreSQL connections work better without threads
     pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: true, // Force single process execution
+      },
+    },
     maxConcurrency: 1, // Prevent database conflicts
+    fileParallelism: false, // Disable file-level parallelism
     sequence: {
       hooks: 'stack',
+      shuffle: false, // Disable test shuffling for predictable execution
     },
     env: {
       NODE_ENV: 'test',

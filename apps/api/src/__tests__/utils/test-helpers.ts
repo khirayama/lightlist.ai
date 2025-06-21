@@ -149,7 +149,7 @@ async function ensureUserExists(client: PrismaClient, userId: string, maxRetries
       }
       
       // 短時間待機してリトライ（待機時間を長くする）
-      await new Promise(resolve => setTimeout(resolve, 200 * attempt));
+      await new Promise(resolve => setTimeout(resolve, 300 * attempt));
     }
   }
 }
@@ -196,7 +196,7 @@ async function ensureAuthenticatedUserExists(client: PrismaClient, userId: strin
       }
       
       // 短時間待機してリトライ（待機時間を長くする）
-      await new Promise(resolve => setTimeout(resolve, 200 * attempt));
+      await new Promise(resolve => setTimeout(resolve, 300 * attempt));
     }
   }
 }

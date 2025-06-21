@@ -3,6 +3,7 @@ import {
   getTestRequest, 
   getTestPrisma, 
   generateAuthHeader,
+  generateUniqueUserData,
   delay 
 } from '../utils/test-helpers';
 import { 
@@ -29,11 +30,9 @@ describe('Authentication Flow Scenarios', () => {
 
   describe('Complete User Journey', () => {
     it('should handle complete user registration and login flow', async () => {
-      const userData = {
-        email: 'journey@example.com',
+      const userData = generateUniqueUserData({
         password: 'JourneyPass123',
-        deviceId: 'journey-device-001',
-      };
+      });
 
       // Step 1: User Registration
       const registerResponse = await request
@@ -100,11 +99,9 @@ describe('Authentication Flow Scenarios', () => {
     });
 
     it('should handle login after registration', async () => {
-      const userData = {
-        email: 'loginafter@example.com',
+      const userData = generateUniqueUserData({
         password: 'LoginAfter123',
-        deviceId: 'login-device-001',
-      };
+      });
 
       // Step 1: Register
       const registerResponse = await request
@@ -142,46 +139,35 @@ describe('Authentication Flow Scenarios', () => {
 
   describe('Multi-Device Scenarios', () => {
     it('should handle user login from multiple devices', async () => {
-      const timestamp = Date.now();
-      const baseUserData = {
-        email: `multidevice_${timestamp}@example.com`,
+      const baseUserData = generateUniqueUserData({
         password: 'MultiDevice123',
-      };
-
-      const baseDeviceId = `multidevice-${timestamp}`;
+      });
 
       // Register user
       const registerResponse = await request
         .post('/api/auth/register')
-        .send({
-          ...baseUserData,
-          deviceId: `${baseDeviceId}-1`,
-        });
+        .send(baseUserData);
 
       expect(registerResponse.status).toBe(201);
       const userId = registerResponse.body.data.user.id;
 
-      // Login from multiple devices
-      const devices = [
-        `${baseDeviceId}-2`,
-        `${baseDeviceId}-3`,
-        `${baseDeviceId}-4`,
-        `${baseDeviceId}-5`,
-      ];
-
+      // Login from multiple devices (same user, different devices)
       const deviceTokens = [];
 
-      for (const deviceId of devices) {
+      for (let i = 0; i < 4; i++) {
+        const deviceUserData = {
+          email: baseUserData.email,
+          password: baseUserData.password,
+          deviceId: generateUniqueUserData().deviceId, // Only generate unique deviceId
+        };
+
         const loginResponse = await request
           .post('/api/auth/login')
-          .send({
-            ...baseUserData,
-            deviceId,
-          });
+          .send(deviceUserData);
 
         expect(loginResponse.status).toBe(200);
         deviceTokens.push({
-          deviceId,
+          deviceId: deviceUserData.deviceId,
           tokens: loginResponse.body.data,
         });
       }
@@ -210,40 +196,29 @@ describe('Authentication Flow Scenarios', () => {
     });
 
     it('should enforce device limit and remove oldest device', async () => {
-      const timestamp = Date.now();
-      const baseUserData = {
-        email: `devicelimit_${timestamp}@example.com`,
+      const baseUserData = generateUniqueUserData({
         password: 'DeviceLimit123',
-      };
-
-      const baseDeviceId = `devicelimit-${timestamp}`;
+      });
 
       // Register user (device 1)
       const registerResponse = await request
         .post('/api/auth/register')
-        .send({
-          ...baseUserData,
-          deviceId: `${baseDeviceId}-1`,
-        });
+        .send(baseUserData);
 
       expect(registerResponse.status).toBe(201);
       const userId = registerResponse.body.data.user.id;
 
       // Login from 4 more devices (total 5, which is the limit)
-      const devices = [
-        `${baseDeviceId}-2`,
-        `${baseDeviceId}-3`,
-        `${baseDeviceId}-4`,
-        `${baseDeviceId}-5`,
-      ];
+      for (let i = 0; i < 4; i++) {
+        const deviceUserData = {
+          email: baseUserData.email,
+          password: baseUserData.password,
+          deviceId: generateUniqueUserData().deviceId, // Only generate unique deviceId
+        };
 
-      for (const deviceId of devices) {
         await request
           .post('/api/auth/login')
-          .send({
-            ...baseUserData,
-            deviceId,
-          });
+          .send(deviceUserData);
       }
 
       // Verify we have 5 active tokens
@@ -259,12 +234,15 @@ describe('Authentication Flow Scenarios', () => {
       const oldestTokenId = activeTokens[0]?.id;
 
       // Login from 6th device (should remove oldest)
+      const sixthDeviceData = {
+        email: baseUserData.email,
+        password: baseUserData.password,
+        deviceId: generateUniqueUserData().deviceId, // Only generate unique deviceId
+      };
+
       const sixthDeviceResponse = await request
         .post('/api/auth/login')
-        .send({
-          ...baseUserData,
-          deviceId: `${baseDeviceId}-6`,
-        });
+        .send(sixthDeviceData);
 
       expect(sixthDeviceResponse.status).toBe(200);
 
@@ -287,31 +265,26 @@ describe('Authentication Flow Scenarios', () => {
     });
 
     it('should handle cross-device logout scenarios', async () => {
-      const timestamp = Date.now();
-      const baseUserData = {
-        email: `crosslogout_${timestamp}@example.com`,
+      const baseUserData = generateUniqueUserData({
         password: 'CrossLogout123',
-      };
-
-      const device1Id = `crosslogout-device1-${timestamp}`;
-      const device2Id = `crosslogout-device2-${timestamp}`;
+      });
 
       // Register and login from multiple devices
       const registerResponse = await request
         .post('/api/auth/register')
-        .send({
-          ...baseUserData,
-          deviceId: device1Id,
-        });
+        .send(baseUserData);
 
       const device1Tokens = registerResponse.body.data;
 
+      const device2UserData = {
+        email: baseUserData.email,
+        password: baseUserData.password,
+        deviceId: generateUniqueUserData().deviceId, // Only generate unique deviceId
+      };
+
       const device2Response = await request
         .post('/api/auth/login')
-        .send({
-          ...baseUserData,
-          deviceId: device2Id,
-        });
+        .send(device2UserData);
 
       const device2Tokens = device2Response.body.data;
 
@@ -330,7 +303,7 @@ describe('Authentication Flow Scenarios', () => {
         .post('/api/auth/refresh')
         .send({
           refreshToken: device1Tokens.refreshToken,
-          deviceId: device1Id,
+          deviceId: baseUserData.deviceId,
         });
 
       expect(device1RefreshResponse.status).toBe(401);
@@ -340,7 +313,7 @@ describe('Authentication Flow Scenarios', () => {
         .post('/api/auth/refresh')
         .send({
           refreshToken: device2Tokens.refreshToken,
-          deviceId: device2Id,
+          deviceId: device2UserData.deviceId,
         });
 
       expect(device2RefreshResponse.status).toBe(200);
@@ -349,11 +322,9 @@ describe('Authentication Flow Scenarios', () => {
 
   describe('Security Scenarios', () => {
     it('should prevent token reuse after refresh', async () => {
-      const userData = {
-        email: 'tokenreuse@example.com',
+      const userData = generateUniqueUserData({
         password: 'TokenReuse123',
-        deviceId: 'reuse-device-001',
-      };
+      });
 
       // Register user
       const registerResponse = await request
@@ -395,11 +366,9 @@ describe('Authentication Flow Scenarios', () => {
     });
 
     it('should handle concurrent refresh requests gracefully', async () => {
-      const userData = {
-        email: 'concurrent@example.com',
+      const userData = generateUniqueUserData({
         password: 'Concurrent123',
-        deviceId: 'concurrent-device-001',
-      };
+      });
 
       // Register user
       const registerResponse = await request
@@ -435,11 +404,9 @@ describe('Authentication Flow Scenarios', () => {
     });
 
     it('should handle expired access token scenario', async () => {
-      const userData = {
-        email: 'expired@example.com',
+      const userData = generateUniqueUserData({
         password: 'Expired123',
-        deviceId: 'expired-device-001',
-      };
+      });
 
       // Register user
       const registerResponse = await request
@@ -479,11 +446,9 @@ describe('Authentication Flow Scenarios', () => {
 
   describe('Error Recovery Scenarios', () => {
     it('should handle network interruption during registration', async () => {
-      const userData = {
-        email: 'interruption@example.com',
+      const userData = generateUniqueUserData({
         password: 'Interruption123',
-        deviceId: 'interruption-device-001',
-      };
+      });
 
       // First attempt (simulated network failure by incomplete registration)
       // We'll just verify that a retry works properly
@@ -518,11 +483,9 @@ describe('Authentication Flow Scenarios', () => {
     });
 
     it('should handle partial logout scenarios', async () => {
-      const userData = {
-        email: 'partiallogout@example.com',
+      const userData = generateUniqueUserData({
         password: 'PartialLogout123',
-        deviceId: 'partial-device-001',
-      };
+      });
 
       // Register and get tokens
       const registerResponse = await request

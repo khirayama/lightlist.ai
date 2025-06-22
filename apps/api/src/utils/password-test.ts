@@ -6,7 +6,6 @@ import crypto from 'crypto';
  */
 
 const SALT_PREFIX = 'test_salt_';
-const HASH_ITERATIONS = 1; // テスト用なので1回のみ
 
 /**
  * テスト用軽量ハッシュ関数
@@ -41,6 +40,11 @@ export function fastVerifyPassword(password: string, hashedPassword: string): Pr
       }
 
       const [, , salt, expectedHash] = parts;
+      
+      if (!salt || !expectedHash) {
+        resolve(false);
+        return;
+      }
       
       // 入力パスワードのハッシュを計算
       const hash = crypto.createHash('sha256');

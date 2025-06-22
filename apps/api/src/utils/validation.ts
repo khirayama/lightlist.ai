@@ -67,6 +67,52 @@ export const updateProfileSchema = z.object({
   email: emailSchema.optional(),
 });
 
+// App設定更新のスキーマ
+export const updateAppSettingsSchema = z.object({
+  taskInsertPosition: z.enum(['top', 'bottom']).optional(),
+  autoSort: z.boolean().optional(),
+});
+
+// ユーザー設定更新のスキーマ
+export const updateUserSettingsSchema = z.object({
+  theme: z.enum(['system', 'light', 'dark']).optional(),
+  language: z.enum(['ja', 'en']).optional(),
+});
+
+// タスクリスト順序更新のスキーマ
+export const updateTaskListOrderSchema = z.object({
+  taskListIds: z.array(z.string().min(1, 'Task list ID cannot be empty')),
+});
+
+// タスクリスト作成のスキーマ
+export const createTaskListSchema = z.object({
+  name: z.string().min(1, 'Task list name is required').max(100, 'Task list name is too long'),
+});
+
+// タスクリスト更新のスキーマ
+export const updateTaskListSchema = z.object({
+  name: z.string().min(1, 'Task list name is required').max(100, 'Task list name is too long').optional(),
+  background: z.string().max(7, 'Background color format is invalid').optional(),
+});
+
+// タスク作成のスキーマ
+export const createTaskSchema = z.object({
+  text: z.string().min(1, 'Task text is required').max(500, 'Task text is too long'),
+});
+
+// タスク更新のスキーマ
+export const updateTaskSchema = z.object({
+  text: z.string().min(1, 'Task text is required').max(500, 'Task text is too long').optional(),
+  completed: z.boolean().optional(),
+  date: z.string().nullable().optional(),
+});
+
+// 共同編集同期のスキーマ
+export const collaborativeSyncSchema = z.object({
+  stateVector: z.string().min(1, 'State vector is required'),
+  update: z.string().optional(),
+});
+
 // 汎用的なバリデーション結果の型
 export interface ValidationResult<T> {
   success: boolean;

@@ -50,6 +50,7 @@
     "express-validator": "^7.0.1",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "yjs": "^13.6.10",
     "zod": "^3.22.4"
   },
   "devDependencies": {

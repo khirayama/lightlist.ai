@@ -3,6 +3,11 @@ import express from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import authRoutes from './routes/auth';
+import usersRoutes from './routes/users';
+import taskListsRoutes from './routes/task-lists';
+import tasksRoutes from './routes/tasks';
+import shareRoutes from './routes/share';
+import collaborativeRoutes from './routes/collaborative';
 import { disconnectDatabase } from './services/database';
 
 const app = express();
@@ -45,6 +50,22 @@ app.get('/api/hello', (_req, res) => {
 
 // Auth routes
 app.use('/api/auth', authRoutes);
+
+// Users routes
+app.use('/api/users', usersRoutes);
+
+// Task lists routes
+app.use('/api/task-lists', taskListsRoutes);
+
+// Tasks routes (note: task endpoints use both task-lists and tasks paths)
+app.use('/api/task-lists', tasksRoutes);
+app.use('/api/tasks', tasksRoutes);
+
+// Collaborative editing routes
+app.use('/api/task-lists', collaborativeRoutes);
+
+// Share routes
+app.use('/api/share', shareRoutes);
 
 // 404 handler
 app.use((req, res) => {

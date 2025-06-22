@@ -8,6 +8,7 @@ import authRoutes from '../../routes/auth';
 import { generateTokenPair } from '../../utils/jwt';
 import type { AuthTokens } from '../../types/auth';
 import { hashPassword } from '../../utils/password';
+import { optimizedTestHashPassword } from '../../utils/password-test';
 import { getDatabase } from '../../services/database';
 
 let app: express.Application;
@@ -207,7 +208,7 @@ export async function createTestUser(userData?: {email: string, password: string
   const userToCreate = userData || generateUniqueUserData();
   
   try {
-    const hashedPassword = await hashPassword(userToCreate.password);
+    const hashedPassword = await optimizedTestHashPassword(userToCreate.password);
     const client = getTestPrisma(); // 確実に初期化されたPrismaクライアントを使用
     
     let user: User;
@@ -260,7 +261,7 @@ export async function createAuthenticatedUser(userData?: Partial<{email: string,
   const uniqueUserData = generateUniqueUserData(userData);
   
   try {
-    const hashedPassword = await hashPassword(uniqueUserData.password);
+    const hashedPassword = await optimizedTestHashPassword(uniqueUserData.password);
     const client = getTestPrisma();
     
     let user: User;

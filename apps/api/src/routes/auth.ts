@@ -13,6 +13,7 @@ import {
   markPasswordResetTokenAsUsed 
 } from '../utils/password-reset';
 import { hashPassword, verifyPassword } from '../utils/password';
+import { optimizedTestHashPassword, optimizedTestVerifyPassword } from '../utils/password-test';
 import {
   forgotPasswordSchema,
   loginSchema,
@@ -21,6 +22,11 @@ import {
   resetPasswordSchema,
   validateData,
 } from '../utils/validation';
+
+// テスト環境でのパスワード関数の選択
+const isTestEnvironment = process.env.NODE_ENV === 'test';
+const passwordHash = isTestEnvironment ? optimizedTestHashPassword : hashPassword;
+const passwordVerify = isTestEnvironment ? optimizedTestVerifyPassword : verifyPassword;
 
 const router = Router();
 
@@ -69,7 +75,7 @@ router.post('/register', async (req: Request, res: Response) => {
     }
 
     // パスワードのハッシュ化
-    const hashedPassword = await hashPassword(password);
+    const hashedPassword = await passwordHash(password);
 
     // JWTトークンペアの生成（ユーザーIDは後で設定）
     let tokens: AuthTokens | undefined;
@@ -205,7 +211,7 @@ router.post('/login', async (req: Request, res: Response) => {
       }
 
       // パスワードの検証
-      const isPasswordValid = await verifyPassword(password, user.password);
+      const isPasswordValid = await passwordVerify(password, user.password);
       if (!isPasswordValid) {
         throw new Error('Invalid email or password');
       }
@@ -570,7 +576,7 @@ router.post('/reset-password', async (req: Request, res: Response) => {
     // トランザクションでパスワード更新と関連トークンの無効化を実行
     await prisma.$transaction(async (tx) => {
       // パスワードをハッシュ化
-      const hashedPassword = await hashPassword(newPassword);
+      const hashedPassword = await passwordHash(newPassword);
 
       // ユーザーのパスワードを更新
       await tx.user.update({

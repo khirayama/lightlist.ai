@@ -15,6 +15,7 @@ import {
   delay 
 } from '../utils/test-helpers';
 import { verifyPassword } from '../../utils/password';
+import { optimizedTestVerifyPassword } from '../../utils/password-test';
 import { verifyAccessToken, verifyRefreshToken } from '../../utils/jwt';
 
 describe('認証ルート', () => {
@@ -60,7 +61,7 @@ describe('認証ルート', () => {
       expect(user?.email).toBe(userData.email);
 
       // Verify password was hashed
-      const isPasswordHashed = await verifyPassword(userData.password, user!.password);
+      const isPasswordHashed = await optimizedTestVerifyPassword(userData.password, user!.password);
       expect(isPasswordHashed).toBe(true);
 
       // Verify default App and Settings were created

@@ -215,7 +215,7 @@ describe('認証ルート', () => {
           email: 'wrong@example.com',
         });
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(401);
       expect(response.body.error).toBe('Invalid email or password');
     });
 
@@ -230,7 +230,7 @@ describe('認証ルート', () => {
           password: 'WrongPassword123',
         });
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(401);
       expect(response.body.error).toBe('Invalid email or password');
     });
 

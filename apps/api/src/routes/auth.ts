@@ -314,9 +314,9 @@ router.post('/login', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Login error:', error);
     
-    // バリデーションエラーの場合は400を返す
+    // 認証エラーの場合は401を返す
     if (error instanceof Error && error.message === 'Invalid email or password') {
-      res.status(400).json({
+      res.status(401).json({
         error: error.message,
       });
       return;

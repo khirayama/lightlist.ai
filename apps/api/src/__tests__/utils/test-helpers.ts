@@ -5,6 +5,11 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import authRoutes from '../../routes/auth';
+import usersRoutes from '../../routes/users';
+import taskListsRoutes from '../../routes/task-lists';
+import tasksRoutes from '../../routes/tasks';
+import shareRoutes from '../../routes/share';
+import collaborativeRoutes from '../../routes/collaborative';
 import { generateTokenPair } from '../../utils/jwt';
 import type { AuthTokens } from '../../types/auth';
 import { hashPassword } from '../../utils/password';
@@ -47,6 +52,22 @@ export function getTestApp(): express.Application {
 
     // Auth routes
     app.use('/api/auth', authRoutes);
+
+    // Users routes
+    app.use('/api/users', usersRoutes);
+
+    // Task lists routes
+    app.use('/api/task-lists', taskListsRoutes);
+
+    // Tasks routes (note: task endpoints use both task-lists and tasks paths)
+    app.use('/api/task-lists', tasksRoutes);
+    app.use('/api/tasks', tasksRoutes);
+
+    // Collaborative editing routes
+    app.use('/api/task-lists', collaborativeRoutes);
+
+    // Share routes
+    app.use('/api/share', shareRoutes);
 
     // 404 handler
     app.use((req, res) => {
@@ -377,4 +398,164 @@ export async function cleanupUser(email: string) {
       client.user.delete({ where: { id: user.id } }),
     ]);
   }
+}
+
+// Task List helpers
+export async function createTestTaskList(userId: string, name: string = 'Test Task List') {
+  const client = getTestPrisma();
+  
+  const taskList = await client.taskList.create({
+    data: {
+      name,
+      background: '',
+    },
+  });
+
+  // Add to user's taskListOrder
+  await client.app.update({
+    where: { userId },
+    data: {
+      taskListOrder: {
+        push: taskList.id,
+      },
+    },
+  });
+
+  return taskList;
+}
+
+export async function createTestTask(taskListId: string, text: string = 'Test Task', completed: boolean = false, date?: string) {
+  const client = getTestPrisma();
+  
+  return await client.task.create({
+    data: {
+      text,
+      completed,
+      date,
+      taskListId,
+    },
+  });
+}
+
+export function generateUniqueTaskListName(prefix: string = 'TaskList'): string {
+  return `${prefix}-${generateUniqueId()}`;
+}
+
+export function generateUniqueTaskText(prefix: string = 'Task'): string {
+  return `${prefix}-${generateUniqueId()}`;
+}
+
+// Share helpers
+export async function createTestShare(taskListId: string) {
+  const client = getTestPrisma();
+  
+  const shareToken = generateUniqueId();
+  
+  return await client.taskListShare.create({
+    data: {
+      taskListId,
+      shareToken,
+      isActive: true,
+    },
+  });
+}
+
+// Collaborative editing helpers
+export async function createTestCollaborativeDoc(taskListId: string) {
+  const client = getTestPrisma();
+  
+  // Create a simple test document with empty state
+  const emptyState = Buffer.from('empty-state-for-test', 'utf8');
+  const emptyStateVector = Buffer.from('empty-vector-for-test', 'utf8');
+  
+  return await client.taskListDocument.create({
+    data: {
+      taskListId,
+      stateVector: emptyStateVector,
+      documentState: emptyState,
+    },
+  });
+}
+
+// Complete scenario helpers
+export async function createCompleteUserScenario(overrides?: {
+  email?: string;
+  password?: string;
+  deviceId?: string;
+  taskListName?: string;
+  taskTexts?: string[];
+}) {
+  // Create authenticated user
+  const authUser = await createAuthenticatedUser({
+    email: overrides?.email,
+    password: overrides?.password,
+    deviceId: overrides?.deviceId,
+  });
+
+  // Create task list
+  const taskList = await createTestTaskList(
+    authUser.user.id,
+    overrides?.taskListName || 'My Tasks'
+  );
+
+  // Create tasks
+  const tasks = [];
+  const taskTexts = overrides?.taskTexts || ['Buy groceries', 'Complete project', 'Call mom'];
+  
+  for (const taskText of taskTexts) {
+    const task = await createTestTask(taskList.id, taskText);
+    tasks.push(task);
+  }
+
+  return {
+    user: authUser.user,
+    tokens: authUser.tokens,
+    deviceId: authUser.deviceId,
+    taskList,
+    tasks,
+  };
+}
+
+// Advanced cleanup helper
+export async function cleanupTestScenario(userId: string) {
+  const client = getTestPrisma();
+  
+  // Get user's app to find task lists
+  const app = await client.app.findUnique({
+    where: { userId },
+  });
+
+  if (app) {
+    // Clean up all task lists and their associated data
+    for (const taskListId of app.taskListOrder) {
+      // Delete tasks
+      await client.task.deleteMany({
+        where: { taskListId },
+      });
+      
+      // Delete shares
+      await client.taskListShare.deleteMany({
+        where: { taskListId },
+      });
+      
+      // Delete collaborative documents
+      await client.taskListDocument.deleteMany({
+        where: { taskListId },
+      });
+      
+      // Delete task list
+      await client.taskList.deleteMany({
+        where: { id: taskListId },
+      });
+    }
+  }
+
+  // Clean up user and related data
+  await client.$transaction([
+    client.passwordResetToken.deleteMany({ where: { userId } }),
+    client.refreshToken.deleteMany({ where: { userId } }),
+    client.settings.deleteMany({ where: { userId } }),
+    client.app.deleteMany({ where: { userId } }),
+    client.user.delete({ where: { id: userId } }),
+  ]);
 }

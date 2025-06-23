@@ -83,7 +83,7 @@ describe('パスワードリセットフローシナリオ', () => {
           deviceId: userData.deviceId,
         });
 
-      expect(oldPasswordLoginResponse.status).toBe(400);
+      expect(oldPasswordLoginResponse.status).toBe(401);
       expect(oldPasswordLoginResponse.body.error).toBe('Invalid email or password');
 
       // Step 7: Login with new password (should succeed)

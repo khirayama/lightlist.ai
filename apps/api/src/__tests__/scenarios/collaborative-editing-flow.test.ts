@@ -259,7 +259,7 @@ describe('共同編集フローシナリオ', () => {
         .get(`/api/task-lists/${ownerScenario.taskList.id}/collaborative/full-state`)
         .set(otherHeaders);
 
-      expect(unauthorizedStateResponse.status).toBe(403);
+      expect(unauthorizedStateResponse.status).toBe(404);
 
       // 他のユーザーが同期しようとする（失敗すべき）
       const unauthorizedSyncResponse = await request
@@ -269,7 +269,7 @@ describe('共同編集フローシナリオ', () => {
           stateVector: 'dummy-state-vector',
         });
 
-      expect(unauthorizedSyncResponse.status).toBe(403);
+      expect(unauthorizedSyncResponse.status).toBe(404);
 
       // Cleanup
       await cleanupTestScenario(ownerScenario.user.id);
@@ -388,14 +388,14 @@ describe('共同編集フローシナリオ', () => {
         .set(authHeaders)
         .send({});
 
-      expect(initResponse.status).toBe(403); // Access denied
+      expect(initResponse.status).toBe(404); // Task list not found
 
       // 存在しないタスクリストの状態取得
       const stateResponse = await request
         .get(`/api/task-lists/${nonExistentTaskListId}/collaborative/full-state`)
         .set(authHeaders);
 
-      expect(stateResponse.status).toBe(403); // Access denied
+      expect(stateResponse.status).toBe(404); // Task list not found
 
       // 存在しないタスクリストの同期
       const syncResponse = await request
@@ -405,7 +405,7 @@ describe('共同編集フローシナリオ', () => {
           stateVector: 'dGVzdA==',
         });
 
-      expect(syncResponse.status).toBe(403); // Access denied
+      expect(syncResponse.status).toBe(404); // Task list not found
 
       // Cleanup
       await cleanupTestScenario(authUser.user.id);

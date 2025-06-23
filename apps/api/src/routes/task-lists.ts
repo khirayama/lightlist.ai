@@ -165,8 +165,8 @@ router.put('/:taskListId', authenticateToken, async (req: AuthenticatedRequest, 
     });
 
     if (!app || !app.taskListOrder.includes(taskListId)) {
-      res.status(403).json({
-        error: 'Access denied to this task list',
+      res.status(404).json({
+        error: 'Task list not found',
       });
       return;
     }
@@ -224,8 +224,8 @@ router.delete('/:taskListId', authenticateToken, async (req: AuthenticatedReques
     });
 
     if (!app || !app.taskListOrder.includes(taskListId)) {
-      res.status(403).json({
-        error: 'Access denied to this task list',
+      res.status(404).json({
+        error: 'Task list not found',
       });
       return;
     }
@@ -279,8 +279,8 @@ router.post('/:taskListId/share', authenticateToken, async (req: AuthenticatedRe
     });
 
     if (!app || !app.taskListOrder.includes(taskListId)) {
-      res.status(403).json({
-        error: 'Access denied to this task list',
+      res.status(404).json({
+        error: 'Task list not found',
       });
       return;
     }
@@ -322,7 +322,7 @@ router.post('/:taskListId/share', authenticateToken, async (req: AuthenticatedRe
 
     const shareUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/share/${shareToken}`;
 
-    res.status(200).json({
+    res.status(201).json({
       message: 'Share link created successfully',
       data: {
         shareUrl,
@@ -361,14 +361,14 @@ router.delete('/:taskListId/share', authenticateToken, async (req: Authenticated
     });
 
     if (!app || !app.taskListOrder.includes(taskListId)) {
-      res.status(403).json({
-        error: 'Access denied to this task list',
+      res.status(404).json({
+        error: 'Task list not found',
       });
       return;
     }
 
     // 共有設定を無効化
-    await prisma.taskListShare.updateMany({
+    const updateResult = await prisma.taskListShare.updateMany({
       where: {
         taskListId,
         isActive: true,
@@ -377,6 +377,13 @@ router.delete('/:taskListId/share', authenticateToken, async (req: Authenticated
         isActive: false,
       },
     });
+
+    if (updateResult.count === 0) {
+      res.status(404).json({
+        error: 'Share link not found for this task list',
+      });
+      return;
+    }
 
     res.status(200).json({
       message: 'Share link deleted successfully',

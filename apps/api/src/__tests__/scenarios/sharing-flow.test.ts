@@ -214,14 +214,14 @@ describe('共有機能フローシナリオ', () => {
         .set(otherHeaders)
         .send({});
 
-      expect(unauthorizedCreateResponse.status).toBe(403);
+      expect(unauthorizedCreateResponse.status).toBe(404);
 
       // 他のユーザーが共有リンクを削除しようとする（失敗すべき）
       const unauthorizedDeleteResponse = await request
         .delete(`/api/task-lists/${ownerScenario.taskList.id}/share`)
         .set(otherHeaders);
 
-      expect(unauthorizedDeleteResponse.status).toBe(403);
+      expect(unauthorizedDeleteResponse.status).toBe(404);
 
       // 所有者が共有リンクを削除（成功すべき）
       const deleteShareResponse = await request
@@ -270,14 +270,14 @@ describe('共有機能フローシナリオ', () => {
         .set(authHeaders)
         .send({});
 
-      expect(createShareResponse.status).toBe(403); // Access denied
+      expect(createShareResponse.status).toBe(404); // Task list not found
 
       // 存在しないタスクリストの共有リンク削除
       const deleteShareResponse = await request
         .delete(`/api/task-lists/${nonExistentTaskListId}/share`)
         .set(authHeaders);
 
-      expect(deleteShareResponse.status).toBe(403); // Access denied
+      expect(deleteShareResponse.status).toBe(404); // Task list not found
 
       // Cleanup
       await cleanupTestScenario(authUser.user.id);

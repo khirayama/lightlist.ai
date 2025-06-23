@@ -389,7 +389,7 @@ describe('タスク管理フローシナリオ', () => {
         .get(`/api/task-lists/${nonExistentTaskListId}/tasks`)
         .set(authHeaders);
 
-      expect(getTasksResponse.status).toBe(403);
+      expect(getTasksResponse.status).toBe(404);
 
       // 存在しないタスクリストにタスクを追加
       const createTaskResponse = await request
@@ -397,7 +397,7 @@ describe('タスク管理フローシナリオ', () => {
         .set(authHeaders)
         .send({ text: 'Test Task' });
 
-      expect(createTaskResponse.status).toBe(403);
+      expect(createTaskResponse.status).toBe(404);
 
       // Cleanup
       await cleanupTestScenario(authUser.user.id);
@@ -496,7 +496,7 @@ describe('タスク管理フローシナリオ', () => {
         .get(`/api/task-lists/${taskList.id}/tasks`)
         .set(user2Headers);
 
-      expect(accessTaskListResponse.status).toBe(403);
+      expect(accessTaskListResponse.status).toBe(404);
 
       // User2がUser1のタスクを更新（失敗すべき）
       const updateTaskResponse = await request

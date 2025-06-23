@@ -34,8 +34,8 @@ router.get('/:taskListId/tasks', authenticateToken, async (req: AuthenticatedReq
     });
 
     if (!app || !app.taskListOrder.includes(taskListId)) {
-      res.status(403).json({
-        error: 'Access denied to this task list',
+      res.status(404).json({
+        error: 'Task list not found',
       });
       return;
     }
@@ -56,6 +56,7 @@ router.get('/:taskListId/tasks', authenticateToken, async (req: AuthenticatedReq
           text: true,
           completed: true,
           date: true,
+          taskListId: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -72,6 +73,7 @@ router.get('/:taskListId/tasks', authenticateToken, async (req: AuthenticatedReq
             text: true,
             completed: true,
             date: true,
+            taskListId: true,
             createdAt: true,
             updatedAt: true,
           },
@@ -90,6 +92,7 @@ router.get('/:taskListId/tasks', authenticateToken, async (req: AuthenticatedReq
             text: true,
             completed: true,
             date: true,
+            taskListId: true,
             createdAt: true,
             updatedAt: true,
           },
@@ -145,8 +148,8 @@ router.post('/:taskListId/tasks', authenticateToken, async (req: AuthenticatedRe
     });
 
     if (!app || !app.taskListOrder.includes(taskListId)) {
-      res.status(403).json({
-        error: 'Access denied to this task list',
+      res.status(404).json({
+        error: 'Task list not found',
       });
       return;
     }
@@ -236,8 +239,8 @@ router.put('/:taskId', authenticateToken, async (req: AuthenticatedRequest, res:
     });
 
     if (!app || !app.taskListOrder.includes(task.taskListId)) {
-      res.status(403).json({
-        error: 'Access denied to this task',
+      res.status(404).json({
+        error: 'Task not found',
       });
       return;
     }
@@ -316,8 +319,8 @@ router.delete('/:taskId', authenticateToken, async (req: AuthenticatedRequest, r
     });
 
     if (!app || !app.taskListOrder.includes(task.taskListId)) {
-      res.status(403).json({
-        error: 'Access denied to this task',
+      res.status(404).json({
+        error: 'Task not found',
       });
       return;
     }

@@ -39,8 +39,8 @@ router.post('/:taskListId/initialize', authenticateToken, async (req: Authentica
     });
 
     if (!app || !app.taskListOrder.includes(taskListId)) {
-      res.status(403).json({
-        error: 'Access denied to this task list',
+      res.status(404).json({
+        error: 'Task list not found',
       });
       return;
     }
@@ -130,8 +130,8 @@ router.get('/:taskListId/full-state', authenticateToken, async (req: Authenticat
     });
 
     if (!app || !app.taskListOrder.includes(taskListId)) {
-      res.status(403).json({
-        error: 'Access denied to this task list',
+      res.status(404).json({
+        error: 'Task list not found',
       });
       return;
     }
@@ -205,8 +205,8 @@ router.post('/:taskListId/sync', authenticateToken, async (req: AuthenticatedReq
     });
 
     if (!app || !app.taskListOrder.includes(taskListId)) {
-      res.status(403).json({
-        error: 'Access denied to this task list',
+      res.status(404).json({
+        error: 'Task list not found',
       });
       return;
     }

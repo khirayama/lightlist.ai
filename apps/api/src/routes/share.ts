@@ -48,7 +48,7 @@ router.get('/:shareToken', async (req: Request, res: Response) => {
 
     if (!taskListShare || !taskListShare.isActive) {
       res.status(404).json({
-        error: 'Shared task list not found or no longer available',
+        error: 'Shared task list not found',
       });
       return;
     }

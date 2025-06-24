@@ -1,0 +1,29 @@
+{
+  "name": "@lightlist/styles",
+  "version": "0.1.0",
+  "description": "Lightlist共通スタイル設定",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": ["lightlist", "styles", "tailwind"],
+  "author": "Lightlist Team",
+  "license": "MIT",
+  "devDependencies": {
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "tailwindcss": "^3.4.0"
+  },
+  "exports": {
+    "./tailwind.config": "./tailwind.config.js"
+  },
+  "files": [
+    "tailwind.config.js",
+    "dist/**/*"
+  ]
+}

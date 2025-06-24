@@ -1,0 +1,80 @@
+{
+  "navigation": {
+    "home": "Home",
+    "settings": "Settings", 
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "passwordConfirm": "Confirm Password",
+    "loginButton": "Login",
+    "registerButton": "Register",
+    "logoutButton": "Logout",
+    "forgotPassword": "Forgot your password?",
+    "resetPassword": "Reset Password",
+    "alreadyHaveAccount": "Already have an account?",
+    "noAccount": "Don't have an account?",
+    "emailPlaceholder": "Enter your email",
+    "passwordPlaceholder": "Enter your password",
+    "passwordConfirmPlaceholder": "Re-enter your password",
+    "loggingIn": "Logging in...",
+    "registering": "Registering...",
+    "resetingPassword": "Resetting...",
+    "sendResetEmail": "Send Reset Email",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password"
+  },
+  "tasks": {
+    "addTask": "Add Task",
+    "taskPlaceholder": "Enter task...",
+    "completed": "Completed",
+    "uncompleted": "Uncompleted",
+    "deleteCompleted": "Delete Completed Tasks",
+    "sortTasks": "Sort Tasks",
+    "dueDate": "Due Date",
+    "setDueDate": "Set Due Date"
+  },
+  "taskList": {
+    "name": "Task List Name",
+    "addTaskList": "Add Task List",
+    "deleteTaskList": "Delete Task List",
+    "shareTaskList": "Share Task List",
+    "backgroundColor": "Background Color"
+  },
+  "settings": {
+    "title": "Settings",
+    "theme": "Theme",
+    "language": "Language",
+    "taskInsertPosition": "Task Insert Position",
+    "autoSort": "Auto Sort",
+    "profile": "Profile",
+    "deleteAccount": "Delete Account",
+    "themes": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "languages": {
+      "ja": "日本語",
+      "en": "English"
+    },
+    "insertPositions": {
+      "top": "Add to Top",
+      "bottom": "Add to Bottom"
+    }
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success",
+    "backToHome": "Back to Home"
+  }
+}

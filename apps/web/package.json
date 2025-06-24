@@ -1,0 +1,37 @@
+{
+  "name": "@lightlist/web",
+  "version": "0.1.0",
+  "description": "Lightlist Web Application",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf .next"
+  },
+  "dependencies": {
+    "next": "^15.0.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "next-themes": "^0.2.1",
+    "react-i18next": "^13.5.0",
+    "i18next": "^23.7.0",
+    "i18next-browser-languagedetector": "^7.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.3.6",
+    "typescript": "^5.0.0",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^15.0.0"
+  },
+  "keywords": ["nextjs", "react", "task-management", "web-app"],
+  "author": "Lightlist Team",
+  "license": "MIT"
+}

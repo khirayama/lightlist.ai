@@ -52,5 +52,11 @@
     "typescript"
   ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@expo/cli": "^0.24.15",
+    "expo": "^53.0.12",
+    "nativewind": "^4.1.23",
+    "react-native-safe-area-context": "^5.5.0"
+  }
 }

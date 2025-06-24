@@ -1,0 +1,80 @@
+{
+  "navigation": {
+    "home": "ホーム",
+    "settings": "設定",
+    "login": "ログイン",
+    "register": "ユーザー登録",
+    "logout": "ログアウト"
+  },
+  "auth": {
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "passwordConfirm": "パスワード確認",
+    "loginButton": "ログイン",
+    "registerButton": "ユーザー登録",
+    "logoutButton": "ログアウト",
+    "forgotPassword": "パスワードを忘れた方はこちら",
+    "resetPassword": "パスワードリセット",
+    "alreadyHaveAccount": "既にアカウントをお持ちの方は",
+    "noAccount": "アカウントをお持ちでない方は",
+    "emailPlaceholder": "メールアドレスを入力",
+    "passwordPlaceholder": "パスワードを入力", 
+    "passwordConfirmPlaceholder": "パスワードを再入力",
+    "loggingIn": "ログイン中...",
+    "registering": "登録中...",
+    "resetingPassword": "リセット中...",
+    "sendResetEmail": "リセットメールを送信",
+    "newPassword": "新しいパスワード",
+    "confirmNewPassword": "新しいパスワード確認"
+  },
+  "tasks": {
+    "addTask": "タスクを追加",
+    "taskPlaceholder": "タスクを入力...",
+    "completed": "完了",
+    "uncompleted": "未完了",
+    "deleteCompleted": "完了済みタスクを削除",
+    "sortTasks": "タスクを並び替え",
+    "dueDate": "期限",
+    "setDueDate": "期限を設定"
+  },
+  "taskList": {
+    "name": "タスクリスト名",
+    "addTaskList": "タスクリストを追加",
+    "deleteTaskList": "タスクリストを削除",
+    "shareTaskList": "タスクリストを共有",
+    "backgroundColor": "背景色"
+  },
+  "settings": {
+    "title": "設定",
+    "theme": "テーマ",
+    "language": "言語",
+    "taskInsertPosition": "タスクの挿入位置",
+    "autoSort": "自動並び替え",
+    "profile": "プロフィール",
+    "deleteAccount": "アカウント削除",
+    "themes": {
+      "system": "システム",
+      "light": "ライト",
+      "dark": "ダーク"
+    },
+    "languages": {
+      "ja": "日本語",
+      "en": "English"
+    },
+    "insertPositions": {
+      "top": "上に追加",
+      "bottom": "下に追加"
+    }
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集",
+    "confirm": "確認",
+    "loading": "読み込み中...",
+    "error": "エラーが発生しました",
+    "success": "成功しました",
+    "backToHome": "ホームに戻る"
+  }
+}

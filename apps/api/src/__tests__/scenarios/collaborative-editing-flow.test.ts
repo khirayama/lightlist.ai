@@ -41,12 +41,12 @@ describe('共同編集フローシナリオ', () => {
 
   describe('基本的な共同編集フロー', () => {
     it('完全な共同編集初期化フローを処理すること', async () => {
-      // Step 1: タスクリストとタスクを持つユーザーシナリオを作成
+      // Step 1: タスクリストとタスクを持つユーザーシナリオを作成（完全分離）
       const scenario = await createCompleteUserScenario({
-        email: 'collab@example.com',
-        password: 'Collab123',
+        testName: 'collaborative-init-flow', // テスト名で完全分離
         taskListName: '共同編集テスト',
         taskTexts: ['既存タスク1', '既存タスク2', '既存タスク3'],
+        useUniqueNames: false,
       });
 
       const authHeaders = generateAuthHeader(scenario.tokens.token);
@@ -104,8 +104,10 @@ describe('共同編集フローシナリオ', () => {
 
     it('Yjsドキュメントの操作を正しく処理すること', async () => {
       const scenario = await createCompleteUserScenario({
+        testName: 'yjs-document-operations', // テスト名で完全分離
         taskListName: 'Yjs操作テスト',
         taskTexts: ['初期タスク'],
+        useUniqueNames: false,
       });
 
       const authHeaders = generateAuthHeader(scenario.tokens.token);
@@ -232,15 +234,16 @@ describe('共同編集フローシナリオ', () => {
 
   describe('権限管理', () => {
     it('タスクリストの所有者のみがアクセスできること', async () => {
-      // 所有者のシナリオを作成
+      // 所有者のシナリオを作成（完全分離）
       const ownerScenario = await createCompleteUserScenario({
-        email: 'owner@example.com',
+        testName: 'access-control-owner', // オーナー用テストID
         taskListName: '所有者のリスト',
+        useUniqueNames: false,
       });
 
-      // 他のユーザーを作成
+      // 他のユーザーを作成（完全分離）
       const otherUser = await createAuthenticatedUser({
-        email: 'other@example.com',
+        testName: 'access-control-other', // 他ユーザー用テストID
       });
 
       const ownerHeaders = generateAuthHeader(ownerScenario.tokens.token);
@@ -280,7 +283,9 @@ describe('共同編集フローシナリオ', () => {
   describe('エラーハンドリング', () => {
     it('重複する初期化を防ぐこと', async () => {
       const scenario = await createCompleteUserScenario({
+        testName: 'duplicate-initialization-prevention', // テスト名で完全分離
         taskListName: '重複初期化テスト',
+        useUniqueNames: false,
       });
 
       const authHeaders = generateAuthHeader(scenario.tokens.token);
@@ -308,7 +313,9 @@ describe('共同編集フローシナリオ', () => {
 
     it('共同編集が無効な場合のエラーを処理すること', async () => {
       const scenario = await createCompleteUserScenario({
+        testName: 'disabled-collaborative-error-handling', // テスト名で完全分離
         taskListName: '無効状態テスト',
+        useUniqueNames: false,
       });
 
       const authHeaders = generateAuthHeader(scenario.tokens.token);
@@ -338,7 +345,9 @@ describe('共同編集フローシナリオ', () => {
 
     it('無効なデータでの同期エラーを処理すること', async () => {
       const scenario = await createCompleteUserScenario({
+        testName: 'invalid-data-sync-error-handling', // テスト名で完全分離
         taskListName: '無効データテスト',
+        useUniqueNames: false,
       });
 
       const authHeaders = generateAuthHeader(scenario.tokens.token);
@@ -377,7 +386,9 @@ describe('共同編集フローシナリオ', () => {
     });
 
     it('存在しないタスクリストでの共同編集操作を処理すること', async () => {
-      const authUser = await createAuthenticatedUser();
+      const authUser = await createAuthenticatedUser({
+        testName: 'non-existent-tasklist-handling', // テスト名で完全分離
+      });
       const authHeaders = generateAuthHeader(authUser.tokens.token);
 
       const nonExistentTaskListId = 'cmbz060iw0000ki5g9h2hwg8n';
@@ -415,8 +426,10 @@ describe('共同編集フローシナリオ', () => {
   describe('同期処理のシミュレーション', () => {
     it('複数クライアントの同期シナリオをシミュレートすること', async () => {
       const scenario = await createCompleteUserScenario({
+        testName: 'multi-client-sync-simulation', // テスト名で完全分離
         taskListName: '複数クライアント同期テスト',
         taskTexts: ['共通タスク'],
+        useUniqueNames: false,
       });
 
       const authHeaders = generateAuthHeader(scenario.tokens.token);
@@ -491,7 +504,9 @@ describe('共同編集フローシナリオ', () => {
 
     it('競合する変更の解決をテストすること', async () => {
       const scenario = await createCompleteUserScenario({
+        testName: 'conflict-resolution-test', // テスト名で完全分離
         taskListName: '競合解決テスト',
+        useUniqueNames: false,
       });
 
       const authHeaders = generateAuthHeader(scenario.tokens.token);

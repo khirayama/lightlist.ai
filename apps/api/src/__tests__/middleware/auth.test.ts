@@ -13,15 +13,29 @@ describe('認証ミドルウェア', () => {
   const prisma = getTestPrisma();
   let testUser: any;
   let validToken: string;
+  let testDeviceId: string;
 
   // Database setup is handled by setup.ts
   
   beforeEach(async () => {
     await cleanupTestDatabase();
     testUser = await createTestUser();
+    testDeviceId = '550e8400-e29b-41d4-a716-446655440000'; // テスト用デバイスID
     validToken = generateAccessToken({
       userId: testUser.id,
       email: testUser.email,
+      deviceId: testDeviceId,
+    });
+
+    // アクティブなリフレッシュトークンを作成
+    await prisma.refreshToken.create({
+      data: {
+        userId: testUser.id,
+        token: `refresh_token_${testUser.id}`,
+        deviceId: testDeviceId,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24時間後
+        isActive: true,
+      },
     });
   });
 

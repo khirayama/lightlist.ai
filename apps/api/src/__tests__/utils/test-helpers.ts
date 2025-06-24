@@ -78,8 +78,19 @@ export function getTestApp(): express.Application {
     });
 
     // Error handler
-    app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
       console.error('Test App Error:', err);
+      
+      // JSON解析エラーの場合は400を返す
+      if (err.type === 'entity.parse.failed' || err.statusCode === 400) {
+        res.status(400).json({
+          error: 'Bad Request',
+          message: err.message || 'Invalid request format',
+        });
+        return;
+      }
+      
+      // その他のエラーは500を返す
       res.status(500).json({
         error: 'Internal Server Error',
         message: err.message,
@@ -102,13 +113,27 @@ export function getTestPrisma(): PrismaClient {
   return client;
 }
 
-// Test data generators with unique values
+// Test data generators with unique values - 並列実行対応の完全ユニーク性
 function generateUniqueId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  // プロセスID + ミリ秒 + マイクロ秒 + ランダム値で完全なユニーク性を保証
+  const processId = process.pid;
+  const timestamp = Date.now();
+  const microseconds = process.hrtime.bigint();
+  const random = Math.random().toString(36).substr(2, 12);
+  return `${processId}-${timestamp}-${microseconds}-${random}`;
 }
 
 function generateUniqueEmail(prefix: string = 'test'): string {
   return `${prefix}-${generateUniqueId()}@example.com`;
+}
+
+// テスト名ベースのプレフィックス生成（より確実な分離）
+function generateTestPrefix(testName?: string): string {
+  const baseName = testName || 'test';
+  const processId = process.pid;
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substr(2, 8);
+  return `${baseName}-p${processId}-${timestamp}-${random}`;
 }
 
 function generateUniqueDeviceId(): string {
@@ -130,10 +155,11 @@ function generateUniqueDeviceId(): string {
 }
 
 
-// Dynamic test data generators for unique values
-export function generateUniqueUserData(overrides: Partial<{email: string, password: string, deviceId: string}> = {}) {
+// Dynamic test data generators for unique values - 完全分離対応
+export function generateUniqueUserData(overrides: Partial<{email: string, password: string, deviceId: string, testName?: string}> = {}) {
+  const testPrefix = overrides.testName ? generateTestPrefix(overrides.testName) : undefined;
   return {
-    email: overrides.email || generateUniqueEmail(),
+    email: overrides.email || (testPrefix ? `${testPrefix}@example.com` : generateUniqueEmail()),
     password: overrides.password || 'TestPass123',
     deviceId: overrides.deviceId || generateUniqueDeviceId(),
   };
@@ -223,18 +249,18 @@ async function ensureAuthenticatedUserExists(client: PrismaClient, userId: strin
   }
 }
 
-// Database helpers
-export async function createTestUser(userData?: {email: string, password: string, deviceId: string}): Promise<User> {
+// Database helpers - リトライ機能付き
+export async function createTestUser(userData?: {email: string, password: string, deviceId: string, testName?: string}): Promise<User> {
   // userDataが渡されなかった場合のみ一意なデータを生成
-  const userToCreate = userData || generateUniqueUserData();
+  const userToCreate = userData || generateUniqueUserData({ testName: userData?.testName });
   
-  try {
+  return withDatabaseRetry(async () => {
     const hashedPassword = await optimizedTestHashPassword(userToCreate.password);
     const client = getTestPrisma(); // 確実に初期化されたPrismaクライアントを使用
     
     let user: User;
 
-    // 全ての作成操作をトランザクションで実行（auth.tsと同じ順序）
+    // 強化されたトランザクションでユーザー作成
     await client.$transaction(async (tx) => {
       // ユーザー作成
       user = await tx.user.create({
@@ -263,32 +289,37 @@ export async function createTestUser(userData?: {email: string, password: string
         },
       });
     }, {
-      timeout: 10000, // 10秒のタイムアウト
+      timeout: 20000, // 20秒のタイムアウト（強化）
+      maxWait: 15000, // 最大15秒待機
+      isolationLevel: 'ReadCommitted' // 適度な分離レベル
     });
 
     // トランザクション完了後、データベースから確実に読み取れることを確認
-    await ensureUserExists(client, user!.id, 5); // リトライ回数を5回に増加
+    await withRetry(
+      () => ensureUserExists(client, user!.id, 3),
+      { 
+        maxRetries: 3, 
+        baseDelay: 500,
+        operationName: `user existence check for ${userToCreate.email}`
+      }
+    );
 
     return user!;
-  } catch (error) {
-    console.error('Test user creation failed:', error);
-    console.error('User data:', { email: userToCreate.email, deviceId: userToCreate.deviceId });
-    throw new Error(`Failed to create test user: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
+  }, `createTestUser for ${userToCreate.email}`);
 }
 
-export async function createAuthenticatedUser(userData?: Partial<{email: string, password: string, deviceId: string}>) {
-  // ユーザーデータを生成
+export async function createAuthenticatedUser(userData?: Partial<{email: string, password: string, deviceId: string, testName?: string}>) {
+  // ユーザーデータを生成（テスト名を含む完全分離）
   const uniqueUserData = generateUniqueUserData(userData);
   
-  try {
+  return withDatabaseRetry(async () => {
     const hashedPassword = await optimizedTestHashPassword(uniqueUserData.password);
     const client = getTestPrisma();
     
     let user: User;
     let tokens: AuthTokens;
 
-    // 全ての作成操作をトランザクションで実行（auth.tsと同じ順序）
+    // 強化されたトランザクションで認証ユーザー作成
     await client.$transaction(async (tx) => {
       // ユーザー作成
       user = await tx.user.create({
@@ -330,22 +361,27 @@ export async function createAuthenticatedUser(userData?: Partial<{email: string,
         },
       });
     }, {
-      timeout: 10000, // 10秒のタイムアウト
+      timeout: 20000, // 20秒のタイムアウト（強化）
+      maxWait: 15000, // 最大15秒待機
+      isolationLevel: 'ReadCommitted' // 適度な分離レベル
     });
 
-    // トランザクション完了後、データベースから確実に読み取れることを確認
-    await ensureAuthenticatedUserExists(client, user!.id, tokens!.refreshToken, 5); // リトライ回数を5回に増加
+    // トランザクション完了後の確認（リトライ付き）
+    await withRetry(
+      () => ensureAuthenticatedUserExists(client, user!.id, tokens!.refreshToken, 3),
+      { 
+        maxRetries: 3, 
+        baseDelay: 500,
+        operationName: `authenticated user existence check for ${uniqueUserData.email}`
+      }
+    );
 
     return {
       user: user!,
       tokens,
       deviceId: uniqueUserData.deviceId,
     };
-  } catch (error) {
-    console.error('Authenticated user creation failed:', error);
-    console.error('User data:', { email: uniqueUserData.email, deviceId: uniqueUserData.deviceId });
-    throw new Error(`Failed to create authenticated user: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
+  }, `createAuthenticatedUser for ${uniqueUserData.email}`);
 }
 
 export function generateAuthHeader(token: string): Record<string, string> {
@@ -357,6 +393,89 @@ export function generateAuthHeader(token: string): Record<string, string> {
 // Helper to wait for async operations
 export function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// 強化されたリトライ機能 - 並列実行時の競合対策
+export async function withRetry<T>(
+  operation: () => Promise<T>,
+  options: {
+    maxRetries?: number;
+    baseDelay?: number;
+    maxDelay?: number;
+    exponentialBackoff?: boolean;
+    retryCondition?: (error: any) => boolean;
+    operationName?: string;
+  } = {}
+): Promise<T> {
+  const {
+    maxRetries = 3,
+    baseDelay = 1000,
+    maxDelay = 10000,
+    exponentialBackoff = true,
+    retryCondition = () => true,
+    operationName = 'operation'
+  } = options;
+
+  let lastError: any;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await operation();
+      if (attempt > 1) {
+        console.log(`[Retry Success] ${operationName} succeeded on attempt ${attempt}`);
+      }
+      return result;
+    } catch (error) {
+      lastError = error;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      console.warn(`[Retry Attempt ${attempt}/${maxRetries}] ${operationName} failed: ${errorMessage}`);
+      
+      // リトライ条件をチェック
+      if (!retryCondition(error)) {
+        console.log(`[Retry Skip] ${operationName} failed with non-retryable error`);
+        throw error;
+      }
+      
+      if (attempt === maxRetries) {
+        console.error(`[Retry Failed] ${operationName} failed after ${maxRetries} attempts`);
+        throw lastError;
+      }
+      
+      // 指数バックオフまたは固定遅延
+      const delay = exponentialBackoff 
+        ? Math.min(baseDelay * Math.pow(2, attempt - 1), maxDelay)
+        : baseDelay;
+      
+      console.log(`[Retry Wait] ${operationName} retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw lastError;
+}
+
+// データベース操作専用のリトライヘルパー
+export async function withDatabaseRetry<T>(
+  operation: () => Promise<T>,
+  operationName: string = 'database operation'
+): Promise<T> {
+  return withRetry(operation, {
+    maxRetries: 5,
+    baseDelay: 500,
+    maxDelay: 5000,
+    exponentialBackoff: true,
+    retryCondition: (error) => {
+      // データベース競合エラーのみリトライ
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return errorMessage.includes('SQLITE_BUSY') || 
+             errorMessage.includes('deadlock') ||
+             errorMessage.includes('timeout') ||
+             errorMessage.includes('connection') ||
+             errorMessage.includes('ECONNRESET');
+    },
+    operationName
+  });
 }
 
 // Helper to generate multiple devices for testing device limits
@@ -386,63 +505,163 @@ export async function createMultipleDevicesForUser(user: User, count: number = 5
   return devices;
 }
 
-// Cleanup helpers
+// Cleanup helpers - リトライ機能付き
 export async function cleanupUser(email: string) {
-  const client = getTestPrisma();
-  const user = await client.user.findUnique({ where: { email } });
-  if (user) {
-    await client.$transaction([
-      client.refreshToken.deleteMany({ where: { userId: user.id } }),
-      client.settings.deleteMany({ where: { userId: user.id } }),
-      client.app.deleteMany({ where: { userId: user.id } }),
-      client.user.delete({ where: { id: user.id } }),
-    ]);
-  }
+  return withDatabaseRetry(async () => {
+    const client = getTestPrisma();
+    const user = await client.user.findUnique({ where: { email } });
+    if (user) {
+      await client.$transaction([
+        client.refreshToken.deleteMany({ where: { userId: user.id } }),
+        client.passwordResetToken.deleteMany({ where: { userId: user.id } }),
+        client.settings.deleteMany({ where: { userId: user.id } }),
+        client.app.deleteMany({ where: { userId: user.id } }),
+        client.user.delete({ where: { id: user.id } }),
+      ], {
+        timeout: 15000,
+        maxWait: 10000
+      });
+    }
+  }, `cleanupUser for ${email}`);
 }
 
 // Task List helpers
 export async function createTestTaskList(userId: string, name: string = 'Test Task List') {
   const client = getTestPrisma();
   
-  const taskList = await client.taskList.create({
-    data: {
-      name,
-      background: '',
-    },
-  });
+  return withDatabaseRetry(async () => {
+    let taskList: any;
+    
+    await client.$transaction(async (tx) => {
+      // タスクリスト作成
+      taskList = await tx.taskList.create({
+        data: {
+          name,
+          background: '',
+        },
+      });
 
-  // Add to user's taskListOrder
-  await client.app.update({
-    where: { userId },
-    data: {
-      taskListOrder: {
-        push: taskList.id,
-      },
-    },
-  });
+      // ユーザーのtaskListOrderに追加
+      await tx.app.update({
+        where: { userId },
+        data: {
+          taskListOrder: {
+            push: taskList.id,
+          },
+        },
+      });
+    }, {
+      timeout: 15000,
+      maxWait: 10000,
+      isolationLevel: 'ReadCommitted'
+    });
 
-  return taskList;
+    // トランザクション完了後の検証
+    const app = await client.app.findUnique({
+      where: { userId },
+    });
+    
+    if (!app || !app.taskListOrder.includes(taskList.id)) {
+      throw new Error(`TaskList ${taskList.id} not properly added to user ${userId} taskListOrder`);
+    }
+
+    return taskList;
+  }, 'createTestTaskList');
 }
 
 export async function createTestTask(taskListId: string, text: string = 'Test Task', completed: boolean = false, date?: string) {
   const client = getTestPrisma();
   
+  // タスクテキストから日付を抽出（APIエンドポイントと同じ動作）
+  const { cleanText, extractedDate } = extractDateFromTaskText(text);
+  
   return await client.task.create({
     data: {
-      text,
+      text: cleanText,
       completed,
-      date,
+      date: date || extractedDate,
       taskListId,
     },
   });
 }
 
-export function generateUniqueTaskListName(prefix: string = 'TaskList'): string {
-  return `${prefix}-${generateUniqueId()}`;
+// 日付抽出ロジック（routes/tasks.tsからコピー）
+function extractDateFromTaskText(text: string): { cleanText: string; extractedDate: string | null } {
+  const today = new Date();
+  let extractedDate: Date | null = null;
+  let cleanText = text.trim();
+  
+  // 日本語の日付パターン
+  const japanesePatterns = [
+    { pattern: /^今日\s+/, date: new Date(today) },
+    { pattern: /^明日\s+/, date: new Date(today.getTime() + 24 * 60 * 60 * 1000) },
+  ];
+  
+  // 英語の日付パターン
+  const englishPatterns = [
+    { pattern: /^today\s+/i, date: new Date(today) },
+    { pattern: /^tomorrow\s+/i, date: new Date(today.getTime() + 24 * 60 * 60 * 1000) },
+  ];
+  
+  // 日付形式のパターン（YYYY/MM/DD, YYYY-MM-DD）
+  const datePatterns = [
+    /^(\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2})\s+/,
+  ];
+  
+  // 日本語パターンをチェック
+  for (const { pattern, date } of japanesePatterns) {
+    if (pattern.test(cleanText)) {
+      extractedDate = date;
+      cleanText = cleanText.replace(pattern, '');
+      break;
+    }
+  }
+  
+  // 英語パターンをチェック
+  if (!extractedDate) {
+    for (const { pattern, date } of englishPatterns) {
+      if (pattern.test(cleanText)) {
+        extractedDate = date;
+        cleanText = cleanText.replace(pattern, '');
+        break;
+      }
+    }
+  }
+  
+  // 日付形式をチェック
+  if (!extractedDate) {
+    for (const pattern of datePatterns) {
+      const match = cleanText.match(pattern);
+      if (match && match[1]) {
+        const parsedDate = new Date(match[1]);
+        if (!isNaN(parsedDate.getTime())) {
+          extractedDate = parsedDate;
+          cleanText = cleanText.replace(pattern, '');
+          break;
+        }
+      }
+    }
+  }
+  
+  // 日付をISO文字列形式に変換（YYYY-MM-DD）
+  const extractedDateString = extractedDate
+    ? extractedDate.toISOString().split('T')[0]
+    : null;
+  
+  return {
+    cleanText: cleanText.trim(),
+    extractedDate: extractedDateString,
+  };
 }
 
-export function generateUniqueTaskText(prefix: string = 'Task'): string {
-  return `${prefix}-${generateUniqueId()}`;
+export function generateUniqueTaskListName(prefix: string = 'TaskList', testName?: string): string {
+  const testPrefix = testName ? generateTestPrefix(testName) : generateUniqueId();
+  return `${prefix}-${testPrefix}`;
+}
+
+export function generateUniqueTaskText(prefix: string = 'Task', testName?: string): string {
+  const testPrefix = testName ? generateTestPrefix(testName) : generateUniqueId();
+  return `${prefix}-${testPrefix}`;
 }
 
 // Share helpers
@@ -477,33 +696,46 @@ export async function createTestCollaborativeDoc(taskListId: string) {
   });
 }
 
-// Complete scenario helpers
+// Complete scenario helpers - 完全分離対応
 export async function createCompleteUserScenario(overrides?: {
   email?: string;
   password?: string;
   deviceId?: string;
   taskListName?: string;
   taskTexts?: string[];
+  testName?: string; // テスト名による完全分離
+  useUniqueNames?: boolean; // ユニーク名生成を制御（デフォルト: true）
 }) {
-  // Create authenticated user
+  // Create authenticated user with test isolation
   const authUser = await createAuthenticatedUser({
     email: overrides?.email,
     password: overrides?.password,
     deviceId: overrides?.deviceId,
+    testName: overrides?.testName,
   });
 
-  // Create task list
+  // Create task list with optional unique naming
+  const useUniqueNames = overrides?.useUniqueNames !== false; // デフォルト: true
+  const taskListName = overrides?.taskListName || 'MyTasks';
+  const finalTaskListName = useUniqueNames 
+    ? generateUniqueTaskListName(taskListName, overrides?.testName)
+    : taskListName;
+  
   const taskList = await createTestTaskList(
     authUser.user.id,
-    overrides?.taskListName || 'My Tasks'
+    finalTaskListName
   );
 
-  // Create tasks
+  // Create tasks with optional unique text
   const tasks = [];
-  const taskTexts = overrides?.taskTexts || ['Buy groceries', 'Complete project', 'Call mom'];
+  const defaultTaskTexts = ['Buy groceries', 'Complete project', 'Call mom'];
+  const taskTexts = overrides?.taskTexts || defaultTaskTexts;
   
   for (const taskText of taskTexts) {
-    const task = await createTestTask(taskList.id, taskText);
+    const finalTaskText = useUniqueNames 
+      ? generateUniqueTaskText(taskText, overrides?.testName)
+      : taskText;
+    const task = await createTestTask(taskList.id, finalTaskText);
     tasks.push(task);
   }
 

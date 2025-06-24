@@ -10,6 +10,7 @@ export interface User {
 export interface JWTPayload {
   userId: string;
   email: string;
+  deviceId: string;
   jti?: string;  // JWT ID（トークンのユニーク識別子）
   iat?: number;
   exp?: number;

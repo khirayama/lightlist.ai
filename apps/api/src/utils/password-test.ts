@@ -125,10 +125,7 @@ export function getPreComputedHash(password: string): string | null {
  * テスト用高速ハッシュ（事前計算済みハッシュを優先使用）
  */
 export async function optimizedTestHashPassword(password: string): Promise<string> {
-  const preComputed = getPreComputedHash(password);
-  if (preComputed) {
-    return preComputed;
-  }
+  // 一貫性のため常に fastHashPassword を使用
   return fastHashPassword(password);
 }
 
@@ -136,9 +133,6 @@ export async function optimizedTestHashPassword(password: string): Promise<strin
  * テスト用高速検証（事前計算済みハッシュを考慮）
  */
 export async function optimizedTestVerifyPassword(password: string, hashedPassword: string): Promise<boolean> {
-  const preComputed = getPreComputedHash(password);
-  if (preComputed) {
-    return preComputed === hashedPassword;
-  }
+  // 一貫性のため常に fastVerifyPassword を使用
   return fastVerifyPassword(password, hashedPassword);
 }

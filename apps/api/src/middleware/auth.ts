@@ -49,6 +49,22 @@ export async function authenticateToken(
       return;
     }
 
+    // デバイスのアクティブなリフレッシュトークンが存在するかチェック
+    const activeRefreshToken = await prisma.refreshToken.findFirst({
+      where: {
+        userId: payload.userId,
+        deviceId: payload.deviceId,
+        isActive: true,
+      },
+    });
+
+    if (!activeRefreshToken) {
+      res.status(401).json({
+        error: 'Device session is no longer active',
+      });
+      return;
+    }
+
     // リクエストオブジェクトにユーザー情報を追加
     req.user = user;
     req.userId = user.id;

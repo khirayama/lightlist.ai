@@ -12,19 +12,21 @@ export default defineConfig({
     hookTimeout: 30000,
     teardownTimeout: 30000,
     isolate: true,
-    // 統合テストの並列化設定（中級レベル）
-    threads: false, // PostgreSQL接続の安定性のためスレッドは無効のまま
+    // 安定性を優先したシーケンシャル実行設定
     pool: 'forks',
     poolOptions: {
       forks: {
-        singleFork: false, // 複数フォークを許可
+        singleFork: true, // 単一フォークで順次実行
       },
     },
-    maxConcurrency: 1, // 安定性を最優先（並列化は一旦無効）
-    fileParallelism: false, // ファイルレベルの並列化も無効化
+    
+    // 並列実行完全無効化
+    maxConcurrency: 1,       // 最大1テストのみ実行
+    fileParallelism: false,  // ファイル並列実行禁止
     sequence: {
       hooks: 'stack',
-      shuffle: false, // テスト順序の予測可能性を保持
+      concurrent: false,     // 同時実行禁止
+      shuffle: false,        // シャッフル禁止
     },
     include: [
       'src/__tests__/routes/**/*.test.ts',

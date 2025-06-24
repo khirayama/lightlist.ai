@@ -19,7 +19,7 @@ const router = Router();
  * POST /api/task-lists/:taskListId/collaborative/initialize
  * 共同編集機能の初期化
  */
-router.post('/:taskListId/initialize', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/:taskListId/collaborative/initialize', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { taskListId } = req.params;
     const userId = req.userId as string;
@@ -38,7 +38,15 @@ router.post('/:taskListId/initialize', authenticateToken, async (req: Authentica
       where: { userId },
     });
 
+    if (process.env.NODE_ENV === 'test') {
+      console.log(`[COLLABORATIVE DEBUG] User ${userId} accessing taskList ${taskListId}`);
+      console.log(`[COLLABORATIVE DEBUG] App found:`, app ? `Yes, taskListOrder: [${app.taskListOrder.join(', ')}]` : 'No');
+    }
+
     if (!app || !app.taskListOrder.includes(taskListId)) {
+      if (process.env.NODE_ENV === 'test') {
+        console.log(`[COLLABORATIVE DEBUG] Access denied - taskList ${taskListId} not in user's taskListOrder`);
+      }
       res.status(404).json({
         error: 'Task list not found',
       });
@@ -110,7 +118,7 @@ router.post('/:taskListId/initialize', authenticateToken, async (req: Authentica
  * GET /api/task-lists/:taskListId/collaborative/full-state
  * タスクリストの完全な共同編集状態を取得
  */
-router.get('/:taskListId/full-state', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/:taskListId/collaborative/full-state', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { taskListId } = req.params;
     const userId = req.userId as string;
@@ -171,7 +179,7 @@ router.get('/:taskListId/full-state', authenticateToken, async (req: Authenticat
  * POST /api/task-lists/:taskListId/collaborative/sync
  * 共同編集の差分同期
  */
-router.post('/:taskListId/sync', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/:taskListId/collaborative/sync', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { taskListId } = req.params;
     const userId = req.userId as string;

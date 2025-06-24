@@ -40,8 +40,22 @@ export function generateYjsUpdate(doc: Y.Doc, encodedStateVector: string): strin
   const stateVector = decodeYjsStateVector(encodedStateVector);
   const update = Y.encodeStateAsUpdate(doc, stateVector);
   
+  if (process.env.NODE_ENV === 'test') {
+    console.log(`[YJS DEBUG] generateYjsUpdate: update.length=${update.length}, base64=${Buffer.from(update).toString('base64')}`);
+  }
+  
+  // 空の更新またはYjsの「差分なし」標準データかどうかを確認
   if (update.length === 0) {
-    return null; // 差分なし
+    return null; // 明確に差分なし
+  }
+  
+  // Yjsが同じ状態で返す標準的な「差分なし」データをチェック
+  // Base64 "AAA=" は [0, 0] という2バイトのデータ
+  if (update.length === 2 && update[0] === 0 && update[1] === 0) {
+    if (process.env.NODE_ENV === 'test') {
+      console.log('[YJS DEBUG] Detected "no diff" standard Yjs data, returning null');
+    }
+    return null; // 実質的な差分なし
   }
   
   return Buffer.from(update).toString('base64');

@@ -6,25 +6,31 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    setupFiles: ['./src/__tests__/setup.ts'], // Use full database setup for integration tests
-    testTimeout: 60000,
-    hookTimeout: 60000,
-    teardownTimeout: 60000,
-    isolate: true,
-    // 統合テストの並列化設定（メイン設定）
-    threads: false, // PostgreSQL接続の安定性のためスレッドは無効
-    pool: 'forks',
+    setupFiles: ['./src/__tests__/setup.ts'],
+    
+    // 合理的なタイムアウト設定
+    testTimeout: 60000,      // 1分 - テストタイムアウト
+    hookTimeout: 30000,      // 30秒 - フックタイムアウト
+    teardownTimeout: 30000,  // 30秒 - ティアダウンタイムアウト
+    
+    // シンプルなシリアル実行設定
+    pool: 'threads',
     poolOptions: {
-      forks: {
-        singleFork: false, // 複数フォークを許可
+      threads: {
+        singleThread: true,    // 単一スレッドで順次実行
       },
     },
-    maxConcurrency: 1, // 安定性を最優先（並列化は一旦無効）
-    fileParallelism: false, // ファイルレベルの並列化も無効化
+    
+    // 並列実行完全無効化
+    maxConcurrency: 1,       // 最大1テストのみ実行
+    fileParallelism: false,  // ファイル並列実行禁止
+    
+    // テスト実行順序の制御
     sequence: {
-      hooks: 'stack',
-      shuffle: false, // テスト順序の予測可能性を保持
+      concurrent: false,     // 同時実行禁止
+      shuffle: false,        // シャッフル禁止
     },
+    
     env: {
       NODE_ENV: 'test',
     },

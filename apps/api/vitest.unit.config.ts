@@ -17,18 +17,25 @@ export default defineConfig({
       'src/__tests__/scenarios/**/*.test.ts',
       'src/__tests__/middleware/**/*.test.ts',
     ],
-    // ユニットテストの並列化最適化設定
-    threads: true, // スレッドプールを有効化
+    // 安定性を優先したシーケンシャル実行設定
     pool: 'threads',
     poolOptions: {
       threads: {
-        maxThreads: Math.max(1, Math.min(os.cpus().length, 4)), // CPU数に応じた最適化（最大4スレッド）
-        minThreads: 1,
+        singleThread: true,    // 単一スレッドで順次実行
       },
     },
-    maxConcurrency: Math.max(2, Math.min(os.cpus().length * 2, 8)), // 並列実行数の最適化
+    
+    // 並列実行完全無効化
+    maxConcurrency: 1,       // 最大1テストのみ実行
+    fileParallelism: false,  // ファイル並列実行禁止
+    
+    // テスト実行順序の制御
+    sequence: {
+      concurrent: false,     // 同時実行禁止
+      shuffle: false,        // シャッフル禁止
+    },
+    
     isolate: true, // テスト間の分離を保証
-    fileParallelism: true, // ファイルレベルの並列化を有効
     env: {
       NODE_ENV: 'test',
     },

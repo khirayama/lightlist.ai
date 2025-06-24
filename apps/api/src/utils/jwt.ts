@@ -82,7 +82,7 @@ export function generateTokenPair(userId: string, email: string, deviceId: strin
   // リフレッシュトークン用のユニークID生成
   const tokenId = randomBytes(16).toString('hex');
 
-  const accessToken = generateAccessToken({ userId, email });
+  const accessToken = generateAccessToken({ userId, email, deviceId });
   const refreshToken = generateRefreshToken({ userId, deviceId, tokenId });
 
   return {

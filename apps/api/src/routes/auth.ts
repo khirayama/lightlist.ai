@@ -312,7 +312,10 @@ router.post('/login', async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Login error:', error);
+    // テスト環境では認証エラー（期待されるエラー）をログに出力しない
+    if (process.env.NODE_ENV !== 'test' || !(error instanceof Error && error.message === 'Invalid email or password')) {
+      console.error('Login error:', error);
+    }
     
     // 認証エラーの場合は401を返す
     if (error instanceof Error && error.message === 'Invalid email or password') {

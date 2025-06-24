@@ -616,7 +616,8 @@ describe('認証ルート', () => {
         .send('invalid-json')
         .set('Content-Type', 'application/json');
 
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBeDefined();
     });
 
     it('非常に長い入力を処理すること', async () => {

@@ -1,4 +1,5 @@
 import { type Request, type Response, Router } from 'express';
+import { Prisma } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth';
 import { getDatabase } from '../services/database';
 import type { AuthenticatedRequest, AuthTokens } from '../types/auth';
@@ -82,7 +83,7 @@ router.post('/register', async (req: Request, res: Response) => {
     let user: any;
 
     // 全ての作成操作をトランザクションで実行
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // ユーザー作成
       user = await tx.user.create({
         data: {
@@ -196,7 +197,7 @@ router.post('/login', async (req: Request, res: Response) => {
     let userData: any;
 
     // 全ての処理をトランザクションで実行（厳密な分離レベルとタイムアウトを設定）
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // ユーザーの検索
       const user = await tx.user.findUnique({
         where: { email },
@@ -242,7 +243,7 @@ router.post('/login', async (req: Request, res: Response) => {
       }
 
       // 既存のデバイスIDがあるかチェック
-      const existingDeviceToken = activeTokens.find(token => token.deviceId === deviceId);
+      const existingDeviceToken = activeTokens.find((token: any) => token.deviceId === deviceId);
 
       if (existingDeviceToken) {
         if (process.env.NODE_ENV === 'test') {
@@ -577,7 +578,7 @@ router.post('/reset-password', async (req: Request, res: Response) => {
     }
 
     // トランザクションでパスワード更新と関連トークンの無効化を実行
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // パスワードをハッシュ化
       const hashedPassword = await passwordHash(newPassword);
 

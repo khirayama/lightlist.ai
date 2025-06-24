@@ -1,4 +1,5 @@
 import { type Response, Router } from 'express';
+import { Prisma } from '@prisma/client';
 import * as Y from 'yjs';
 import { authenticateToken } from '../middleware/auth';
 import { getDatabase } from '../services/database';
@@ -220,7 +221,7 @@ router.post('/:taskListId/collaborative/sync', authenticateToken, async (req: Au
     }
 
     // トランザクションで同期処理を実行
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // 共同編集ドキュメントを取得
       const document = await tx.taskListDocument.findUnique({
         where: { taskListId },

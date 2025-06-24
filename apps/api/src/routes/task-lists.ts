@@ -1,4 +1,5 @@
 import { type Response, Router } from 'express';
+import { Prisma } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth';
 import { getDatabase } from '../services/database';
 import type { AuthenticatedRequest } from '../types/auth';
@@ -85,7 +86,7 @@ router.post('/', authenticateToken, async (req: AuthenticatedRequest, res: Respo
     const prisma = getDatabase();
 
     let taskList;
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // タスクリストを作成
       taskList = await tx.taskList.create({
         data: {
@@ -230,14 +231,14 @@ router.delete('/:taskListId', authenticateToken, async (req: AuthenticatedReques
       return;
     }
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // タスクリストを削除（Cascadeでタスクも削除される）
       await tx.taskList.delete({
         where: { id: taskListId },
       });
 
       // App設定のtaskListOrderからも削除
-      const updatedOrder = app.taskListOrder.filter(id => id !== taskListId);
+      const updatedOrder = app.taskListOrder.filter((id: string) => id !== taskListId);
       await tx.app.update({
         where: { userId },
         data: { taskListOrder: updatedOrder },

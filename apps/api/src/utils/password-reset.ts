@@ -1,8 +1,8 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { generateResetToken, getPasswordResetTokenExpiry } from './jwt';
 
 // トランザクション用の型定義
-type TransactionClient = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0];
+type TransactionClient = Prisma.TransactionClient;
 
 /**
  * パスワードリセットトークンを作成
@@ -15,7 +15,7 @@ export async function createPasswordResetToken(
   const expiresAt = getPasswordResetTokenExpiry();
 
   // トランザクションで既存トークン無効化と新トークン作成を実行
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     // 既存の未使用トークンを無効化（期限切れも含む）
     await tx.passwordResetToken.updateMany({
       where: {

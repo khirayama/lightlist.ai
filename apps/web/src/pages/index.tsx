@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import { Layout } from '../components/Layout';
@@ -7,7 +7,8 @@ import { useAuth } from '../contexts/AuthContext';
 const HomePage: React.FC = () => {
   const { t } = useTranslation();
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const [isMounted, setIsMounted] = useState(false);
   const [taskLists] = useState([
     { id: '1', name: '📝個人', background: '#FFE4E1' },
     { id: '2', name: '💼仕事', background: '#E6E6FA' },
@@ -18,13 +19,36 @@ const HomePage: React.FC = () => {
     { id: '3', text: 'プロジェクト進捗確認', completed: false, date: '2025-06-25' },
   ]);
 
-  if (isLoading) {
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // SSR時および hydration 前は初期コンテンツを表示
+  if (!isMounted) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-96">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto"></div>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">{t('common.loading')}</p>
+          <div className="text-center space-y-4">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Lightlistへようこそ
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              タスクを管理するためにログインしてください
+            </p>
+            <div className="space-x-4">
+              <button
+                onClick={() => router.push('/login')}
+                className="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors"
+              >
+                ログイン
+              </button>
+              <button
+                onClick={() => router.push('/register')}
+                className="px-4 py-2 border border-primary-500 text-primary-500 rounded-md hover:bg-primary-50 dark:hover:bg-primary-900 transition-colors"
+              >
+                ユーザー登録
+              </button>
+            </div>
           </div>
         </div>
       </Layout>

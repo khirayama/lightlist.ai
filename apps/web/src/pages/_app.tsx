@@ -21,7 +21,7 @@ export default function App({ Component, pageProps }: AppProps) {
       attribute="class"
       defaultTheme="system"
       enableSystem={true}
-      disableTransitionOnChange={false}
+      disableTransitionOnChange={true}
     >
       <AuthProvider>
         <Component {...pageProps} />

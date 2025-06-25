@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'next-themes';
@@ -18,6 +18,11 @@ export const Layout: React.FC<LayoutProps> = ({
   const { t, i18n } = useTranslation();
   const { theme, setTheme } = useTheme();
   const { isAuthenticated, logout } = useAuth();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'ja' ? 'en' : 'ja';
@@ -64,27 +69,31 @@ export const Layout: React.FC<LayoutProps> = ({
             </div>
 
             <div className="flex items-center space-x-4">
-              <button
-                onClick={toggleLanguage}
-                className="px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              >
-                {i18n.language === 'ja' ? 'EN' : 'JA'}
-              </button>
+              {isMounted && (
+                <>
+                  <button
+                    onClick={toggleLanguage}
+                    className="px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    {i18n.language === 'ja' ? 'EN' : 'JA'}
+                  </button>
 
-              <button
-                onClick={toggleTheme}
-                className="px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              >
-                {theme === 'system' ? '🖥️' : theme === 'light' ? '☀️' : '🌙'}
-              </button>
+                  <button
+                    onClick={toggleTheme}
+                    className="px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    {theme === 'system' ? '🖥️' : theme === 'light' ? '☀️' : '🌙'}
+                  </button>
 
-              {isAuthenticated && (
-                <button
-                  onClick={logout}
-                  className="px-3 py-1 rounded-md bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
-                >
-                  {t('auth.logoutButton')}
-                </button>
+                  {isAuthenticated && (
+                    <button
+                      onClick={logout}
+                      className="px-3 py-1 rounded-md bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+                    >
+                      {t('auth.logoutButton')}
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>

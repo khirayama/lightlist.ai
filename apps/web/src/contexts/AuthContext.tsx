@@ -32,11 +32,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     token: null,
     refreshToken: null,
     isAuthenticated: false,
-    isLoading: true,
+    isLoading: false, // SSRとCSRで一貫性を保つため false に変更
   });
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
+    
     const initAuth = () => {
+      // ブラウザー環境でのみ localStorage にアクセス
+      if (typeof window === 'undefined') return;
+      
       try {
         const token = localStorage.getItem('token');
         const refreshToken = localStorage.getItem('refreshToken');
@@ -51,12 +57,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             isAuthenticated: true,
             isLoading: false,
           });
-        } else {
-          setAuthState(prev => ({ ...prev, isLoading: false }));
         }
       } catch (error) {
         console.error('Failed to restore auth state:', error);
-        setAuthState(prev => ({ ...prev, isLoading: false }));
       }
     };
 
@@ -72,9 +75,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         refreshToken: 'mock-refresh-token',
       };
 
-      localStorage.setItem('token', mockResponse.token);
-      localStorage.setItem('refreshToken', mockResponse.refreshToken);
-      localStorage.setItem('user', JSON.stringify(mockResponse.user));
+      // ブラウザー環境でのみ localStorage にアクセス
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('token', mockResponse.token);
+        localStorage.setItem('refreshToken', mockResponse.refreshToken);
+        localStorage.setItem('user', JSON.stringify(mockResponse.user));
+      }
 
       setAuthState({
         user: mockResponse.user,
@@ -98,9 +104,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         refreshToken: 'mock-refresh-token',
       };
 
-      localStorage.setItem('token', mockResponse.token);
-      localStorage.setItem('refreshToken', mockResponse.refreshToken);
-      localStorage.setItem('user', JSON.stringify(mockResponse.user));
+      // ブラウザー環境でのみ localStorage にアクセス
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('token', mockResponse.token);
+        localStorage.setItem('refreshToken', mockResponse.refreshToken);
+        localStorage.setItem('user', JSON.stringify(mockResponse.user));
+      }
 
       setAuthState({
         user: mockResponse.user,
@@ -116,9 +125,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = (): void => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
+    // ブラウザー環境でのみ localStorage にアクセス
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+    }
 
     setAuthState({
       user: null,
@@ -130,7 +142,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const updateUser = (user: User): void => {
-    localStorage.setItem('user', JSON.stringify(user));
+    // ブラウザー環境でのみ localStorage にアクセス
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('user', JSON.stringify(user));
+    }
     setAuthState(prev => ({ ...prev, user }));
   };
 

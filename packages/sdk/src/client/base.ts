@@ -23,8 +23,6 @@ export class BaseApiClient {
   private accessToken: string | null = null;
   private refreshToken: string | null = null;
   private deviceId: string | null = null;
-  private isRefreshing: boolean = false;
-  private refreshPromise: Promise<void> | null = null;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl.replace(/\/$/, ''); // 末尾のスラッシュを除去
@@ -112,11 +110,10 @@ export class BaseApiClient {
         body: requestBody,
       });
 
-      // 401エラーの場合、トークンリフレッシュを試行
-      if (response.status === 401 && requiresAuth && this.refreshToken) {
-        await this.handleTokenRefresh();
-        // リフレッシュ後、元のリクエストを再実行
-        return this.request<T>(endpoint, options);
+      // 401エラーの場合、AuthContextで管理するため自動リフレッシュは無効化
+      if (response.status === 401 && requiresAuth) {
+        const error = await response.json() as ApiError;
+        throw new ApiClientError(error.error || 'Unauthorized', 401, error.details);
       }
 
       // レスポンスの処理
@@ -142,71 +139,6 @@ export class BaseApiClient {
     }
   }
 
-  /**
-   * トークンリフレッシュを処理
-   */
-  private async handleTokenRefresh(): Promise<void> {
-    // 既にリフレッシュ中の場合は、その完了を待つ
-    if (this.isRefreshing) {
-      if (this.refreshPromise) {
-        await this.refreshPromise;
-      }
-      return;
-    }
-
-    if (!this.refreshToken || !this.deviceId) {
-      throw new Error('No refresh token available');
-    }
-
-    this.isRefreshing = true;
-    
-    this.refreshPromise = this.performTokenRefresh();
-    
-    try {
-      await this.refreshPromise;
-    } finally {
-      this.isRefreshing = false;
-      this.refreshPromise = null;
-    }
-  }
-
-  /**
-   * 実際のトークンリフレッシュ処理
-   */
-  private async performTokenRefresh(): Promise<void> {
-    if (!this.refreshToken || !this.deviceId) {
-      throw new Error('No refresh token available');
-    }
-
-    try {
-      const response = await fetch(`${this.baseUrl}/api/auth/refresh`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          refreshToken: this.refreshToken,
-          deviceId: this.deviceId,
-        }),
-      });
-
-      if (!response.ok) {
-        // リフレッシュに失敗した場合、認証情報をクリア
-        this.clearAuth();
-        throw new Error('Token refresh failed');
-      }
-
-      const data = await response.json();
-      
-      // 新しいトークンを設定
-      this.accessToken = data.data.token;
-      this.refreshToken = data.data.refreshToken;
-    } catch (error) {
-      // リフレッシュに失敗した場合、認証情報をクリア
-      this.clearAuth();
-      throw error;
-    }
-  }
 
   /**
    * GET リクエスト

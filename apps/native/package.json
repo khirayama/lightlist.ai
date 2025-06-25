@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
-    "@lightlist/sdk": "workspace:*",
+    "@lightlist/sdk": "file:../../packages/sdk",
     "@react-native-async-storage/async-storage": "2.1.0",
     "@react-navigation/native": "^7.1.6",
     "expo": "~53.0.12",
@@ -35,7 +35,7 @@
     "i18next": "^24.0.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
-    "react-i18next": "^16.0.0",
+    "react-i18next": "^13.5.0",
     "react-native": "0.79.4",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",

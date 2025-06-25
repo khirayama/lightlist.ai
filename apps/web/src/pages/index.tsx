@@ -3,7 +3,8 @@ import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import { Layout } from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
-import { apiClient, TaskList, Task } from '../lib/api';
+import { sdkClient } from '../lib/sdk-client';
+import type { TaskList, Task } from '@lightlist/sdk';
 
 const HomePage: React.FC = () => {
   const { t } = useTranslation();
@@ -33,13 +34,15 @@ const HomePage: React.FC = () => {
     try {
       setIsLoadingTaskLists(true);
       setError(null);
-      const lists = await apiClient.getTaskLists();
-      setTaskLists(lists);
-      
-      // 最初のタスクリストを選択
-      if (lists.length > 0 && !selectedTaskListId) {
-        setSelectedTaskListId(lists[0].id);
-        setCurrentTaskListIndex(0);
+      const response = await sdkClient.taskList.getTaskLists();
+      if (response.data?.taskLists) {
+        setTaskLists(response.data.taskLists);
+        
+        // 最初のタスクリストを選択
+        if (response.data.taskLists.length > 0 && !selectedTaskListId) {
+          setSelectedTaskListId(response.data.taskLists[0].id);
+          setCurrentTaskListIndex(0);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch task lists:', err);
@@ -53,8 +56,10 @@ const HomePage: React.FC = () => {
     try {
       setIsLoadingTasks(true);
       setError(null);
-      const taskList = await apiClient.getTasks(taskListId);
-      setTasks(taskList);
+      const response = await sdkClient.task.getTasks(taskListId);
+      if (response.data?.tasks) {
+        setTasks(response.data.tasks);
+      }
     } catch (err) {
       console.error('Failed to fetch tasks:', err);
       setError('タスクの取得に失敗しました');
@@ -106,8 +111,10 @@ const HomePage: React.FC = () => {
     
     try {
       setError(null);
-      const newTask = await apiClient.createTask(selectedTaskListId, newTaskText.trim());
-      setTasks(prev => [newTask, ...prev]); // 上に追加
+      const response = await sdkClient.task.createTask(selectedTaskListId, { text: newTaskText.trim() });
+      if (response.data?.task) {
+        setTasks(prev => [response.data!.task, ...prev]); // 上に追加
+      }
       setNewTaskText('');
     } catch (err) {
       console.error('Failed to add task:', err);
@@ -118,10 +125,12 @@ const HomePage: React.FC = () => {
   const handleToggleTask = async (taskId: string, completed: boolean) => {
     try {
       setError(null);
-      const updatedTask = await apiClient.updateTask(taskId, { completed });
-      setTasks(prev => prev.map(task => 
-        task.id === taskId ? updatedTask : task
-      ));
+      const response = await sdkClient.task.updateTask(taskId, { completed });
+      if (response.data?.task) {
+        setTasks(prev => prev.map(task => 
+          task.id === taskId ? response.data!.task : task
+        ));
+      }
     } catch (err) {
       console.error('Failed to update task:', err);
       setError('タスクの更新に失敗しました');
@@ -131,7 +140,7 @@ const HomePage: React.FC = () => {
   const handleDeleteTask = async (taskId: string) => {
     try {
       setError(null);
-      await apiClient.deleteTask(taskId);
+      await sdkClient.task.deleteTask(taskId);
       setTasks(prev => prev.filter(task => task.id !== taskId));
     } catch (err) {
       console.error('Failed to delete task:', err);
@@ -147,7 +156,7 @@ const HomePage: React.FC = () => {
       setError(null);
       // 完了済みタスクを一括削除
       await Promise.all(
-        completedTasks.map(task => apiClient.deleteTask(task.id))
+        completedTasks.map(task => sdkClient.task.deleteTask(task.id))
       );
       setTasks(prev => prev.filter(task => !task.completed));
     } catch (err) {

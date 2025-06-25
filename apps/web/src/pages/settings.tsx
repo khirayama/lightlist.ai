@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from 'next-themes';
 import { Layout } from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
-import { apiClient, Settings, AppSettings } from '../lib/api';
+import { sdkClient } from '../lib/sdk-client';
+import type { UserSettings, AppSettings } from '@lightlist/sdk';
 
 const SettingsPage: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -13,7 +14,7 @@ const SettingsPage: React.FC = () => {
   const { user, logout } = useAuth();
   
   // 設定データ
-  const [userSettings, setUserSettings] = useState<Settings>({
+  const [userSettings, setUserSettings] = useState<UserSettings>({
     theme: 'system',
     language: 'ja',
   });
@@ -33,12 +34,14 @@ const SettingsPage: React.FC = () => {
     try {
       setIsLoadingSettings(true);
       setError(null);
-      const settings = await apiClient.getUserSettings(user.id);
-      setUserSettings(settings);
-      
-      // テーマと言語をローカル状態に反映
-      setTheme(settings.theme);
-      i18n.changeLanguage(settings.language);
+      const response = await sdkClient.user.getSettings(user.id);
+      if (response.data) {
+        setUserSettings(response.data.settings);
+        
+        // テーマと言語をローカル状態に反映
+        setTheme(response.data.settings.theme);
+        i18n.changeLanguage(response.data.settings.language);
+      }
     } catch (err) {
       console.error('Failed to fetch user settings:', err);
       setError('設定の取得に失敗しました');
@@ -53,8 +56,10 @@ const SettingsPage: React.FC = () => {
     try {
       setIsLoadingApp(true);
       setError(null);
-      const app = await apiClient.getUserApp(user.id);
-      setAppSettings(app);
+      const response = await sdkClient.user.getApp(user.id);
+      if (response.data) {
+        setAppSettings(response.data.app);
+      }
     } catch (err) {
       console.error('Failed to fetch app settings:', err);
       setError('アプリ設定の取得に失敗しました');
@@ -64,14 +69,16 @@ const SettingsPage: React.FC = () => {
   };
 
   // 設定更新関数
-  const updateUserSettings = async (updates: Partial<Settings>) => {
+  const updateUserSettings = async (updates: Partial<UserSettings>) => {
     if (!user?.id) return;
     
     try {
       setIsSaving(true);
       setError(null);
-      const updated = await apiClient.updateUserSettings(user.id, updates);
-      setUserSettings(updated);
+      const response = await sdkClient.user.updateSettings(user.id, updates);
+      if (response.data) {
+        setUserSettings(response.data.settings);
+      }
     } catch (err) {
       console.error('Failed to update user settings:', err);
       setError('設定の更新に失敗しました');
@@ -86,8 +93,10 @@ const SettingsPage: React.FC = () => {
     try {
       setIsSaving(true);
       setError(null);
-      const updated = await apiClient.updateUserApp(user.id, updates);
-      setAppSettings(updated);
+      const response = await sdkClient.user.updateApp(user.id, updates);
+      if (response.data) {
+        setAppSettings(response.data.app);
+      }
     } catch (err) {
       console.error('Failed to update app settings:', err);
       setError('アプリ設定の更新に失敗しました');
@@ -99,16 +108,16 @@ const SettingsPage: React.FC = () => {
   // イベントハンドラー
   const handleThemeChange = async (newTheme: string) => {
     setTheme(newTheme);
-    await updateUserSettings({ theme: newTheme });
+    await updateUserSettings({ theme: newTheme as UserSettings['theme'] });
   };
 
   const handleLanguageChange = async (language: string) => {
     i18n.changeLanguage(language);
-    await updateUserSettings({ language });
+    await updateUserSettings({ language: language as UserSettings['language'] });
   };
 
   const handleTaskInsertPositionChange = async (position: string) => {
-    await updateAppSettings({ taskInsertPosition: position });
+    await updateAppSettings({ taskInsertPosition: position as AppSettings['taskInsertPosition'] });
   };
 
   const handleAutoSortChange = async (autoSort: boolean) => {
@@ -131,7 +140,7 @@ const SettingsPage: React.FC = () => {
     
     try {
       setError(null);
-      await apiClient.deleteAccount(user.id);
+      await sdkClient.user.deleteAccount(user.id);
       setShowDeleteConfirm(false);
       await logout();
       router.push('/');

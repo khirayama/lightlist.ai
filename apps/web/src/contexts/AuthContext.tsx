@@ -1,10 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { apiClient, AuthResponse } from '../lib/api';
-
-export interface User {
-  id: string;
-  email: string;
-}
+import { sdkClient, saveAuthToStorage, clearAuthFromStorage, restoreAuthFromStorage, getDeviceId } from '../lib/sdk-client';
+import type { User, AuthResponse } from '@lightlist/sdk';
 
 export interface AuthState {
   user: User | null;
@@ -48,15 +44,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (typeof window === 'undefined') return;
       
       try {
-        const token = localStorage.getItem('token');
+        // SDKクライアントから認証状態を復元
+        restoreAuthFromStorage();
+        
+        const accessToken = localStorage.getItem('accessToken');
         const refreshToken = localStorage.getItem('refreshToken');
         const userStr = localStorage.getItem('user');
 
-        if (token && refreshToken && userStr) {
+        if (accessToken && refreshToken && userStr) {
           const user = JSON.parse(userStr);
           setAuthState({
             user,
-            token,
+            token: accessToken,
             refreshToken,
             isAuthenticated: true,
             isLoading: false,
@@ -75,12 +74,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
 
-      const response: AuthResponse = await apiClient.login(email, password);
+      const response: AuthResponse = await sdkClient.auth.login({
+        email,
+        password,
+        deviceId: getDeviceId(),
+      });
+
+      // 認証情報を保存
+      saveAuthToStorage(response.data.token, response.data.refreshToken);
+      
+      // ユーザー情報をlocalStorageに保存
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
 
       setAuthState({
-        user: response.user,
-        token: response.token,
-        refreshToken: response.refreshToken,
+        user: response.data.user,
+        token: response.data.token,
+        refreshToken: response.data.refreshToken,
         isAuthenticated: true,
         isLoading: false,
         error: null,
@@ -101,12 +112,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
 
-      const response: AuthResponse = await apiClient.register(email, password);
+      const response: AuthResponse = await sdkClient.auth.register({
+        email,
+        password,
+        deviceId: getDeviceId(),
+      });
+
+      // 認証情報を保存
+      saveAuthToStorage(response.data.token, response.data.refreshToken);
+      
+      // ユーザー情報をlocalStorageに保存
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
 
       setAuthState({
-        user: response.user,
-        token: response.token,
-        refreshToken: response.refreshToken,
+        user: response.data.user,
+        token: response.data.token,
+        refreshToken: response.data.refreshToken,
         isAuthenticated: true,
         isLoading: false,
         error: null,
@@ -127,7 +150,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       
-      await apiClient.logout();
+      await sdkClient.auth.logout();
+      
+      // 認証情報をクリア
+      clearAuthFromStorage();
+      
+      // ユーザー情報もlocalStorageから削除
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('user');
+      }
       
       setAuthState({
         user: null,
@@ -140,6 +171,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Logout failed:', error);
       // ログアウトが失敗してもローカル状態はクリアする
+      clearAuthFromStorage();
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('user');
+      }
       setAuthState({
         user: null,
         token: null,

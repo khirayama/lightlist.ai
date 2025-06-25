@@ -1,0 +1,229 @@
+{
+  "app": {
+    "name": "Lightlist"
+  },
+  "common": {
+    "loading": "読み込み中...",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集",
+    "done": "完了",
+    "back": "戻る",
+    "settings": "設定",
+    "logout": "ログアウト",
+    "ok": "OK",
+    "error": "エラー",
+    "success": "成功",
+    "yes": "はい",
+    "no": "いいえ"
+  },
+  "auth": {
+    "login": {
+      "title": "ログイン",
+      "subtitle": "アカウントにサインインしてください",
+      "email": "メールアドレス",
+      "emailPlaceholder": "メールアドレスを入力",
+      "password": "パスワード",
+      "passwordPlaceholder": "パスワードを入力",
+      "loginButton": "ログイン",
+      "loginButtonLoading": "ログイン中...",
+      "forgotPassword": "パスワードを忘れた方はこちら",
+      "noAccount": "アカウントをお持ちでない方は",
+      "register": "ユーザー登録",
+      "validation": {
+        "emailRequired": "メールアドレスを入力してください",
+        "emailInvalid": "有効なメールアドレスを入力してください",
+        "passwordRequired": "パスワードを入力してください"
+      },
+      "errors": {
+        "loginFailed": "ログインに失敗しました"
+      }
+    },
+    "register": {
+      "title": "ユーザー登録",
+      "subtitle": "新しいアカウントを作成してください",
+      "email": "メールアドレス",
+      "emailPlaceholder": "メールアドレスを入力",
+      "password": "パスワード",
+      "passwordPlaceholder": "パスワードを入力",
+      "confirmPassword": "パスワード確認",
+      "confirmPasswordPlaceholder": "パスワードを再入力",
+      "registerButton": "ユーザー登録",
+      "registerButtonLoading": "登録中...",
+      "hasAccount": "既にアカウントをお持ちの方は",
+      "login": "ログイン",
+      "validation": {
+        "emailRequired": "メールアドレスを入力してください",
+        "emailInvalid": "有効なメールアドレスを入力してください",
+        "passwordRequired": "パスワードを入力してください",
+        "passwordWeak": "パスワードは大文字・小文字・数字を含む8文字以上で入力してください",
+        "confirmPasswordRequired": "パスワード確認を入力してください",
+        "passwordMismatch": "パスワードが一致しません"
+      },
+      "errors": {
+        "registrationFailed": "ユーザー登録に失敗しました"
+      }
+    },
+    "forgotPassword": {
+      "title": "パスワードを忘れた方",
+      "subtitle": "登録されたメールアドレスにパスワードリセットリンクを送信します",
+      "email": "メールアドレス",
+      "emailPlaceholder": "メールアドレスを入力",
+      "sendButton": "リセットリンクを送信",
+      "sendButtonLoading": "送信中...",
+      "backToLogin": "ログインに戻る"
+    },
+    "resetPassword": {
+      "title": "パスワードリセット",
+      "subtitle": "新しいパスワードを入力してください",
+      "newPassword": "新しいパスワード",
+      "newPasswordPlaceholder": "新しいパスワードを入力",
+      "confirmPassword": "パスワード確認",
+      "confirmPasswordPlaceholder": "パスワードを再入力",
+      "resetButton": "パスワードをリセット",
+      "resetButtonLoading": "リセット中..."
+    }
+  },
+  "home": {
+    "title": "タスクリスト",
+    "userEmail": "{{email}}",
+    "newTaskList": "新しいタスクリスト",
+    "loginRegister": "ログイン / 新規登録",
+    "taskInput": {
+      "placeholder": "タスクを入力...",
+      "accessibilityLabel": "新しいタスクを入力"
+    },
+    "toolbar": {
+      "taskCount": "タスク ({{count}})",
+      "sort": "並び替え",
+      "sortAccessibilityLabel": "タスクを並び替え",
+      "deleteCompleted": "完了タスクを削除",
+      "sortCompleted": "並び替えが完了しました"
+    },
+    "task": {
+      "completed": "完了",
+      "completedAccessibilityLabel": "タスクを完了にする",
+      "moveAccessibilityLabel": "タスクを移動",
+      "dueDate": "期限: {{date}}",
+      "setDueDateAccessibilityLabel": "期限を設定"
+    },
+    "share": {
+      "title": "共有",
+      "accessibilityLabel": "タスクリストを共有"
+    },
+    "modal": {
+      "createTaskList": {
+        "title": "新しいタスクリスト",
+        "nameLabel": "タスクリスト名",
+        "namePlaceholder": "タスクリスト名を入力",
+        "nameRequired": "タスクリスト名は必須です",
+        "maxLength": "タスクリスト名は50文字以内で入力してください",
+        "charactersRemaining": "残り{{count}}文字",
+        "createButton": "作成",
+        "createButtonLoading": "作成中...",
+        "cancel": "キャンセル"
+      },
+      "deleteTaskList": {
+        "title": "タスクリスト削除",
+        "message": "本当にこのタスクリストを削除しますか？",
+        "confirm": "削除",
+        "cancel": "キャンセル"
+      },
+      "deleteCompletedTasks": {
+        "title": "完了タスク削除",
+        "message": "完了済みタスクを削除しますか？",
+        "confirm": "削除",
+        "cancel": "キャンセル"
+      }
+    }
+  },
+  "settings": {
+    "title": "設定",
+    "sections": {
+      "profile": "プロフィール",
+      "appearance": "外観",
+      "tasks": "タスク設定",
+      "account": "アカウント"
+    },
+    "profile": {
+      "username": "ユーザー名",
+      "usernamePlaceholder": "ユーザー名を入力",
+      "email": "メールアドレス",
+      "updateSuccess": "プロフィールを更新しました",
+      "updateError": "プロフィールの更新に失敗しました"
+    },
+    "appearance": {
+      "theme": "テーマ",
+      "themeSystem": "システム",
+      "themeLight": "ライト",
+      "themeDark": "ダーク",
+      "language": "言語",
+      "languageJa": "日本語",
+      "languageEn": "English"
+    },
+    "tasks": {
+      "insertPosition": "タスクの挿入位置",
+      "insertTop": "上に追加",
+      "insertBottom": "下に追加",
+      "autoSort": "自動並び替え",
+      "autoSortDescription": "タスクを自動的に並び替えます（完了・未完了、日付順など）"
+    },
+    "account": {
+      "logout": "ログアウト",
+      "deleteAccount": "アカウント削除",
+      "logoutConfirm": {
+        "title": "ログアウト",
+        "message": "ログアウトしますか？",
+        "confirm": "ログアウト",
+        "cancel": "キャンセル"
+      },
+      "deleteAccountConfirm": {
+        "title": "アカウント削除",
+        "message": "本当にアカウントを削除しますか？この操作は取り消せません。",
+        "emailVerification": "メールアドレスを入力してください",
+        "emailMismatch": "メールアドレスが正しくありません",
+        "confirm": "削除実行",
+        "cancel": "キャンセル",
+        "success": "アカウントを削除しました",
+        "gracePeriod": "24時間以内であれば復元可能です"
+      }
+    }
+  },
+  "validation": {
+    "required": "この項目は必須です",
+    "email": "有効なメールアドレスを入力してください",
+    "password": "パスワードは大文字・小文字・数字を含む8文字以上で入力してください",
+    "passwordMatch": "パスワードが一致しません",
+    "maxLength": "{{max}}文字以内で入力してください"
+  },
+  "errors": {
+    "network": "ネットワークエラーが発生しました",
+    "server": "サーバーエラーが発生しました",
+    "unknown": "予期しないエラーが発生しました",
+    "retry": "再試行してください"
+  },
+  "accessibility": {
+    "navigationDrawer": "ナビゲーションドロワー",
+    "openDrawer": "ドロワーを開く",
+    "closeDrawer": "ドロワーを閉じる",
+    "taskList": "タスクリスト",
+    "task": "タスク",
+    "button": "ボタン",
+    "textInput": "テキスト入力",
+    "switch": "スイッチ",
+    "picker": "選択"
+  },
+  "dates": {
+    "today": "今日",
+    "tomorrow": "明日",
+    "yesterday": "昨日",
+    "monday": "月曜日",
+    "tuesday": "火曜日",
+    "wednesday": "水曜日",
+    "thursday": "木曜日",
+    "friday": "金曜日",
+    "saturday": "土曜日",
+    "sunday": "日曜日"
+  }
+}

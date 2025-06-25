@@ -1,0 +1,229 @@
+{
+  "app": {
+    "name": "Lightlist"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "done": "Done",
+    "back": "Back",
+    "settings": "Settings",
+    "logout": "Logout",
+    "ok": "OK",
+    "error": "Error",
+    "success": "Success",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "auth": {
+    "login": {
+      "title": "Sign In",
+      "subtitle": "Please sign in to your account",
+      "email": "Email Address",
+      "emailPlaceholder": "Enter your email",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "loginButton": "Sign In",
+      "loginButtonLoading": "Signing in...",
+      "forgotPassword": "Forgot your password?",
+      "noAccount": "Don't have an account?",
+      "register": "Sign Up",
+      "validation": {
+        "emailRequired": "Email address is required",
+        "emailInvalid": "Please enter a valid email address",
+        "passwordRequired": "Password is required"
+      },
+      "errors": {
+        "loginFailed": "Login failed"
+      }
+    },
+    "register": {
+      "title": "Sign Up",
+      "subtitle": "Create a new account",
+      "email": "Email Address",
+      "emailPlaceholder": "Enter your email",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Re-enter your password",
+      "registerButton": "Sign Up",
+      "registerButtonLoading": "Signing up...",
+      "hasAccount": "Already have an account?",
+      "login": "Sign In",
+      "validation": {
+        "emailRequired": "Email address is required",
+        "emailInvalid": "Please enter a valid email address",
+        "passwordRequired": "Password is required",
+        "passwordWeak": "Password must be at least 8 characters with uppercase, lowercase, and numbers",
+        "confirmPasswordRequired": "Password confirmation is required",
+        "passwordMismatch": "Passwords do not match"
+      },
+      "errors": {
+        "registrationFailed": "Registration failed"
+      }
+    },
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "subtitle": "We'll send a password reset link to your email",
+      "email": "Email Address",
+      "emailPlaceholder": "Enter your email",
+      "sendButton": "Send Reset Link",
+      "sendButtonLoading": "Sending...",
+      "backToLogin": "Back to Sign In"
+    },
+    "resetPassword": {
+      "title": "Reset Password",
+      "subtitle": "Enter your new password",
+      "newPassword": "New Password",
+      "newPasswordPlaceholder": "Enter new password",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Re-enter password",
+      "resetButton": "Reset Password",
+      "resetButtonLoading": "Resetting..."
+    }
+  },
+  "home": {
+    "title": "Task Lists",
+    "userEmail": "{{email}}",
+    "newTaskList": "New Task List",
+    "loginRegister": "Sign In / Sign Up",
+    "taskInput": {
+      "placeholder": "Enter a task...",
+      "accessibilityLabel": "Enter a new task"
+    },
+    "toolbar": {
+      "taskCount": "Tasks ({{count}})",
+      "sort": "Sort",
+      "sortAccessibilityLabel": "Sort tasks",
+      "deleteCompleted": "Delete Completed",
+      "sortCompleted": "Sort completed"
+    },
+    "task": {
+      "completed": "Completed",
+      "completedAccessibilityLabel": "Mark task as completed",
+      "moveAccessibilityLabel": "Move task",
+      "dueDate": "Due: {{date}}",
+      "setDueDateAccessibilityLabel": "Set due date"
+    },
+    "share": {
+      "title": "Share",
+      "accessibilityLabel": "Share task list"
+    },
+    "modal": {
+      "createTaskList": {
+        "title": "New Task List",
+        "nameLabel": "Task List Name",
+        "namePlaceholder": "Enter task list name",
+        "nameRequired": "Task list name is required",
+        "maxLength": "Task list name must be 50 characters or less",
+        "charactersRemaining": "{{count}} characters remaining",
+        "createButton": "Create",
+        "createButtonLoading": "Creating...",
+        "cancel": "Cancel"
+      },
+      "deleteTaskList": {
+        "title": "Delete Task List",
+        "message": "Are you sure you want to delete this task list?",
+        "confirm": "Delete",
+        "cancel": "Cancel"
+      },
+      "deleteCompletedTasks": {
+        "title": "Delete Completed Tasks",
+        "message": "Are you sure you want to delete all completed tasks?",
+        "confirm": "Delete",
+        "cancel": "Cancel"
+      }
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "sections": {
+      "profile": "Profile",
+      "appearance": "Appearance",
+      "tasks": "Task Settings",
+      "account": "Account"
+    },
+    "profile": {
+      "username": "Username",
+      "usernamePlaceholder": "Enter username",
+      "email": "Email Address",
+      "updateSuccess": "Profile updated successfully",
+      "updateError": "Failed to update profile"
+    },
+    "appearance": {
+      "theme": "Theme",
+      "themeSystem": "System",
+      "themeLight": "Light",
+      "themeDark": "Dark",
+      "language": "Language",
+      "languageJa": "日本語",
+      "languageEn": "English"
+    },
+    "tasks": {
+      "insertPosition": "Task Insert Position",
+      "insertTop": "Add to Top",
+      "insertBottom": "Add to Bottom",
+      "autoSort": "Auto Sort",
+      "autoSortDescription": "Automatically sort tasks (completed/incomplete, by date, etc.)"
+    },
+    "account": {
+      "logout": "Sign Out",
+      "deleteAccount": "Delete Account",
+      "logoutConfirm": {
+        "title": "Sign Out",
+        "message": "Are you sure you want to sign out?",
+        "confirm": "Sign Out",
+        "cancel": "Cancel"
+      },
+      "deleteAccountConfirm": {
+        "title": "Delete Account",
+        "message": "Are you sure you want to delete your account? This action cannot be undone.",
+        "emailVerification": "Please enter your email address",
+        "emailMismatch": "Email address is incorrect",
+        "confirm": "Delete Account",
+        "cancel": "Cancel",
+        "success": "Account deleted successfully",
+        "gracePeriod": "You can restore it within 24 hours"
+      }
+    }
+  },
+  "validation": {
+    "required": "This field is required",
+    "email": "Please enter a valid email address",
+    "password": "Password must be at least 8 characters with uppercase, lowercase, and numbers",
+    "passwordMatch": "Passwords do not match",
+    "maxLength": "Must be {{max}} characters or less"
+  },
+  "errors": {
+    "network": "Network error occurred",
+    "server": "Server error occurred",
+    "unknown": "An unexpected error occurred",
+    "retry": "Please try again"
+  },
+  "accessibility": {
+    "navigationDrawer": "Navigation drawer",
+    "openDrawer": "Open drawer",
+    "closeDrawer": "Close drawer",
+    "taskList": "Task list",
+    "task": "Task",
+    "button": "Button",
+    "textInput": "Text input",
+    "switch": "Switch",
+    "picker": "Picker"
+  },
+  "dates": {
+    "today": "today",
+    "tomorrow": "tomorrow",
+    "yesterday": "yesterday",
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday",
+    "sunday": "Sunday"
+  }
+}

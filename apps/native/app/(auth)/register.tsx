@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Link, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function RegisterScreen() {
+  const { t } = useTranslation();
+  const { register, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{
     email?: string; 
     password?: string; 
@@ -60,19 +63,14 @@ export default function RegisterScreen() {
     if (!validateForm()) {
       return;
     }
-
-    setIsLoading(true);
     
     try {
-      // TODO: 実際のAPI呼び出しを実装
-      await new Promise(resolve => setTimeout(resolve, 1000)); // シミュレート
-      
+      await register(email, password);
       // 登録成功時はメイン画面に遷移
       router.replace('/');
     } catch (error) {
+      console.error('Register error:', error);
       Alert.alert('エラー', 'ユーザー登録に失敗しました');
-    } finally {
-      setIsLoading(false);
     }
   };
 

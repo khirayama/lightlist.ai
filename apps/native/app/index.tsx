@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, Dimensions, Platform } from '
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useColorScheme } from '@/components/useColorScheme';
+import { useAuth } from '../contexts/AuthContext';
 
 // アイコン用のシンプルなコンポーネント
 const Icon = ({ name, size = 24, color = '#6B7280' }: { name: string; size?: number; color?: string }) => {
@@ -47,11 +48,19 @@ const taskLists = [
 ];
 
 export default function HomeScreen() {
+  const { user, isLoading, isAuthenticated } = useAuth();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedTaskListIndex, setSelectedTaskListIndex] = useState(0);
   const [newTaskText, setNewTaskText] = useState('');
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
   const colorScheme = useColorScheme();
+
+  // 認証チェック
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace('/(auth)/login' as any);
+    }
+  }, [isLoading, isAuthenticated]);
 
   // Web環境でのウィンドウリサイズ対応
   useEffect(() => {
@@ -95,6 +104,20 @@ export default function HomeScreen() {
     router.push('/(auth)/login' as any);
   };
 
+  // ローディング中は空の画面を表示
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900 justify-center items-center">
+        <Text className="text-gray-600 dark:text-gray-400">読み込み中...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  // 未認証の場合は何も表示しない（useEffectでリダイレクト）
+  if (!isAuthenticated) {
+    return null;
+  }
+
   const selectedTaskList = taskLists[selectedTaskListIndex];
 
   // ドロワーコンテンツ
@@ -108,7 +131,7 @@ export default function HomeScreen() {
         >
           <Icon name="user" size={24} color={colorScheme === 'dark' ? '#fff' : '#1f2937'} />
           <Text className="ml-3 text-lg font-semibold text-gray-900 dark:text-white">
-            user@example.com
+            {user?.email || 'ユーザー'}
           </Text>
           <View className="ml-auto">
             <Icon name="settings" size={20} color={colorScheme === 'dark' ? '#9CA3AF' : '#6B7280'} />

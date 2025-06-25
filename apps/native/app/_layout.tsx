@@ -3,12 +3,14 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/components/useColorScheme';
+import { AuthProvider } from '../contexts/AuthContext';
 import '../styles/global.css';
+import '../i18n';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -52,39 +54,41 @@ function RootLayoutNav() {
 
   return (
     <SafeAreaProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            animation: 'slide_from_right',
-          }}
-        >
-          {/* メインアプリ画面 */}
-          <Stack.Screen 
-            name="index" 
-            options={{
-              title: 'Lightlist',
+      <AuthProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              animation: 'slide_from_right',
             }}
-          />
-          
-          {/* 認証フロー */}
-          <Stack.Screen 
-            name="(auth)" 
-            options={{
-              presentation: 'modal',
-            }}
-          />
-          
-          {/* 設定画面 */}
-          <Stack.Screen 
-            name="settings" 
-            options={{
-              title: '設定',
-              presentation: 'modal',
-            }}
-          />
-        </Stack>
-      </ThemeProvider>
+          >
+            {/* メインアプリ画面 */}
+            <Stack.Screen 
+              name="index" 
+              options={{
+                title: 'Lightlist',
+              }}
+            />
+            
+            {/* 認証フロー */}
+            <Stack.Screen 
+              name="(auth)" 
+              options={{
+                presentation: 'modal',
+              }}
+            />
+            
+            {/* 設定画面 */}
+            <Stack.Screen 
+              name="settings" 
+              options={{
+                title: '設定',
+                presentation: 'modal',
+              }}
+            />
+          </Stack>
+        </ThemeProvider>
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }

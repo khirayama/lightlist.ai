@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Switch, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { useColorScheme } from '@/components/useColorScheme';
+import { useTranslation } from 'react-i18next';
+import { useSettings, Theme, Language, TaskInsertPosition } from '../hooks/useSettings';
+import { useAuth } from '../contexts/AuthContext';
 
 // アイコン用のシンプルなコンポーネント
 const Icon = ({ name, size = 24, color = '#6B7280' }: { name: string; size?: number; color?: string }) => {
@@ -24,20 +26,23 @@ const Icon = ({ name, size = 24, color = '#6B7280' }: { name: string; size?: num
   );
 };
 
-type Theme = 'system' | 'light' | 'dark';
-type Language = 'ja' | 'en';
-type TaskInsertPosition = 'top' | 'bottom';
-
 export default function SettingsScreen() {
+  const { t } = useTranslation();
+  const { user, logout, isLoading: authLoading } = useAuth();
+  const {
+    settings,
+    isLoading: settingsLoading,
+    effectiveTheme,
+    updateTheme,
+    updateLanguage,
+    updateTaskInsertPosition,
+    updateAutoSort,
+  } = useSettings();
+  
   const [userName, setUserName] = useState('');
-  const [email] = useState('user@example.com');
-  const [theme, setTheme] = useState<Theme>('system');
-  const [language, setLanguage] = useState<Language>('ja');
-  const [taskInsertPosition, setTaskInsertPosition] = useState<TaskInsertPosition>('top');
-  const [autoSort, setAutoSort] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  const colorScheme = useColorScheme();
+  const colorScheme = effectiveTheme;
 
   const handleBack = () => {
     router.back();
@@ -48,26 +53,63 @@ export default function SettingsScreen() {
     try {
       // TODO: 実際のAPI呼び出しを実装
       await new Promise(resolve => setTimeout(resolve, 500));
-      Alert.alert('成功', 'プロフィールを更新しました');
+      Alert.alert(t('common.success'), t('settings.profile.updateSuccess'));
     } catch (error) {
-      Alert.alert('エラー', 'プロフィールの更新に失敗しました');
+      Alert.alert(t('common.error'), t('settings.profile.updateError'));
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleThemeChange = async (newTheme: Theme) => {
+    try {
+      await updateTheme(newTheme);
+    } catch (error) {
+      Alert.alert(t('common.error'), t('errors.unknown'));
+    }
+  };
+
+  const handleLanguageChange = async (newLanguage: Language) => {
+    try {
+      await updateLanguage(newLanguage);
+    } catch (error) {
+      Alert.alert(t('common.error'), t('errors.unknown'));
+    }
+  };
+
+  const handleTaskInsertPositionChange = async (newPosition: TaskInsertPosition) => {
+    try {
+      await updateTaskInsertPosition(newPosition);
+    } catch (error) {
+      Alert.alert(t('common.error'), t('errors.unknown'));
+    }
+  };
+
+  const handleAutoSortChange = async (value: boolean) => {
+    try {
+      await updateAutoSort(value);
+    } catch (error) {
+      Alert.alert(t('common.error'), t('errors.unknown'));
+    }
+  };
+
   const handleLogout = () => {
     Alert.alert(
-      'ログアウト',
-      'ログアウトしますか？',
+      t('settings.account.logoutConfirm.title'),
+      t('settings.account.logoutConfirm.message'),
       [
-        { text: 'キャンセル', style: 'cancel' },
+        { text: t('settings.account.logoutConfirm.cancel'), style: 'cancel' },
         { 
-          text: 'ログアウト', 
+          text: t('settings.account.logoutConfirm.confirm'), 
           style: 'destructive',
-          onPress: () => {
-            // TODO: ログアウト処理を実装
-            router.replace('/(auth)/login' as any);
+          onPress: async () => {
+            try {
+              await logout();
+              router.replace('/(auth)/login' as any);
+            } catch (error) {
+              console.error('Logout error:', error);
+              Alert.alert(t('common.error'), t('errors.unknown'));
+            }
           }
         }
       ]
@@ -76,30 +118,33 @@ export default function SettingsScreen() {
 
   const handleDeleteAccount = () => {
     Alert.alert(
-      'アカウント削除',
-      '本当にアカウントを削除しますか？この操作は取り消せません。',
+      t('settings.account.deleteAccountConfirm.title'),
+      t('settings.account.deleteAccountConfirm.message'),
       [
-        { text: 'キャンセル', style: 'cancel' },
+        { text: t('settings.account.deleteAccountConfirm.cancel'), style: 'cancel' },
         { 
-          text: '削除', 
+          text: t('settings.account.deleteAccountConfirm.confirm'), 
           style: 'destructive',
           onPress: () => {
             // 二段階確認
             Alert.prompt(
-              'アカウント削除の確認',
-              'メールアドレスを入力してください',
+              t('settings.account.deleteAccountConfirm.title'),
+              t('settings.account.deleteAccountConfirm.emailVerification'),
               [
-                { text: 'キャンセル', style: 'cancel' },
+                { text: t('settings.account.deleteAccountConfirm.cancel'), style: 'cancel' },
                 { 
-                  text: '削除実行', 
+                  text: t('settings.account.deleteAccountConfirm.confirm'), 
                   style: 'destructive',
                   onPress: (inputEmail) => {
-                    if (inputEmail === email) {
+                    if (inputEmail === user?.email) {
                       // TODO: アカウント削除処理を実装
-                      Alert.alert('削除完了', 'アカウントを削除しました');
+                      Alert.alert(
+                        t('common.success'), 
+                        `${t('settings.account.deleteAccountConfirm.success')}\n${t('settings.account.deleteAccountConfirm.gracePeriod')}`
+                      );
                       router.replace('/(auth)/login' as any);
                     } else {
-                      Alert.alert('エラー', 'メールアドレスが正しくありません');
+                      Alert.alert(t('common.error'), t('settings.account.deleteAccountConfirm.emailMismatch'));
                     }
                   }
                 }
@@ -153,21 +198,21 @@ export default function SettingsScreen() {
           <Icon name="back" size={24} color={colorScheme === 'dark' ? '#fff' : '#1f2937'} />
         </TouchableOpacity>
         <Text className="text-xl font-bold text-gray-900 dark:text-white">
-          設定
+          {t('settings.title')}
         </Text>
       </View>
 
       <ScrollView className="flex-1 p-4">
         {/* プロフィール設定 */}
-        <SettingSection title="プロフィール">
+        <SettingSection title={t('settings.sections.profile')}>
           <View className="p-4">
             <View className="mb-4">
               <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                ユーザー名
+                {t('settings.profile.username')}
               </Text>
               <TextInput
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="ユーザー名を入力"
+                placeholder={t('settings.profile.usernamePlaceholder')}
                 placeholderTextColor="#9CA3AF"
                 value={userName}
                 onChangeText={setUserName}
@@ -177,60 +222,60 @@ export default function SettingsScreen() {
             
             <View className="mb-4">
               <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                メールアドレス
+                {t('settings.profile.email')}
               </Text>
               <Text className="px-4 py-3 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400">
-                {email}
+                {user?.email || 'user@example.com'}
               </Text>
             </View>
           </View>
         </SettingSection>
 
         {/* 外観設定 */}
-        <SettingSection title="外観">
-          <SettingItem icon="palette" label="テーマ">
+        <SettingSection title={t('settings.sections.appearance')}>
+          <SettingItem icon="palette" label={t('settings.appearance.theme')}>
             <View className="flex-row space-x-2">
               {(['system', 'light', 'dark'] as Theme[]).map((themeOption) => (
                 <TouchableOpacity
                   key={themeOption}
                   className={`px-3 py-2 rounded-lg ${
-                    theme === themeOption 
+                    settings.theme === themeOption 
                       ? 'bg-primary-500' 
                       : 'bg-gray-200 dark:bg-gray-700'
                   }`}
-                  onPress={() => setTheme(themeOption)}
+                  onPress={() => handleThemeChange(themeOption)}
                 >
                   <Text className={`text-sm ${
-                    theme === themeOption 
+                    settings.theme === themeOption 
                       ? 'text-white' 
                       : 'text-gray-700 dark:text-gray-300'
                   }`}>
-                    {themeOption === 'system' ? 'システム' : 
-                     themeOption === 'light' ? 'ライト' : 'ダーク'}
+                    {themeOption === 'system' ? t('settings.appearance.themeSystem') : 
+                     themeOption === 'light' ? t('settings.appearance.themeLight') : t('settings.appearance.themeDark')}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
           </SettingItem>
           
-          <SettingItem icon="language" label="言語" isLast>
+          <SettingItem icon="language" label={t('settings.appearance.language')} isLast>
             <View className="flex-row space-x-2">
               {(['ja', 'en'] as Language[]).map((lang) => (
                 <TouchableOpacity
                   key={lang}
                   className={`px-3 py-2 rounded-lg ${
-                    language === lang 
+                    settings.language === lang 
                       ? 'bg-primary-500' 
                       : 'bg-gray-200 dark:bg-gray-700'
                   }`}
-                  onPress={() => setLanguage(lang)}
+                  onPress={() => handleLanguageChange(lang)}
                 >
                   <Text className={`text-sm ${
-                    language === lang 
+                    settings.language === lang 
                       ? 'text-white' 
                       : 'text-gray-700 dark:text-gray-300'
                   }`}>
-                    {lang === 'ja' ? '日本語' : 'English'}
+                    {lang === 'ja' ? t('settings.appearance.languageJa') : t('settings.appearance.languageEn')}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -239,51 +284,51 @@ export default function SettingsScreen() {
         </SettingSection>
 
         {/* タスク設定 */}
-        <SettingSection title="タスク設定">
-          <SettingItem icon="settings" label="タスクの挿入位置">
+        <SettingSection title={t('settings.sections.tasks')}>
+          <SettingItem icon="settings" label={t('settings.tasks.insertPosition')}>
             <View className="flex-row space-x-2">
               {(['top', 'bottom'] as TaskInsertPosition[]).map((position) => (
                 <TouchableOpacity
                   key={position}
                   className={`px-3 py-2 rounded-lg ${
-                    taskInsertPosition === position 
+                    settings.taskInsertPosition === position 
                       ? 'bg-primary-500' 
                       : 'bg-gray-200 dark:bg-gray-700'
                   }`}
-                  onPress={() => setTaskInsertPosition(position)}
+                  onPress={() => handleTaskInsertPositionChange(position)}
                 >
                   <Text className={`text-sm ${
-                    taskInsertPosition === position 
+                    settings.taskInsertPosition === position 
                       ? 'text-white' 
                       : 'text-gray-700 dark:text-gray-300'
                   }`}>
-                    {position === 'top' ? '上に追加' : '下に追加'}
+                    {position === 'top' ? t('settings.tasks.insertTop') : t('settings.tasks.insertBottom')}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
           </SettingItem>
           
-          <SettingItem icon="check" label="自動並び替え" isLast>
+          <SettingItem icon="check" label={t('settings.tasks.autoSort')} isLast>
             <Switch
-              value={autoSort}
-              onValueChange={setAutoSort}
+              value={settings.autoSort}
+              onValueChange={handleAutoSortChange}
               trackColor={{ false: '#D1D5DB', true: '#93C5FD' }}
-              thumbColor={autoSort ? '#005AAF' : '#f4f3f4'}
+              thumbColor={settings.autoSort ? '#005AAF' : '#f4f3f4'}
             />
           </SettingItem>
         </SettingSection>
 
         {/* アカウント管理 */}
-        <SettingSection title="アカウント">
+        <SettingSection title={t('settings.sections.account')}>
           <TouchableOpacity onPress={handleLogout}>
-            <SettingItem icon="logout" label="ログアウト">
+            <SettingItem icon="logout" label={t('settings.account.logout')}>
               <Icon name="back" size={16} color={colorScheme === 'dark' ? '#9CA3AF' : '#6B7280'} />
             </SettingItem>
           </TouchableOpacity>
           
           <TouchableOpacity onPress={handleDeleteAccount}>
-            <SettingItem icon="trash" label="アカウント削除" isLast>
+            <SettingItem icon="trash" label={t('settings.account.deleteAccount')} isLast>
               <Icon name="back" size={16} color="#EF4444" />
             </SettingItem>
           </TouchableOpacity>

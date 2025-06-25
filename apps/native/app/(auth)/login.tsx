@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Link, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function LoginScreen() {
+  const { t } = useTranslation();
+  const { login, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{email?: string; password?: string}>({});
 
   const validateEmail = (email: string) => {
@@ -18,13 +21,13 @@ export default function LoginScreen() {
     const newErrors: {email?: string; password?: string} = {};
     
     if (!email.trim()) {
-      newErrors.email = 'メールアドレスを入力してください';
+      newErrors.email = t('auth.login.validation.emailRequired');
     } else if (!validateEmail(email)) {
-      newErrors.email = '有効なメールアドレスを入力してください';
+      newErrors.email = t('auth.login.validation.emailInvalid');
     }
     
     if (!password.trim()) {
-      newErrors.password = 'パスワードを入力してください';
+      newErrors.password = t('auth.login.validation.passwordRequired');
     }
     
     setErrors(newErrors);
@@ -35,19 +38,14 @@ export default function LoginScreen() {
     if (!validateForm()) {
       return;
     }
-
-    setIsLoading(true);
     
     try {
-      // TODO: 実際のAPI呼び出しを実装
-      await new Promise(resolve => setTimeout(resolve, 1000)); // シミュレート
-      
+      await login(email, password);
       // ログイン成功時はメイン画面に遷移
       router.replace('/');
     } catch (error) {
-      Alert.alert('エラー', 'ログインに失敗しました');
-    } finally {
-      setIsLoading(false);
+      console.error('Login error:', error);
+      Alert.alert(t('common.error'), t('auth.login.errors.loginFailed'));
     }
   };
 
@@ -62,10 +60,10 @@ export default function LoginScreen() {
           {/* ヘッダー */}
           <View className="mb-8">
             <Text className="text-3xl font-bold text-gray-900 dark:text-white text-center mb-2">
-              ログイン
+              {t('auth.login.title')}
             </Text>
             <Text className="text-gray-600 dark:text-gray-400 text-center">
-              アカウントにサインインしてください
+              {t('auth.login.subtitle')}
             </Text>
           </View>
 
@@ -74,13 +72,13 @@ export default function LoginScreen() {
             {/* メールアドレス */}
             <View>
               <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                メールアドレス
+                {t('auth.login.email')}
               </Text>
               <TextInput
                 className={`w-full px-4 py-3 border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
                   errors.email ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
                 }`}
-                placeholder="メールアドレスを入力"
+                placeholder={t('auth.login.emailPlaceholder')}
                 placeholderTextColor="#9CA3AF"
                 value={email}
                 onChangeText={setEmail}
@@ -96,13 +94,13 @@ export default function LoginScreen() {
             {/* パスワード */}
             <View>
               <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                パスワード
+                {t('auth.login.password')}
               </Text>
               <TextInput
                 className={`w-full px-4 py-3 border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
                   errors.password ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
                 }`}
-                placeholder="パスワードを入力"
+                placeholder={t('auth.login.passwordPlaceholder')}
                 placeholderTextColor="#9CA3AF"
                 value={password}
                 onChangeText={setPassword}
@@ -119,7 +117,7 @@ export default function LoginScreen() {
               <Link href={"/(auth)/forgot-password" as any} asChild>
                 <TouchableOpacity>
                   <Text className="text-primary-500 text-sm font-medium">
-                    パスワードを忘れた方はこちら
+                    {t('auth.login.forgotPassword')}
                   </Text>
                 </TouchableOpacity>
               </Link>
@@ -134,19 +132,19 @@ export default function LoginScreen() {
               disabled={isLoading}
             >
               <Text className="text-white text-center font-semibold text-base">
-                {isLoading ? 'ログイン中...' : 'ログイン'}
+                {isLoading ? t('auth.login.loginButtonLoading') : t('auth.login.loginButton')}
               </Text>
             </TouchableOpacity>
 
             {/* 新規登録リンク */}
             <View className="flex-row justify-center items-center mt-6">
               <Text className="text-gray-600 dark:text-gray-400">
-                アカウントをお持ちでない方は{' '}
+                {t('auth.login.noAccount')}{' '}
               </Text>
               <Link href={"/(auth)/register" as any} asChild>
                 <TouchableOpacity>
                   <Text className="text-primary-500 font-medium">
-                    ユーザー登録
+                    {t('auth.login.register')}
                   </Text>
                 </TouchableOpacity>
               </Link>

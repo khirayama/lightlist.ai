@@ -8,28 +8,30 @@ import { useAuth } from '../contexts/AuthContext';
 const RegisterPage: React.FC = () => {
   const { t } = useTranslation();
   const router = useRouter();
-  const { register, isAuthenticated } = useAuth();
+  const { register, isAuthenticated, isLoading, error, clearError } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     passwordConfirm: '',
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    setError(null);
+    setValidationError(null);
+    if (error) {
+      clearError();
+    }
   };
 
   const validateForm = (): boolean => {
     if (formData.password !== formData.passwordConfirm) {
-      setError('パスワードが一致しません');
+      setValidationError('パスワードが一致しません');
       return false;
     }
     if (formData.password.length < 8) {
-      setError('パスワードは8文字以上で入力してください');
+      setValidationError('パスワードは8文字以上で入力してください');
       return false;
     }
     return true;
@@ -37,11 +39,9 @@ const RegisterPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
+    setValidationError(null);
 
     if (!validateForm()) {
-      setIsLoading(false);
       return;
     }
 
@@ -49,10 +49,8 @@ const RegisterPage: React.FC = () => {
       await register(formData.email, formData.password);
       router.push('/');
     } catch (err) {
-      setError(t('common.error'));
+      // エラーはAuthContextで管理される
       console.error('Registration error:', err);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -75,9 +73,9 @@ const RegisterPage: React.FC = () => {
           </div>
 
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            {error && (
+            {(error || validationError) && (
               <div className="p-3 bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 rounded-md">
-                <p className="text-red-700 dark:text-red-300 text-sm">{error}</p>
+                <p className="text-red-700 dark:text-red-300 text-sm">{error || validationError}</p>
               </div>
             )}
 

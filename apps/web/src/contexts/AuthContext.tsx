@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { apiClient, AuthResponse } from '../lib/api';
 
 export interface User {
   id: string;
@@ -11,13 +12,15 @@ export interface AuthState {
   refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  error: string | null;
 }
 
 export interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateUser: (user: User) => void;
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -33,6 +36,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     refreshToken: null,
     isAuthenticated: false,
     isLoading: false, // SSRとCSRで一貫性を保つため false に変更
+    error: null,
   });
   const [isMounted, setIsMounted] = useState(false);
 
@@ -56,6 +60,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             refreshToken,
             isAuthenticated: true,
             isLoading: false,
+            error: null,
           });
         }
       } catch (error) {
@@ -68,77 +73,82 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string): Promise<void> => {
     try {
-      // TODO: Replace with actual API call
-      const mockResponse = {
-        user: { id: '1', email },
-        token: 'mock-token',
-        refreshToken: 'mock-refresh-token',
-      };
+      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
 
-      // ブラウザー環境でのみ localStorage にアクセス
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('token', mockResponse.token);
-        localStorage.setItem('refreshToken', mockResponse.refreshToken);
-        localStorage.setItem('user', JSON.stringify(mockResponse.user));
-      }
+      const response: AuthResponse = await apiClient.login(email, password);
 
       setAuthState({
-        user: mockResponse.user,
-        token: mockResponse.token,
-        refreshToken: mockResponse.refreshToken,
+        user: response.user,
+        token: response.token,
+        refreshToken: response.refreshToken,
         isAuthenticated: true,
         isLoading: false,
+        error: null,
       });
     } catch (error) {
       console.error('Login failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'ログインに失敗しました';
+      setAuthState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: errorMessage,
+      }));
       throw error;
     }
   };
 
   const register = async (email: string, password: string): Promise<void> => {
     try {
-      // TODO: Replace with actual API call
-      const mockResponse = {
-        user: { id: '1', email },
-        token: 'mock-token',
-        refreshToken: 'mock-refresh-token',
-      };
+      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
 
-      // ブラウザー環境でのみ localStorage にアクセス
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('token', mockResponse.token);
-        localStorage.setItem('refreshToken', mockResponse.refreshToken);
-        localStorage.setItem('user', JSON.stringify(mockResponse.user));
-      }
+      const response: AuthResponse = await apiClient.register(email, password);
 
       setAuthState({
-        user: mockResponse.user,
-        token: mockResponse.token,
-        refreshToken: mockResponse.refreshToken,
+        user: response.user,
+        token: response.token,
+        refreshToken: response.refreshToken,
         isAuthenticated: true,
         isLoading: false,
+        error: null,
       });
     } catch (error) {
       console.error('Registration failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'ユーザー登録に失敗しました';
+      setAuthState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: errorMessage,
+      }));
       throw error;
     }
   };
 
-  const logout = (): void => {
-    // ブラウザー環境でのみ localStorage にアクセス
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
+  const logout = async (): Promise<void> => {
+    try {
+      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
+      
+      await apiClient.logout();
+      
+      setAuthState({
+        user: null,
+        token: null,
+        refreshToken: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: null,
+      });
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // ログアウトが失敗してもローカル状態はクリアする
+      setAuthState({
+        user: null,
+        token: null,
+        refreshToken: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: null,
+      });
     }
-
-    setAuthState({
-      user: null,
-      token: null,
-      refreshToken: null,
-      isAuthenticated: false,
-      isLoading: false,
-    });
   };
 
   const updateUser = (user: User): void => {
@@ -149,12 +159,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setAuthState(prev => ({ ...prev, user }));
   };
 
+  const clearError = (): void => {
+    setAuthState(prev => ({ ...prev, error: null }));
+  };
+
   const contextValue: AuthContextType = {
     ...authState,
     login,
     register,
     logout,
     updateUser,
+    clearError,
   };
 
   return (

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'next-themes';
 import { Layout } from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
+import { apiClient, Settings, AppSettings } from '../lib/api';
 
 const SettingsPage: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -11,35 +12,143 @@ const SettingsPage: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const { user, logout } = useAuth();
   
-  const [settings, setSettings] = useState({
-    taskInsertPosition: 'top',
-    autoSort: false,
+  // 設定データ
+  const [userSettings, setUserSettings] = useState<Settings>({
+    theme: 'system',
+    language: 'ja',
   });
+  const [appSettings, setAppSettings] = useState<AppSettings | null>(null);
+  
+  // UI状態
+  const [isLoadingSettings, setIsLoadingSettings] = useState(false);
+  const [isLoadingApp, setIsLoadingApp] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const handleSettingChange = (key: string, value: any) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+  // データ取得関数
+  const fetchUserSettings = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setIsLoadingSettings(true);
+      setError(null);
+      const settings = await apiClient.getUserSettings(user.id);
+      setUserSettings(settings);
+      
+      // テーマと言語をローカル状態に反映
+      setTheme(settings.theme);
+      i18n.changeLanguage(settings.language);
+    } catch (err) {
+      console.error('Failed to fetch user settings:', err);
+      setError('設定の取得に失敗しました');
+    } finally {
+      setIsLoadingSettings(false);
+    }
   };
 
-  const handleThemeChange = (newTheme: string) => {
+  const fetchAppSettings = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setIsLoadingApp(true);
+      setError(null);
+      const app = await apiClient.getUserApp(user.id);
+      setAppSettings(app);
+    } catch (err) {
+      console.error('Failed to fetch app settings:', err);
+      setError('アプリ設定の取得に失敗しました');
+    } finally {
+      setIsLoadingApp(false);
+    }
+  };
+
+  // 設定更新関数
+  const updateUserSettings = async (updates: Partial<Settings>) => {
+    if (!user?.id) return;
+    
+    try {
+      setIsSaving(true);
+      setError(null);
+      const updated = await apiClient.updateUserSettings(user.id, updates);
+      setUserSettings(updated);
+    } catch (err) {
+      console.error('Failed to update user settings:', err);
+      setError('設定の更新に失敗しました');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const updateAppSettings = async (updates: Partial<AppSettings>) => {
+    if (!user?.id) return;
+    
+    try {
+      setIsSaving(true);
+      setError(null);
+      const updated = await apiClient.updateUserApp(user.id, updates);
+      setAppSettings(updated);
+    } catch (err) {
+      console.error('Failed to update app settings:', err);
+      setError('アプリ設定の更新に失敗しました');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // イベントハンドラー
+  const handleThemeChange = async (newTheme: string) => {
     setTheme(newTheme);
+    await updateUserSettings({ theme: newTheme });
   };
 
-  const handleLanguageChange = (language: string) => {
+  const handleLanguageChange = async (language: string) => {
     i18n.changeLanguage(language);
+    await updateUserSettings({ language });
   };
 
-  const handleLogout = () => {
-    logout();
-    router.push('/');
+  const handleTaskInsertPositionChange = async (position: string) => {
+    await updateAppSettings({ taskInsertPosition: position });
   };
 
-  const handleDeleteAccount = () => {
-    // TODO: Implement account deletion
-    setShowDeleteConfirm(false);
-    logout();
-    router.push('/');
+  const handleAutoSortChange = async (autoSort: boolean) => {
+    await updateAppSettings({ autoSort });
   };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push('/');
+    } catch (err) {
+      console.error('Logout failed:', err);
+      // ログアウトに失敗してもページを移動
+      router.push('/');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setError(null);
+      await apiClient.deleteAccount(user.id);
+      setShowDeleteConfirm(false);
+      await logout();
+      router.push('/');
+    } catch (err) {
+      console.error('Account deletion failed:', err);
+      setError('アカウントの削除に失敗しました');
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  // データ初期化
+  useEffect(() => {
+    if (user?.id) {
+      fetchUserSettings();
+      fetchAppSettings();
+    }
+  }, [user?.id]);
 
   return (
     <Layout title="Lightlist - 設定" requireAuth>
@@ -55,6 +164,18 @@ const SettingsPage: React.FC = () => {
             {t('common.backToHome')}
           </button>
         </div>
+
+        {error && (
+          <div className="mb-6 p-3 bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 rounded-md">
+            <p className="text-red-700 dark:text-red-300 text-sm">{error}</p>
+          </div>
+        )}
+
+        {isSaving && (
+          <div className="mb-6 p-3 bg-blue-100 dark:bg-blue-900 border border-blue-300 dark:border-blue-700 rounded-md">
+            <p className="text-blue-700 dark:text-blue-300 text-sm">設定を保存中...</p>
+          </div>
+        )}
 
         <div className="space-y-6">
           {/* プロフィール設定 */}
@@ -82,23 +203,30 @@ const SettingsPage: React.FC = () => {
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               {t('settings.theme')}
             </h2>
-            <div className="space-y-2">
-              {['system', 'light', 'dark'].map((themeOption) => (
-                <label key={themeOption} className="flex items-center">
-                  <input
-                    type="radio"
-                    name="theme"
-                    value={themeOption}
-                    checked={theme === themeOption}
-                    onChange={(e) => handleThemeChange(e.target.value)}
-                    className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300"
-                  />
-                  <span className="ml-2 text-gray-900 dark:text-white">
-                    {t(`settings.themes.${themeOption}`)}
-                  </span>
-                </label>
-              ))}
-            </div>
+            {isLoadingSettings ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {['system', 'light', 'dark'].map((themeOption) => (
+                  <label key={themeOption} className="flex items-center">
+                    <input
+                      type="radio"
+                      name="theme"
+                      value={themeOption}
+                      checked={userSettings.theme === themeOption}
+                      onChange={(e) => handleThemeChange(e.target.value)}
+                      disabled={isSaving}
+                      className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300 disabled:opacity-50"
+                    />
+                    <span className="ml-2 text-gray-900 dark:text-white">
+                      {t(`settings.themes.${themeOption}`)}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* 言語設定 */}
@@ -106,23 +234,30 @@ const SettingsPage: React.FC = () => {
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               {t('settings.language')}
             </h2>
-            <div className="space-y-2">
-              {['ja', 'en'].map((lang) => (
-                <label key={lang} className="flex items-center">
-                  <input
-                    type="radio"
-                    name="language"
-                    value={lang}
-                    checked={i18n.language === lang}
-                    onChange={(e) => handleLanguageChange(e.target.value)}
-                    className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300"
-                  />
-                  <span className="ml-2 text-gray-900 dark:text-white">
-                    {t(`settings.languages.${lang}`)}
-                  </span>
-                </label>
-              ))}
-            </div>
+            {isLoadingSettings ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {['ja', 'en'].map((lang) => (
+                  <label key={lang} className="flex items-center">
+                    <input
+                      type="radio"
+                      name="language"
+                      value={lang}
+                      checked={userSettings.language === lang}
+                      onChange={(e) => handleLanguageChange(e.target.value)}
+                      disabled={isSaving}
+                      className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300 disabled:opacity-50"
+                    />
+                    <span className="ml-2 text-gray-900 dark:text-white">
+                      {t(`settings.languages.${lang}`)}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* タスク設定 */}
@@ -130,44 +265,56 @@ const SettingsPage: React.FC = () => {
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               タスク設定
             </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {t('settings.taskInsertPosition')}
-                </label>
-                <div className="space-y-2">
-                  {['top', 'bottom'].map((position) => (
-                    <label key={position} className="flex items-center">
-                      <input
-                        type="radio"
-                        name="taskInsertPosition"
-                        value={position}
-                        checked={settings.taskInsertPosition === position}
-                        onChange={(e) => handleSettingChange('taskInsertPosition', e.target.value)}
-                        className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300"
-                      />
-                      <span className="ml-2 text-gray-900 dark:text-white">
-                        {t(`settings.insertPositions.${position}`)}
-                      </span>
-                    </label>
-                  ))}
+            {isLoadingApp ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
+              </div>
+            ) : appSettings ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {t('settings.taskInsertPosition')}
+                  </label>
+                  <div className="space-y-2">
+                    {['top', 'bottom'].map((position) => (
+                      <label key={position} className="flex items-center">
+                        <input
+                          type="radio"
+                          name="taskInsertPosition"
+                          value={position}
+                          checked={appSettings.taskInsertPosition === position}
+                          onChange={(e) => handleTaskInsertPositionChange(e.target.value)}
+                          disabled={isSaving}
+                          className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300 disabled:opacity-50"
+                        />
+                        <span className="ml-2 text-gray-900 dark:text-white">
+                          {t(`settings.insertPositions.${position}`)}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={appSettings.autoSort}
+                      onChange={(e) => handleAutoSortChange(e.target.checked)}
+                      disabled={isSaving}
+                      className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300 rounded disabled:opacity-50"
+                    />
+                    <span className="ml-2 text-gray-900 dark:text-white">
+                      {t('settings.autoSort')}
+                    </span>
+                  </label>
                 </div>
               </div>
-
-              <div>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={settings.autoSort}
-                    onChange={(e) => handleSettingChange('autoSort', e.target.checked)}
-                    className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300 rounded"
-                  />
-                  <span className="ml-2 text-gray-900 dark:text-white">
-                    {t('settings.autoSort')}
-                  </span>
-                </label>
-              </div>
-            </div>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400">
+                アプリ設定を読み込めませんでした
+              </p>
+            )}
           </div>
 
           {/* アカウント操作 */}
@@ -178,14 +325,16 @@ const SettingsPage: React.FC = () => {
             <div className="space-y-4">
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+                disabled={isSaving}
+                className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {t('auth.logoutButton')}
               </button>
 
               <button
                 onClick={() => setShowDeleteConfirm(true)}
-                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+                disabled={isSaving}
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {t('settings.deleteAccount')}
               </button>

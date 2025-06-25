@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
@@ -8,33 +8,29 @@ import { useAuth } from '../contexts/AuthContext';
 const LoginPage: React.FC = () => {
   const { t } = useTranslation();
   const router = useRouter();
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, isLoading, error, clearError } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    setError(null);
+    if (error) {
+      clearError();
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
 
     try {
       await login(formData.email, formData.password);
       router.push('/');
     } catch (err) {
-      setError(t('common.error'));
+      // エラーはAuthContextで管理される
       console.error('Login error:', err);
-    } finally {
-      setIsLoading(false);
     }
   };
 

@@ -5,6 +5,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import '../styles/global.css';
@@ -15,8 +16,8 @@ export {
 } from 'expo-router';
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
+  // 初期ルートをindex（メインアプリ画面）に設定
+  initialRouteName: 'index',
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -50,11 +51,40 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        >
+          {/* メインアプリ画面 */}
+          <Stack.Screen 
+            name="index" 
+            options={{
+              title: 'Lightlist',
+            }}
+          />
+          
+          {/* 認証フロー */}
+          <Stack.Screen 
+            name="(auth)" 
+            options={{
+              presentation: 'modal',
+            }}
+          />
+          
+          {/* 設定画面 */}
+          <Stack.Screen 
+            name="settings" 
+            options={{
+              title: '設定',
+              presentation: 'modal',
+            }}
+          />
+        </Stack>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

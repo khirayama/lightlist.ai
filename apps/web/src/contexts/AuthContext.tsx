@@ -96,6 +96,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isLoading: false,
         error: null,
       });
+
+      // タスクリストが存在しない場合は最初のタスクリストを自動生成
+      try {
+        const taskListsResponse = await sdkClient.taskList.getTaskLists();
+        if (taskListsResponse.data?.taskLists?.length === 0) {
+          const language = typeof window !== 'undefined' ? localStorage.getItem('i18nextLng') || 'ja' : 'ja';
+          const taskListName = language === 'ja' ? '📝個人' : '📝Personal';
+          await sdkClient.taskList.createTaskList({ name: taskListName });
+        }
+      } catch (taskListError) {
+        console.error('Failed to create initial task list:', taskListError);
+        // タスクリスト作成の失敗はログインの失敗ではないため、エラーを投げない
+      }
     } catch (error) {
       console.error('Login failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'ログインに失敗しました';
@@ -134,6 +147,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isLoading: false,
         error: null,
       });
+
+      // 最初のタスクリストを自動生成
+      try {
+        const language = typeof window !== 'undefined' ? localStorage.getItem('i18nextLng') || 'ja' : 'ja';
+        const taskListName = language === 'ja' ? '📝個人' : '📝Personal';
+        await sdkClient.taskList.createTaskList({ name: taskListName });
+      } catch (taskListError) {
+        console.error('Failed to create initial task list:', taskListError);
+        // タスクリスト作成の失敗は登録の失敗ではないため、エラーを投げない
+      }
     } catch (error) {
       console.error('Registration failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'ユーザー登録に失敗しました';

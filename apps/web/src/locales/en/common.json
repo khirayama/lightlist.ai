@@ -33,6 +33,7 @@
     "completed": "Completed",
     "uncompleted": "Uncompleted",
     "deleteCompleted": "Delete Completed Tasks",
+    "deleteCompletedConfirm": "Are you sure you want to delete all completed tasks?",
     "sortTasks": "Sort Tasks",
     "dueDate": "Due Date",
     "setDueDate": "Set Due Date"

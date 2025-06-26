@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation } from '../hooks/useSafeTranslation';
 import { useTheme } from 'next-themes';
 import { Layout } from '../components/Layout';
+import { Button, Input, Card, CardHeader, CardTitle, CardContent, CardFooter, Icon } from '../components';
 import { useAuth } from '../contexts/AuthContext';
 import { sdkClient } from '../lib/sdk-client';
 import type { UserSettings, AppSettings } from '@lightlist/sdk';
 
 const SettingsPage: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = useSafeTranslation();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const { user, logout } = useAuth();
@@ -166,12 +167,14 @@ const SettingsPage: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             {t('settings.title')}
           </h1>
-          <button
+          <Button
+            variant="secondary"
             onClick={() => router.push('/')}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            icon="arrow-left"
+            iconPosition="left"
           >
             {t('common.backToHome')}
-          </button>
+          </Button>
         </div>
 
         {error && (
@@ -188,193 +191,234 @@ const SettingsPage: React.FC = () => {
 
         <div className="space-y-6">
           {/* プロフィール設定 */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              {t('settings.profile')}
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {t('auth.email')}
-                </label>
-                <input
+          <Card variant="elevated" className="animate-fade-in">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Icon name="user" size={20} />
+                {t('settings.profile')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <Input
+                  label={t('auth.email')}
                   type="email"
                   value={user?.email || ''}
                   disabled
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white"
+                  state="disabled"
+                  icon="mail"
                 />
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* テーマ設定 */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              {t('settings.theme')}
-            </h2>
-            {isLoadingSettings ? (
-              <div className="flex items-center justify-center py-4">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {['system', 'light', 'dark'].map((themeOption) => (
-                  <label key={themeOption} className="flex items-center">
-                    <input
-                      type="radio"
-                      name="theme"
-                      value={themeOption}
-                      checked={userSettings.theme === themeOption}
-                      onChange={(e) => handleThemeChange(e.target.value)}
-                      disabled={isSaving}
-                      className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300 disabled:opacity-50"
-                    />
-                    <span className="ml-2 text-gray-900 dark:text-white">
-                      {t(`settings.themes.${themeOption}`)}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
+          <Card variant="elevated" className="animate-fade-in">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Icon name="palette" size={20} />
+                {t('settings.theme')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingSettings ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {['system', 'light', 'dark'].map((themeOption) => (
+                    <label key={themeOption} className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+                      <input
+                        type="radio"
+                        name="theme"
+                        value={themeOption}
+                        checked={userSettings.theme === themeOption}
+                        onChange={(e) => handleThemeChange(e.target.value)}
+                        disabled={isSaving}
+                        className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300 disabled:opacity-50"
+                      />
+                      <span className="ml-3 text-gray-900 dark:text-white">
+                        {t(`settings.themes.${themeOption}`)}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* 言語設定 */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              {t('settings.language')}
-            </h2>
-            {isLoadingSettings ? (
-              <div className="flex items-center justify-center py-4">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {['ja', 'en'].map((lang) => (
-                  <label key={lang} className="flex items-center">
-                    <input
-                      type="radio"
-                      name="language"
-                      value={lang}
-                      checked={userSettings.language === lang}
-                      onChange={(e) => handleLanguageChange(e.target.value)}
-                      disabled={isSaving}
-                      className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300 disabled:opacity-50"
-                    />
-                    <span className="ml-2 text-gray-900 dark:text-white">
-                      {t(`settings.languages.${lang}`)}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
+          <Card variant="elevated" className="animate-fade-in">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Icon name="language" size={20} />
+                {t('settings.language')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingSettings ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {['ja', 'en'].map((lang) => (
+                    <label key={lang} className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+                      <input
+                        type="radio"
+                        name="language"
+                        value={lang}
+                        checked={userSettings.language === lang}
+                        onChange={(e) => handleLanguageChange(e.target.value)}
+                        disabled={isSaving}
+                        className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300 disabled:opacity-50"
+                      />
+                      <span className="ml-3 text-gray-900 dark:text-white">
+                        {t(`settings.languages.${lang}`)}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* タスク設定 */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              タスク設定
-            </h2>
-            {isLoadingApp ? (
-              <div className="flex items-center justify-center py-4">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
-              </div>
-            ) : appSettings ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    {t('settings.taskInsertPosition')}
-                  </label>
-                  <div className="space-y-2">
-                    {['top', 'bottom'].map((position) => (
-                      <label key={position} className="flex items-center">
-                        <input
-                          type="radio"
-                          name="taskInsertPosition"
-                          value={position}
-                          checked={appSettings.taskInsertPosition === position}
-                          onChange={(e) => handleTaskInsertPositionChange(e.target.value)}
-                          disabled={isSaving}
-                          className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300 disabled:opacity-50"
-                        />
-                        <span className="ml-2 text-gray-900 dark:text-white">
-                          {t(`settings.insertPositions.${position}`)}
-                        </span>
-                      </label>
-                    ))}
+          <Card variant="elevated" className="animate-fade-in">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Icon name="cog" size={20} />
+                タスク設定
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingApp ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
+                </div>
+              ) : appSettings ? (
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      {t('settings.taskInsertPosition')}
+                    </label>
+                    <div className="space-y-3">
+                      {['top', 'bottom'].map((position) => (
+                        <label key={position} className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+                          <input
+                            type="radio"
+                            name="taskInsertPosition"
+                            value={position}
+                            checked={appSettings.taskInsertPosition === position}
+                            onChange={(e) => handleTaskInsertPositionChange(e.target.value)}
+                            disabled={isSaving}
+                            className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300 disabled:opacity-50"
+                          />
+                          <span className="ml-3 text-gray-900 dark:text-white">
+                            {t(`settings.insertPositions.${position}`)}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <label className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={appSettings.autoSort}
+                        onChange={(e) => handleAutoSortChange(e.target.checked)}
+                        disabled={isSaving}
+                        className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300 rounded disabled:opacity-50"
+                      />
+                      <span className="ml-3 text-gray-900 dark:text-white">
+                        {t('settings.autoSort')}
+                      </span>
+                    </label>
                   </div>
                 </div>
-
-                <div>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={appSettings.autoSort}
-                      onChange={(e) => handleAutoSortChange(e.target.checked)}
-                      disabled={isSaving}
-                      className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300 rounded disabled:opacity-50"
-                    />
-                    <span className="ml-2 text-gray-900 dark:text-white">
-                      {t('settings.autoSort')}
-                    </span>
-                  </label>
-                </div>
-              </div>
-            ) : (
-              <p className="text-gray-500 dark:text-gray-400">
-                アプリ設定を読み込めませんでした
-              </p>
-            )}
-          </div>
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400">
+                  アプリ設定を読み込めませんでした
+                </p>
+              )}
+            </CardContent>
+          </Card>
 
           {/* アカウント操作 */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              アカウント
-            </h2>
-            <div className="space-y-4">
-              <button
-                onClick={handleLogout}
-                disabled={isSaving}
-                className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {t('auth.logoutButton')}
-              </button>
+          <Card variant="elevated" className="animate-fade-in">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Icon name="shield-check" size={20} />
+                アカウント
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <Button
+                  variant="secondary"
+                  onClick={handleLogout}
+                  disabled={isSaving}
+                  icon="arrow-right-on-rectangle"
+                  iconPosition="left"
+                  className="w-full sm:w-auto"
+                >
+                  {t('auth.logoutButton')}
+                </Button>
 
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                disabled={isSaving}
-                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {t('settings.deleteAccount')}
-              </button>
-            </div>
-          </div>
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  disabled={isSaving}
+                  icon="trash"
+                  iconPosition="left"
+                  className="w-full sm:w-auto"
+                >
+                  {t('settings.deleteAccount')}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* アカウント削除確認モーダル */}
         {showDeleteConfirm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                アカウント削除の確認
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                本当にアカウントを削除しますか？この操作は取り消すことができません。
-              </p>
-              <div className="flex space-x-4">
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                >
-                  {t('common.cancel')}
-                </button>
-                <button
-                  onClick={handleDeleteAccount}
-                  className="flex-1 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
-                >
-                  {t('common.delete')}
-                </button>
-              </div>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in">
+            <div className="max-w-md w-full mx-4 animate-slide-up">
+              <Card variant="elevated" className="border-0 shadow-2xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                    <Icon name="exclamation-triangle" size={20} />
+                    アカウント削除の確認
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                    本当にアカウントを削除しますか？この操作は取り消すことができません。
+                  </p>
+                </CardContent>
+                <CardFooter className="flex space-x-4">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="flex-1"
+                    icon="x-mark"
+                    iconPosition="left"
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeleteAccount}
+                    className="flex-1"
+                    icon="trash"
+                    iconPosition="left"
+                  >
+                    {t('common.delete')}
+                  </Button>
+                </CardFooter>
+              </Card>
             </div>
           </div>
         )}
@@ -384,3 +428,4 @@ const SettingsPage: React.FC = () => {
 };
 
 export default SettingsPage;
+

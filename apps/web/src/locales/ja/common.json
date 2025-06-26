@@ -33,6 +33,7 @@
     "completed": "完了",
     "uncompleted": "未完了",
     "deleteCompleted": "完了済みタスクを削除",
+    "deleteCompletedConfirm": "完了済みタスクを削除しますか？",
     "sortTasks": "タスクを並び替え",
     "dueDate": "期限",
     "setDueDate": "期限を設定"

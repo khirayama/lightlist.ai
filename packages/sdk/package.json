@@ -10,14 +10,23 @@
     "clean": "rm -rf dist",
     "type-check": "tsc --noEmit"
   },
-  "keywords": ["lightlist", "sdk", "api-client"],
+  "keywords": [
+    "lightlist",
+    "sdk",
+    "api-client"
+  ],
   "author": "Lightlist Team",
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "@types/react": "^18.0.0"
   },
   "dependencies": {
+    "yjs": "^13.6.27",
     "zod": "^3.22.0"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
   },
   "exports": {
     ".": {

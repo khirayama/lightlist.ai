@@ -5,6 +5,9 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@lightlist/sdk": [
+        "../../packages/sdk/src/index"
       ]
     }
   },

@@ -64,7 +64,14 @@ model Task {
 
   taskList TaskList @relation(fields: [taskListId], references: [id], onDelete: Cascade)
 
-  @@index([taskListId])
+  // パフォーマンス最適化のための複合インデックス
+  @@index([taskListId])                                    // 基本的なタスクリスト検索
+  @@index([taskListId, completed])                         // 完了状態での検索
+  @@index([taskListId, completed, date])                   // 自動ソート用の複合インデックス
+  @@index([taskListId, createdAt])                         // 作成日時順での検索
+  @@index([completed])                                     // 完了状態での検索
+  @@index([date])                                          // 日付での検索
+  @@index([taskListId, completed, date, createdAt])        // 複合ソート用のカバリングインデックス
   @@map("tasks")
 }
 

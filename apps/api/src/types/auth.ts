@@ -86,6 +86,36 @@ export interface RefreshTokenResponse {
 export interface AuthenticatedRequest extends Request {
   user?: User;
   userId?: string;
+  appData?: {
+    id: string;
+    userId: string;
+    taskListOrder: string[];
+    taskInsertPosition: string;
+    autoSort: boolean;
+  };
+  taskList?: {
+    id: string;
+    name: string;
+    background: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  task?: {
+    id: string;
+    text: string;
+    completed: boolean;
+    date: string | null;
+    taskListId: string;
+    createdAt: Date;
+    updatedAt: Date;
+    taskList: {
+      id: string;
+      name: string;
+      background: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+    };
+  };
 }
 
 export interface PasswordResetToken {

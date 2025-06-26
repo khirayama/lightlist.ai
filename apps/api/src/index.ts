@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import compression from 'compression';
 import cors from 'cors';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
@@ -10,6 +11,12 @@ import tasksRoutes from './routes/tasks';
 import shareRoutes from './routes/share';
 import collaborativeRoutes from './routes/collaborative';
 import { disconnectDatabase } from './services/database';
+import { 
+  responseCache, 
+  invalidateCache, 
+  performanceMonitor, 
+  compressionOptions 
+} from './middleware/performance';
 
 const app = express();
 
@@ -34,6 +41,8 @@ const limiter = rateLimit({
 app.use(helmet());
 app.use(cors());
 app.use(limiter);
+app.use(compression(compressionOptions));
+app.use(performanceMonitor);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -57,21 +66,21 @@ app.get('/api/hello', (_req, res) => {
 // Auth routes
 app.use('/api/auth', authRoutes);
 
-// Users routes
-app.use('/api/users', usersRoutes);
+// Users routes (with cache)
+app.use('/api/users', responseCache(300000), usersRoutes);
 
-// Task lists routes
-app.use('/api/task-lists', taskListsRoutes);
+// Task lists routes (with cache)
+app.use('/api/task-lists', responseCache(300000), taskListsRoutes);
 
-// Tasks routes (note: task endpoints use both task-lists and tasks paths)
-app.use('/api/task-lists', tasksRoutes);
-app.use('/api/tasks', tasksRoutes);
+// Tasks routes (with cache and invalidation)
+app.use('/api/task-lists', responseCache(300000), invalidateCache(), tasksRoutes);
+app.use('/api/tasks', responseCache(300000), invalidateCache(), tasksRoutes);
 
 // Collaborative editing routes
 app.use('/api/task-lists', collaborativeRoutes);
 
-// Share routes
-app.use('/api/share', shareRoutes);
+// Share routes (with cache)
+app.use('/api/share', responseCache(600000), shareRoutes);
 
 // 404 handler
 app.use((req, res) => {

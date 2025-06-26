@@ -35,12 +35,13 @@ export default function ForgotPasswordScreen() {
     setIsLoading(true);
     
     try {
-      // TODO: 実際のAPI呼び出しを実装
-      await new Promise(resolve => setTimeout(resolve, 1000)); // シミュレート
+      const { LightlistSDK } = await import('@lightlist/sdk');
+      const sdkClient = new LightlistSDK(process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001');
+      await sdkClient.auth.forgotPassword({ email });
       
       setIsEmailSent(true);
-    } catch (error) {
-      Alert.alert('エラー', 'パスワードリセットメールの送信に失敗しました');
+    } catch (error: any) {
+      Alert.alert('エラー', error?.message || 'パスワードリセットメールの送信に失敗しました');
     } finally {
       setIsLoading(false);
     }

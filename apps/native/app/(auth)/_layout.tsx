@@ -3,13 +3,13 @@ import { View, StatusBar } from 'react-native';
 import { useColorScheme } from '@/components/useColorScheme';
 
 export default function AuthLayout() {
-  const colorScheme = useColorScheme();
+  const { isDark } = useColorScheme();
 
   return (
     <View className="flex-1 bg-white dark:bg-gray-900">
       <StatusBar 
-        barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'}
-        backgroundColor={colorScheme === 'dark' ? '#111827' : '#ffffff'}
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={isDark ? '#111827' : '#ffffff'}
       />
       <Stack
         screenOptions={{

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ResetPasswordScreen() {
+  const { token } = useLocalSearchParams<{ token: string }>();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -47,11 +48,20 @@ export default function ResetPasswordScreen() {
       return;
     }
 
+    if (!token) {
+      Alert.alert('エラー', '無効なリセットトークンです');
+      return;
+    }
+
     setIsLoading(true);
     
     try {
-      // TODO: 実際のAPI呼び出しを実装
-      await new Promise(resolve => setTimeout(resolve, 1000)); // シミュレート
+      const { LightlistSDK } = await import('@lightlist/sdk');
+      const sdkClient = new LightlistSDK(process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001');
+      await sdkClient.auth.resetPassword({
+        token: token as string,
+        newPassword,
+      });
       
       Alert.alert(
         'パスワードをリセットしました',
@@ -63,8 +73,8 @@ export default function ResetPasswordScreen() {
           }
         ]
       );
-    } catch (error) {
-      Alert.alert('エラー', 'パスワードのリセットに失敗しました');
+    } catch (error: any) {
+      Alert.alert('エラー', error?.message || 'パスワードのリセットに失敗しました');
     } finally {
       setIsLoading(false);
     }

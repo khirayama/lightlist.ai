@@ -149,6 +149,7 @@ export interface UpdateTaskListRequest {
 
 export interface CreateTaskRequest {
   text: string;
+  date?: string | null;
 }
 
 export interface UpdateTaskRequest {

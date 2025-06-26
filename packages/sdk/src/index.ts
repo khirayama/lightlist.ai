@@ -8,9 +8,16 @@ export { TaskListApiClient } from './client/task-list';
 export { TaskApiClient } from './client/task';
 export { UserApiClient } from './client/user';
 export { ShareApiClient } from './client/share';
+export { CollaborativeApiClient } from './client/collaborative';
 
 // Utilities
 export * from './utils';
+
+// Validation
+export * from './validation';
+
+// Collaborative editing
+export * from './collaborative';
 
 // Import for internal use
 import { AuthApiClient } from './client/auth';
@@ -18,6 +25,7 @@ import { TaskListApiClient } from './client/task-list';
 import { TaskApiClient } from './client/task';
 import { UserApiClient } from './client/user';
 import { ShareApiClient } from './client/share';
+import { CollaborativeApiClient } from './client/collaborative';
 
 // Main SDK class
 export class LightlistSDK {
@@ -26,6 +34,7 @@ export class LightlistSDK {
   public readonly task: TaskApiClient;
   public readonly user: UserApiClient;
   public readonly share: ShareApiClient;
+  public readonly collaborative: CollaborativeApiClient;
 
   constructor(baseUrl: string) {
     this.auth = new AuthApiClient(baseUrl);
@@ -33,6 +42,7 @@ export class LightlistSDK {
     this.task = new TaskApiClient(baseUrl);
     this.user = new UserApiClient(baseUrl);
     this.share = new ShareApiClient(baseUrl);
+    this.collaborative = new CollaborativeApiClient(baseUrl);
   }
 
   /**
@@ -51,6 +61,7 @@ export class LightlistSDK {
     this.task.setAuth(accessToken, refreshToken, deviceId);
     this.user.setAuth(accessToken, refreshToken, deviceId);
     this.share.setAuth(accessToken, refreshToken, deviceId);
+    this.collaborative.setAuth(accessToken, refreshToken, deviceId);
   }
 
   /**
@@ -62,6 +73,7 @@ export class LightlistSDK {
     this.task.clearAuth();
     this.user.clearAuth();
     this.share.clearAuth();
+    this.collaborative.clearAuth();
   }
 
   /**

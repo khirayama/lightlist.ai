@@ -4,43 +4,43 @@ import { Link, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFormValidation, loginSchema } from '@lightlist/sdk';
 
 export default function LoginScreen() {
   const { t } = useTranslation();
   const { login, isLoading } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<{email?: string; password?: string}>({});
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+  // バリデーションフック
+  const {
+    validateField,
+    validateForm,
+    getFieldError,
+    isFormValid,
+    setFieldTouched,
+  } = useFormValidation(loginSchema);
+
+  const handleInputChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+    validateField(name, value);
   };
 
-  const validateForm = () => {
-    const newErrors: {email?: string; password?: string} = {};
-    
-    if (!email.trim()) {
-      newErrors.email = t('auth.login.validation.emailRequired');
-    } else if (!validateEmail(email)) {
-      newErrors.email = t('auth.login.validation.emailInvalid');
-    }
-    
-    if (!password.trim()) {
-      newErrors.password = t('auth.login.validation.passwordRequired');
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const handleBlur = (name: string) => {
+    setFieldTouched(name, true);
+    validateField(name, formData[name as keyof typeof formData]);
   };
 
   const handleLogin = async () => {
-    if (!validateForm()) {
+    const isValid = validateForm(formData);
+    if (!isValid) {
       return;
     }
     
     try {
-      await login(email, password);
+      await login(formData.email, formData.password);
       // ログイン成功時はメイン画面に遷移
       router.replace('/');
     } catch (error) {
@@ -60,10 +60,10 @@ export default function LoginScreen() {
           {/* ヘッダー */}
           <View className="mb-8">
             <Text className="text-3xl font-bold text-gray-900 dark:text-white text-center mb-2">
-              {t('auth.login.title')}
+              {t('auth.loginButton')}
             </Text>
             <Text className="text-gray-600 dark:text-gray-400 text-center">
-              {t('auth.login.subtitle')}
+              {t('auth.signInToAccount')}
             </Text>
           </View>
 
@@ -72,43 +72,45 @@ export default function LoginScreen() {
             {/* メールアドレス */}
             <View>
               <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {t('auth.login.email')}
+                {t('auth.email')}
               </Text>
               <TextInput
                 className={`w-full px-4 py-3 border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
-                  errors.email ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
+                  getFieldError('email') ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
                 }`}
-                placeholder={t('auth.login.emailPlaceholder')}
+                placeholder={t('auth.emailPlaceholder')}
                 placeholderTextColor="#9CA3AF"
-                value={email}
-                onChangeText={setEmail}
+                value={formData.email}
+                onChangeText={(value) => handleInputChange('email', value)}
+                onBlur={() => handleBlur('email')}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
               />
-              {errors.email && (
-                <Text className="text-error-500 text-sm mt-1">{errors.email}</Text>
+              {getFieldError('email') && (
+                <Text className="text-error-500 text-sm mt-1">{getFieldError('email')}</Text>
               )}
             </View>
 
             {/* パスワード */}
             <View>
               <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {t('auth.login.password')}
+                {t('auth.password')}
               </Text>
               <TextInput
                 className={`w-full px-4 py-3 border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
-                  errors.password ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
+                  getFieldError('password') ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
                 }`}
-                placeholder={t('auth.login.passwordPlaceholder')}
+                placeholder={t('auth.passwordPlaceholder')}
                 placeholderTextColor="#9CA3AF"
-                value={password}
-                onChangeText={setPassword}
+                value={formData.password}
+                onChangeText={(value) => handleInputChange('password', value)}
+                onBlur={() => handleBlur('password')}
                 secureTextEntry
                 autoComplete="current-password"
               />
-              {errors.password && (
-                <Text className="text-error-500 text-sm mt-1">{errors.password}</Text>
+              {getFieldError('password') && (
+                <Text className="text-error-500 text-sm mt-1">{getFieldError('password')}</Text>
               )}
             </View>
 
@@ -117,7 +119,7 @@ export default function LoginScreen() {
               <Link href={"/(auth)/forgot-password" as any} asChild>
                 <TouchableOpacity>
                   <Text className="text-primary-500 text-sm font-medium">
-                    {t('auth.login.forgotPassword')}
+                    {t('auth.forgotPassword')}
                   </Text>
                 </TouchableOpacity>
               </Link>
@@ -126,25 +128,25 @@ export default function LoginScreen() {
             {/* ログインボタン */}
             <TouchableOpacity
               className={`w-full py-3 rounded-lg ${
-                isLoading ? 'bg-gray-400' : 'bg-primary-500'
+                isLoading || !isFormValid ? 'bg-gray-400' : 'bg-primary-500'
               }`}
               onPress={handleLogin}
-              disabled={isLoading}
+              disabled={isLoading || !isFormValid}
             >
               <Text className="text-white text-center font-semibold text-base">
-                {isLoading ? t('auth.login.loginButtonLoading') : t('auth.login.loginButton')}
+                {isLoading ? t('auth.loggingIn') : t('auth.loginButton')}
               </Text>
             </TouchableOpacity>
 
             {/* 新規登録リンク */}
             <View className="flex-row justify-center items-center mt-6">
               <Text className="text-gray-600 dark:text-gray-400">
-                {t('auth.login.noAccount')}{' '}
+                {t('auth.noAccount')}{' '}
               </Text>
               <Link href={"/(auth)/register" as any} asChild>
                 <TouchableOpacity>
                   <Text className="text-primary-500 font-medium">
-                    {t('auth.login.register')}
+                    {t('auth.registerButton')}
                   </Text>
                 </TouchableOpacity>
               </Link>

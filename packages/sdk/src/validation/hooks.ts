@@ -2,7 +2,7 @@
  * React用バリデーションフック
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import React from 'react';
 import {
   ValidationSchema,
   ValidationResult,
@@ -19,11 +19,11 @@ export const useFormValidation = (
   schema: ValidationSchema,
   options: FormValidationOptions = {}
 ) => {
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = React.useState<Record<string, string>>({});
+  const [touched, setTouched] = React.useState<Record<string, boolean>>({});
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const validator = useMemo(
+  const validator = React.useMemo(
     () => new FormValidator(schema, options),
     [schema, options]
   );
@@ -31,7 +31,7 @@ export const useFormValidation = (
   /**
    * フィールドのバリデーション（リアルタイム）
    */
-  const validateField = useCallback(
+  const validateField = React.useCallback(
     (fieldName: string, value: any): boolean => {
       const result = validator.validateFieldRealTime(fieldName, value);
       
@@ -48,7 +48,7 @@ export const useFormValidation = (
   /**
    * フィールドにタッチ状態を設定
    */
-  const setFieldTouched = useCallback((fieldName: string, isTouched = true) => {
+  const setFieldTouched = React.useCallback((fieldName: string, isTouched = true) => {
     setTouched(prev => ({
       ...prev,
       [fieldName]: isTouched,
@@ -58,7 +58,7 @@ export const useFormValidation = (
   /**
    * フォーム全体のバリデーション
    */
-  const validateForm = useCallback(
+  const validateForm = React.useCallback(
     (data: Record<string, any>): boolean => {
       const result = validator.validateAll(data);
       
@@ -88,7 +88,7 @@ export const useFormValidation = (
   /**
    * フィールドエラーをクリア
    */
-  const clearFieldError = useCallback((fieldName: string) => {
+  const clearFieldError = React.useCallback((fieldName: string) => {
     setErrors(prev => ({
       ...prev,
       [fieldName]: '',
@@ -99,7 +99,7 @@ export const useFormValidation = (
   /**
    * 全エラーをクリア
    */
-  const clearAllErrors = useCallback(() => {
+  const clearAllErrors = React.useCallback(() => {
     setErrors({});
     setTouched({});
     validator.clearAllErrors();
@@ -108,7 +108,7 @@ export const useFormValidation = (
   /**
    * フィールドエラーを取得
    */
-  const getFieldError = useCallback(
+  const getFieldError = React.useCallback(
     (fieldName: string): string | null => {
       return touched[fieldName] ? (errors[fieldName] || null) : null;
     },
@@ -118,7 +118,7 @@ export const useFormValidation = (
   /**
    * フィールドが有効かどうか
    */
-  const isFieldValid = useCallback(
+  const isFieldValid = React.useCallback(
     (fieldName: string): boolean => {
       return !touched[fieldName] || !errors[fieldName];
     },
@@ -128,14 +128,14 @@ export const useFormValidation = (
   /**
    * フォームが有効かどうか
    */
-  const isFormValid = useMemo(() => {
+  const isFormValid = React.useMemo(() => {
     return Object.values(errors).every(error => !error);
   }, [errors]);
 
   /**
    * 送信中状態の管理
    */
-  const setSubmitting = useCallback((submitting: boolean) => {
+  const setSubmitting = React.useCallback((submitting: boolean) => {
     setIsSubmitting(submitting);
   }, []);
 
@@ -170,12 +170,12 @@ export const useFieldValidation = (
   rules: any[],
   options: { validateOnChange?: boolean; validateOnBlur?: boolean } = {}
 ) => {
-  const [error, setError] = useState<string | null>(null);
-  const [touched, setTouched] = useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [touched, setTouched] = React.useState(false);
   
   const { validateOnChange = true, validateOnBlur = true } = options;
 
-  const validate = useCallback(
+  const validate = React.useCallback(
     (value: any): boolean => {
       const validator = new FormValidator({ [fieldName]: rules });
       const result = validator.validateFieldRealTime(fieldName, value);
@@ -186,7 +186,7 @@ export const useFieldValidation = (
     [fieldName, rules]
   );
 
-  const handleChange = useCallback(
+  const handleChange = React.useCallback(
     (value: any) => {
       if (validateOnChange && touched) {
         validate(value);
@@ -195,7 +195,7 @@ export const useFieldValidation = (
     [validate, validateOnChange, touched]
   );
 
-  const handleBlur = useCallback(
+  const handleBlur = React.useCallback(
     (value: any) => {
       setTouched(true);
       if (validateOnBlur) {
@@ -205,7 +205,7 @@ export const useFieldValidation = (
     [validate, validateOnBlur]
   );
 
-  const clearError = useCallback(() => {
+  const clearError = React.useCallback(() => {
     setError(null);
   }, []);
 
@@ -224,7 +224,7 @@ export const useFieldValidation = (
  * パスワード強度表示用フック
  */
 export const usePasswordStrength = () => {
-  const [strength, setStrength] = useState<{
+  const [strength, setStrength] = React.useState<{
     score: number;
     level: 'weak' | 'medium' | 'strong';
     suggestions: string[];
@@ -234,7 +234,7 @@ export const usePasswordStrength = () => {
     suggestions: [],
   });
 
-  const checkStrength = useCallback((password: string) => {
+  const checkStrength = React.useCallback((password: string) => {
     // パスワード強度計算のロジック
     let score = 0;
     const suggestions: string[] = [];

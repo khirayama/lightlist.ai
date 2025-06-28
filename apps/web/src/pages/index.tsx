@@ -76,6 +76,33 @@ const HomePage: React.FC<HomePageProps> = ({ i18nInitialized = false }) => {
   // カルーセル状態
   const [currentTaskListIndex, setCurrentTaskListIndex] = useState(0);
 
+  // ドロワー操作関数
+  const openDrawer = () => setIsDrawerOpen(true);
+  const closeDrawer = () => setIsDrawerOpen(false);
+
+  // Escapeキーでドロワーを閉じる処理
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isDrawerOpen && isMobile) {
+        e.preventDefault();
+        closeDrawer();
+      }
+    };
+
+    if (isDrawerOpen && isMobile) {
+      document.addEventListener('keydown', handleKeyDown);
+      // ドロワーが開いたときに本体のスクロールを防ぐ
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [isDrawerOpen, isMobile]);
+
   // データ取得関数
   const fetchTaskLists = async () => {
     if (!user) return;
@@ -495,9 +522,6 @@ const HomePage: React.FC<HomePageProps> = ({ i18nInitialized = false }) => {
     goToTaskList(newIndex);
   };
 
-  const openDrawer = () => setIsDrawerOpen(true);
-  const closeDrawer = () => setIsDrawerOpen(false);
-
   // キーボードショートカット
   useEffect(() => {
     // ブラウザ環境でのみ実行
@@ -770,15 +794,26 @@ const HomePage: React.FC<HomePageProps> = ({ i18nInitialized = false }) => {
         )}
 
         {isMobile && isDrawerOpen && (
-          <div onClick={closeDrawer} className="fixed inset-0 bg-black bg-opacity-50 z-40" />
+          <div 
+            onClick={closeDrawer} 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            aria-label="ドロワーを閉じる"
+            role="button"
+          />
         )}
 
         <div className={`transform transition-transform duration-300 ease-in-out flex flex-col w-80 bg-white dark:bg-gray-800 shadow-sm ${isMobile ? (isDrawerOpen ? 'translate-x-0 fixed inset-y-0 left-0 z-50' : '-translate-x-full fixed inset-y-0 left-0 z-50') : 'static'}`}>
           {isMobile && (
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-600">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">タスクリスト</h2>
-              <button onClick={closeDrawer} className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
-                <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              <button 
+                onClick={closeDrawer} 
+                className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                aria-label="ドロワーを閉じる"
+              >
+                <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
           )}

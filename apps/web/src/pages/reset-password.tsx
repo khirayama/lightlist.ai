@@ -7,6 +7,7 @@ import { Card, CardContent } from '../components/Card';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Icon } from '../components/Icon';
+// import { useFormValidation, createResetPasswordSchemaWithConfirmation } from '@lightlist/sdk';
 
 const ResetPasswordPage: React.FC = () => {
   const { t } = useSafeTranslation();
@@ -20,10 +21,34 @@ const ResetPasswordPage: React.FC = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // バリデーションスキーマ（一時的に無効化）
+  // const schema = createResetPasswordSchemaWithConfirmation(formData.newPassword);
+  
+  // バリデーションフック（一時的に無効化）
+  // const {
+  //   validateField,
+  //   validateForm,
+  //   getFieldError,
+  //   isFormValid,
+  //   setFieldTouched,
+  // } = useFormValidation(schema);
+
+  // 一時的なバリデーション関数
+  const validateField = (name: string, value: any) => true;
+  const getFieldError = (name: string) => null;
+  const isFormValid = true;
+  const setFieldTouched = (name: string, touched: boolean) => {};
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     setError(null);
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFieldTouched(name, true);
+    validateField(name, value);
   };
 
   const validateForm = (): boolean => {
@@ -155,7 +180,10 @@ const ResetPasswordPage: React.FC = () => {
                     required
                     value={formData.newPassword}
                     onChange={handleInputChange}
+                    onBlur={handleBlur}
                     placeholder="新しいパスワードを入力"
+                    state={getFieldError('newPassword') ? 'error' : 'normal'}
+                    errorMessage={getFieldError('newPassword') || undefined}
                     className="w-full"
                   />
                 </div>
@@ -171,7 +199,10 @@ const ResetPasswordPage: React.FC = () => {
                     required
                     value={formData.confirmNewPassword}
                     onChange={handleInputChange}
+                    onBlur={handleBlur}
                     placeholder="新しいパスワードを再入力"
+                    state={getFieldError('confirmNewPassword') ? 'error' : 'normal'}
+                    errorMessage={getFieldError('confirmNewPassword') || undefined}
                     className="w-full"
                   />
                 </div>
@@ -180,7 +211,7 @@ const ResetPasswordPage: React.FC = () => {
                   type="submit"
                   variant="primary"
                   size="lg"
-                  disabled={isLoading}
+                  disabled={isLoading || !isFormValid}
                   className="w-full"
                 >
                   {isLoading ? (

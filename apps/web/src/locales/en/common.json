@@ -25,7 +25,10 @@
     "resetingPassword": "Resetting...",
     "sendResetEmail": "Send Reset Email",
     "newPassword": "New Password",
-    "confirmNewPassword": "Confirm New Password"
+    "confirmNewPassword": "Confirm New Password",
+    "passwordStrengthWeak": "Weak",
+    "passwordStrengthMedium": "Medium",
+    "passwordStrengthStrong": "Strong"
   },
   "tasks": {
     "addTask": "Add Task",

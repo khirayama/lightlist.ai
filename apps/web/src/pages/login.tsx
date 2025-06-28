@@ -7,7 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button, Input, Card, CardContent } from '../components';
 // import { 
 //   useFormValidation, 
-//   createLocalizedSchema 
+//   loginSchema 
 // } from '@lightlist/sdk';
 
 const LoginPage: React.FC = () => {
@@ -19,9 +19,6 @@ const LoginPage: React.FC = () => {
     password: '',
   });
 
-  // バリデーションスキーマ（多言語対応）
-  // const schema = createLocalizedSchema('login', 'ja');
-  
   // バリデーションフック（一時的に無効化）
   // const {
   //   validateField,
@@ -31,7 +28,7 @@ const LoginPage: React.FC = () => {
   //   isFormValid,
   //   setFieldTouched,
   //   clearFieldError,
-  // } = useFormValidation(schema);
+  // } = useFormValidation(loginSchema);
 
   // 一時的なバリデーション関数
   const validateField = (name: string, value: any) => true;

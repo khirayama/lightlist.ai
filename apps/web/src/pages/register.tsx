@@ -8,7 +8,6 @@ import { Button, Input, Card, CardContent } from '../components';
 // import { 
 //   useFormValidation, 
 //   createRegisterSchemaWithConfirmation,
-//   createLocalizedSchema,
 //   usePasswordStrength 
 // } from '@lightlist/sdk';
 
@@ -22,8 +21,7 @@ const RegisterPage: React.FC = () => {
     confirmPassword: '',
   });
 
-  // バリデーションスキーマ（多言語対応）
-  // const baseSchema = createLocalizedSchema('register', 'ja');
+  // バリデーションスキーマ
   // const schema = createRegisterSchemaWithConfirmation(formData.password);
   
   // バリデーションフック（一時的に無効化）
@@ -174,7 +172,7 @@ const RegisterPage: React.FC = () => {
                               : 'text-green-600 dark:text-green-400'
                           }`}
                         >
-                          {strength.level === 'weak' ? '弱い' : strength.level === 'medium' ? '普通' : '強い'}
+                          {strength.level === 'weak' ? t('auth.passwordStrengthWeak') : strength.level === 'medium' ? t('auth.passwordStrengthMedium') : t('auth.passwordStrengthStrong')}
                         </span>
                       </div>
                       {strength.suggestions.length > 0 && (

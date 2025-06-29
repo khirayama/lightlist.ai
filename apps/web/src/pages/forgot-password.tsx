@@ -1,163 +1,218 @@
 import React, { useState } from 'react';
-import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useSafeTranslation } from '../hooks/useSafeTranslation';
 import { Layout } from '../components/Layout';
-import { Card, CardContent } from '../components/Card';
-import { Button } from '../components/Button';
-import { Input } from '../components/Input';
-import { Icon } from '../components/Icon';
+import { Button, Input } from '../components';
+import { sdkClient } from '../lib/sdk-client';
+import { 
+  useFormValidation, 
+  createLocalizedSchema
+} from '@lightlist/sdk';
 
 const ForgotPasswordPage: React.FC = () => {
-  const { t } = useSafeTranslation();
-  const router = useRouter();
-  const [email, setEmail] = useState('');
+  const { t, i18n } = useSafeTranslation();
+  const [formData, setFormData] = useState({
+    email: '',
+  });
   const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lastSentTime, setLastSentTime] = useState<number | null>(null);
+
+  // バリデーションスキーマ（現在の言語に対応）
+  const currentLanguage = i18n.language === 'en' ? 'en' : 'ja';
+  const schema = createLocalizedSchema('forgotPassword', currentLanguage);
+  
+  // バリデーションフック
+  const {
+    validateField,
+    validateForm,
+    getFieldError,
+    isFormValid,
+    setFieldTouched,
+  } = useFormValidation(schema);
+
+  // 連続送信制限チェック（5分間）
+  const canSendEmail = (): boolean => {
+    if (!lastSentTime) return true;
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+    return lastSentTime < fiveMinutesAgo;
+  };
+
+  // 残り時間を計算（秒）
+  const getRemainingTime = (): number => {
+    if (!lastSentTime) return 0;
+    const elapsed = Date.now() - lastSentTime;
+    const fiveMinutes = 5 * 60 * 1000;
+    return Math.max(0, Math.ceil((fiveMinutes - elapsed) / 1000));
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // リアルタイムバリデーション
+    validateField(name, value);
+    
+    // エラーをクリア
+    if (error) {
+      setError(null);
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFieldTouched(name, true);
+    validateField(name, value);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
+    
+    // フォーム全体のバリデーション
+    const isValid = validateForm(formData);
+    
+    if (!isValid) {
+      return;
+    }
+
+    // 連続送信制限チェック
+    if (!canSendEmail()) {
+      const remainingTime = getRemainingTime();
+      const minutes = Math.floor(remainingTime / 60);
+      const seconds = remainingTime % 60;
+      setError(t('auth.forgotPasswordRateLimit', { 
+        time: minutes > 0 ? `${minutes}分${seconds}秒` : `${seconds}秒` 
+      }));
+      return;
+    }
 
     try {
-      const { sdkClient } = await import('../lib/sdk-client');
-      await sdkClient.auth.forgotPassword({ email });
-      setIsSuccess(true);
-    } catch (err: any) {
-      setError(err?.message || 'パスワードリセットメールの送信に失敗しました');
+      setIsLoading(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      await sdkClient.auth.forgotPassword({
+        email: formData.email,
+      });
+
+      // 成功メッセージを表示（セキュリティ上、未登録でも成功として表示）
+      setSuccessMessage(t('auth.forgotPasswordSuccess'));
+      setLastSentTime(Date.now());
+      
+      // フォームをリセット
+      setFormData({ email: '' });
+    } catch (err) {
       console.error('Forgot password error:', err);
+      const errorMessage = err instanceof Error ? err.message : t('auth.forgotPasswordError');
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (isSuccess) {
-    return (
-      <Layout title="Lightlist - パスワードリセット">
-        <div className="min-h-screen flex items-center justify-center px-4 py-8">
-          <div className="w-full max-w-md animate-fade-in">
-            <Card className="shadow-xl">
-              <CardContent className="p-8 text-center space-y-6">
-                <div className="flex justify-center">
-                  <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
-                    <Icon
-                      name="success"
-                      className="w-8 h-8 text-green-600 dark:text-green-400"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    メールを送信しました
-                  </h2>
-                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                    パスワードリセットのリンクを {email} に送信しました。
-                    メールボックスをご確認ください。
-                  </p>
-                </div>
-                {/* @ts-ignore - temporary fix for React/Next.js type incompatibility */}
-                <Link
-                  href="/login"
-                  className="w-full inline-flex items-center justify-center px-6 py-3 bg-primary-500 text-white font-medium text-base rounded-lg hover:bg-primary-400 active:bg-primary-600 transition-all duration-150 ease-out motion-safe:hover:shadow-lg motion-safe:active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                >
-                  ログインページに戻る
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
   return (
-    <Layout title="Lightlist - パスワード忘れ">
-      <div className="min-h-screen flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md animate-fade-in">
-          <Card className="shadow-xl">
-            <CardContent className="p-8">
-              <div className="text-center mb-8">
-                <div className="flex justify-center mb-4">
-                  <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
-                    <Icon
-                      name="lock-closed"
-                      className="w-8 h-8 text-primary-600 dark:text-primary-400"
-                    />
-                  </div>
-                </div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  パスワードを忘れた場合
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                  メールアドレスを入力すると、パスワードリセットのリンクをお送りします
+    <Layout title="Lightlist - パスワードリセット">
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="w-full max-w-sm px-4 md:px-6" style={{ maxWidth: '400px' }}>
+          {/* ロゴ */}
+          <div className="text-center mt-8 mb-6">
+            <div className="inline-block text-2xl font-bold text-gray-900 dark:text-white flex items-center justify-center" style={{ width: '100px', height: '32px' }}>
+              Lightlist
+            </div>
+          </div>
+
+          {/* パスワードリセットタイトル */}
+          <div className="text-center mb-4">
+            <h1 id="forgot-password-title" className="text-2xl font-bold text-gray-900 dark:text-white">
+              {t('auth.passwordReset')}
+            </h1>
+          </div>
+
+          {/* 説明文 */}
+          <div className="text-center mb-6">
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              {t('auth.forgotPasswordDescription')}
+            </p>
+          </div>
+
+          {/* フォーム */}
+          <form className="space-y-4" onSubmit={handleSubmit} role="form" aria-labelledby="forgot-password-title">
+            {/* 成功メッセージ */}
+            {successMessage && (
+              <div 
+                className="p-3 bg-green-100 dark:bg-green-900 border border-green-300 dark:border-green-700 rounded-md"
+                role="alert"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                <p className="text-green-700 dark:text-green-300 text-sm">{successMessage}</p>
+              </div>
+            )}
+
+            {/* エラーメッセージ */}
+            {error && (
+              <div 
+                className="p-3 bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 rounded-md"
+                role="alert"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                <p className="text-red-700 dark:text-red-300 text-sm">{error}</p>
+              </div>
+            )}
+
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              size="lg"
+              label={t('auth.email')}
+              required
+              aria-required="true"
+              aria-describedby={getFieldError('email') ? 'email-error' : undefined}
+              value={formData.email}
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+              placeholder={t('auth.emailPlaceholder')}
+              state={getFieldError('email') ? 'error' : 'normal'}
+              errorMessage={getFieldError('email') || undefined}
+            />
+
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              className="w-full"
+              disabled={isLoading || !isFormValid || !canSendEmail()}
+              loading={isLoading}
+              aria-describedby={!isFormValid ? 'form-validation-errors' : undefined}
+            >
+              {isLoading ? t('auth.sending') : t('auth.sendButton')}
+            </Button>
+
+            {/* 連続送信制限の表示 */}
+            {!canSendEmail() && (
+              <div className="text-center">
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  {t('auth.forgotPasswordWait', { 
+                    time: Math.floor(getRemainingTime() / 60) > 0 
+                      ? `${Math.floor(getRemainingTime() / 60)}分${getRemainingTime() % 60}秒`
+                      : `${getRemainingTime()}秒`
+                  })}
                 </p>
               </div>
+            )}
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {error && (
-                  <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <Icon
-                        name="exclamation-triangle"
-                        className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0"
-                      />
-                      <p className="text-red-700 dark:text-red-300 text-sm font-medium">
-                        {error}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {t('auth.email')}
-                  </label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      setError(null);
-                    }}
-                    placeholder={t('auth.emailPlaceholder')}
-                    className="w-full"
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="lg"
-                  disabled={isLoading}
-                  className="w-full"
-                >
-                  {isLoading ? (
-                    <div className="flex items-center justify-center space-x-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>{t('auth.resetingPassword')}</span>
-                    </div>
-                  ) : (
-                    t('auth.sendResetEmail')
-                  )}
-                </Button>
-
-                <div className="text-center">
-                  {/* @ts-ignore - temporary fix for React/Next.js type incompatibility */}
-                  <Link
-                    href="/login"
-                    className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium transition-colors"
-                  >
-                    ログインページに戻る
-                  </Link>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+            <div className="text-center">
+              <Link
+                href="/login"
+                className="text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 font-medium transition-colors"
+              >
+                {t('auth.backToLogin')}
+              </Link>
+            </div>
+          </form>
         </div>
       </div>
     </Layout>

@@ -4,12 +4,12 @@ import Link from 'next/link';
 import { useSafeTranslation } from '../hooks/useSafeTranslation';
 import { Layout } from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
-import { Button, Input, Card, CardContent } from '../components';
-// import { 
-//   useFormValidation, 
-//   createRegisterSchemaWithConfirmation,
-//   usePasswordStrength 
-// } from '@lightlist/sdk';
+import { Button, Input } from '../components';
+import { 
+  useFormValidation, 
+  createRegisterSchemaWithConfirmation,
+  usePasswordStrength 
+} from '@lightlist/sdk';
 
 const RegisterPage: React.FC = () => {
   const { t } = useSafeTranslation();
@@ -22,32 +22,21 @@ const RegisterPage: React.FC = () => {
   });
 
   // バリデーションスキーマ
-  // const schema = createRegisterSchemaWithConfirmation(formData.password);
+  const schema = createRegisterSchemaWithConfirmation(formData.password);
   
-  // バリデーションフック（一時的に無効化）
-  // const {
-  //   validateField,
-  //   validateForm,
-  //   getFieldError,
-  //   isFieldValid,
-  //   isFormValid,
-  //   setFieldTouched,
-  //   clearFieldError,
-  // } = useFormValidation(schema);
+  // バリデーションフック
+  const {
+    validateField,
+    validateForm,
+    getFieldError,
+    isFieldValid,
+    isFormValid,
+    setFieldTouched,
+    clearFieldError,
+  } = useFormValidation(schema);
 
-  // 一時的なバリデーション関数
-  const validateField = (name: string, value: any) => true;
-  const validateForm = (data: any) => true;
-  const getFieldError = (name: string) => null;
-  const isFieldValid = (name: string) => true;
-  const isFormValid = true;
-  const setFieldTouched = (name: string, touched: boolean) => {};
-  const clearFieldError = (name: string) => {};
-
-  // パスワード強度フック（一時的に無効化）
-  // const { strength, checkStrength } = usePasswordStrength();
-  const strength = { score: 0, level: 'weak' as const, suggestions: [] };
-  const checkStrength = (password: string) => strength;
+  // パスワード強度フック
+  const { strength, checkStrength } = usePasswordStrength();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -99,20 +88,24 @@ const RegisterPage: React.FC = () => {
 
   return (
     <Layout title="Lightlist - ユーザー登録">
-      <div className="min-h-96 flex items-center justify-center px-4">
-        <div className="max-w-md w-full">
-          <Card className="motion-safe:animate-fade-in">
-            <CardContent>
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                  {t('auth.registerButton')}
-                </h2>
-                <p className="mt-2 text-gray-600 dark:text-gray-400">
-                  新しいアカウントを作成してください
-                </p>
-              </div>
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="w-full max-w-sm px-4 md:px-6" style={{ maxWidth: '400px' }}>
+          {/* ロゴ */}
+          <div className="text-center mt-8 mb-6">
+            <div className="inline-block text-2xl font-bold text-gray-900 dark:text-white flex items-center justify-center" style={{ width: '100px', height: '32px' }}>
+              Lightlist
+            </div>
+          </div>
 
-              <form className="space-y-6" onSubmit={handleSubmit}>
+          {/* ユーザー登録タイトル */}
+          <div className="text-center mb-4">
+            <h1 id="register-title" className="text-2xl font-bold text-gray-900 dark:text-white">
+              {t('auth.registerButton')}
+            </h1>
+          </div>
+
+          {/* フォーム */}
+          <form className="space-y-4" onSubmit={handleSubmit} role="form" aria-labelledby="register-title">
                 {error && (
                   <div className="p-3 bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 rounded-md motion-safe:animate-bounce-light">
                     <p className="text-red-700 dark:text-red-300 text-sm">{error}</p>
@@ -123,8 +116,11 @@ const RegisterPage: React.FC = () => {
                   id="email"
                   name="email"
                   type="email"
+                  size="lg"
                   label={t('auth.email')}
                   required
+                  aria-required="true"
+                  aria-describedby={getFieldError('email') ? 'email-error' : undefined}
                   value={formData.email}
                   onChange={handleInputChange}
                   onBlur={handleBlur}
@@ -138,8 +134,11 @@ const RegisterPage: React.FC = () => {
                     id="password"
                     name="password"
                     type="password"
+                    size="lg"
                     label={t('auth.password')}
                     required
+                    aria-required="true"
+                    aria-describedby={getFieldError('password') ? 'password-error' : 'password-strength'}
                     value={formData.password}
                     onChange={handleInputChange}
                     onBlur={handleBlur}
@@ -150,7 +149,7 @@ const RegisterPage: React.FC = () => {
                   
                   {/* パスワード強度表示 */}
                   {formData.password && (
-                    <div className="mt-2">
+                    <div id="password-strength" className="mt-1" aria-live="polite">
                       <div className="flex items-center space-x-2">
                         <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                           <div
@@ -164,7 +163,7 @@ const RegisterPage: React.FC = () => {
                           />
                         </div>
                         <span
-                          className={`text-xs font-medium ${
+                          className={`text-xs font-medium min-w-fit ${
                             strength.level === 'weak'
                               ? 'text-red-600 dark:text-red-400'
                               : strength.level === 'medium'
@@ -175,7 +174,7 @@ const RegisterPage: React.FC = () => {
                           {strength.level === 'weak' ? t('auth.passwordStrengthWeak') : strength.level === 'medium' ? t('auth.passwordStrengthMedium') : t('auth.passwordStrengthStrong')}
                         </span>
                       </div>
-                      {strength.suggestions.length > 0 && (
+                      {strength.suggestions && strength.suggestions.length > 0 && (
                         <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
                           {strength.suggestions.join('、')}
                         </p>
@@ -188,8 +187,11 @@ const RegisterPage: React.FC = () => {
                   id="confirmPassword"
                   name="confirmPassword"
                   type="password"
+                  size="lg"
                   label={t('auth.passwordConfirm')}
                   required
+                  aria-required="true"
+                  aria-describedby={getFieldError('confirmPassword') ? 'confirm-password-error' : undefined}
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
                   onBlur={handleBlur}
@@ -205,6 +207,7 @@ const RegisterPage: React.FC = () => {
                   className="w-full"
                   disabled={isLoading || !isFormValid}
                   loading={isLoading}
+                  aria-describedby={!isFormValid ? 'form-validation-errors' : undefined}
                 >
                   {isLoading ? t('auth.registering') : t('auth.registerButton')}
                 </Button>
@@ -221,9 +224,7 @@ const RegisterPage: React.FC = () => {
                     {t('auth.loginButton')}
                   </Link>
                 </div>
-              </form>
-            </CardContent>
-          </Card>
+          </form>
         </div>
       </div>
     </Layout>

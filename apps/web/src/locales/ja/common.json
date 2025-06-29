@@ -73,6 +73,13 @@
     "autoSort": "自動並び替え",
     "profile": "プロフィール",
     "deleteAccount": "アカウント削除",
+    "userName": "ユーザー名",
+    "userNamePlaceholder": "ユーザー名を入力",
+    "displaySettings": "表示設定",
+    "taskSettings": "タスク設定",
+    "account": "アカウント",
+    "deleteAccountConfirm": "アカウント削除の確認",
+    "deleteAccountDescription": "本当にアカウントを削除しますか？この操作は取り消すことができません。",
     "themes": {
       "system": "システム",
       "light": "ライト",

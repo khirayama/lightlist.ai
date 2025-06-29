@@ -1,5 +1,9 @@
-import React, { ReactNode, useState, useEffect } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 import Head from 'next/head';
+import { useTheme } from 'next-themes';
+import { useAuth } from '../contexts/AuthContext';
+import { useSafeTranslation } from '../hooks/useSafeTranslation';
+import { useAuthGuard } from '../hooks/useAuthGuard';
 import { OfflineIndicator } from './OfflineIndicator';
 
 interface LayoutProps {
@@ -13,24 +17,10 @@ export const Layout: React.FC<LayoutProps> = ({
   title = 'Lightlist',
   requireAuth = false 
 }) => {
-  // 一時的にuseThemeを無効化してstateで管理
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light');
-  // 一時的にuseAuthを無効化
-  const isAuthenticated = false;
-  const logout = () => {};
-  const [isMounted, setIsMounted] = useState(false);
-  // 一時的にuseSafeTranslationを無効化してエラーを回避
-  const t = (key: string) => {
-    const translations: { [key: string]: string } = {
-      'auth.logoutButton': 'ログアウト'
-    };
-    return translations[key] || key;
-  };
-  const i18n = { language: 'ja', changeLanguage: (lang: string) => {} };
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const { theme, setTheme } = useTheme();
+  const { logout } = useAuth();
+  const { t, i18n, isClientMounted } = useSafeTranslation();
+  const { shouldRender, isLoading, isRedirecting } = useAuthGuard(requireAuth);
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'ja' ? 'en' : 'ja';
@@ -47,15 +37,30 @@ export const Layout: React.FC<LayoutProps> = ({
     }
   };
 
-  // TODO: Implement proper auth guard
-  if (requireAuth && !isAuthenticated) {
+  // 認証確認中のローディング表示
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
+
+  // 認証が必要だが未認証の場合（リダイレクト中）
+  if (isRedirecting) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-400">認証が必要です</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">ログインページに移動中...</p>
         </div>
       </div>
     );
+  }
+
+  // 認証ガードで表示が許可されていない場合
+  if (!shouldRender) {
+    return null;
   }
 
   return (
@@ -98,15 +103,15 @@ export const Layout: React.FC<LayoutProps> = ({
               role="navigation"
               aria-label="ユーザー設定とアカウント"
             >
-              {isMounted && (
+              {isClientMounted && (
                 <>
                   <button
                     onClick={toggleLanguage}
                     className="px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                    aria-label="言語を切り替え (現在: 日本語)"
+                    aria-label={`言語を切り替え (現在: ${i18n.language === 'ja' ? '日本語' : 'English'})`}
                     title="言語を切り替え"
                   >
-                    EN
+                    {i18n.language === 'ja' ? 'EN' : 'JA'}
                   </button>
 
                   <button
@@ -121,17 +126,6 @@ export const Layout: React.FC<LayoutProps> = ({
                       {theme === 'system' ? '🖥️' : theme === 'light' ? '☀️' : '🌙'}
                     </span>
                   </button>
-
-                  {isAuthenticated && (
-                    <button
-                      onClick={logout}
-                      className="px-3 py-1 rounded-md bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                      aria-label="ログアウト"
-                      title="ログアウト"
-                    >
-                      {t('auth.logoutButton')}
-                    </button>
-                  )}
                 </>
               )}
             </nav>

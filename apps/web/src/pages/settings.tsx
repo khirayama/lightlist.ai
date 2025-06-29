@@ -21,6 +21,10 @@ const SettingsPage: React.FC = () => {
   });
   const [appSettings, setAppSettings] = useState<AppSettings | null>(null);
   
+  // ユーザー名編集
+  const [userName, setUserName] = useState<string>('');
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  
   // UI状態
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
   const [isLoadingApp, setIsLoadingApp] = useState(false);
@@ -125,6 +129,26 @@ const SettingsPage: React.FC = () => {
     await updateAppSettings({ autoSort });
   };
 
+  const handleUserNameUpdate = async () => {
+    if (!user?.id || !userName.trim()) return;
+    
+    try {
+      setIsUpdatingProfile(true);
+      setError(null);
+      // TODO: SDKにユーザー名更新機能を追加したら実装
+      // const response = await sdkClient.user.updateProfile(user.id, { name: userName.trim() });
+      // if (response.data) {
+      //   updateUser(response.data.user);
+      // }
+      console.log('ユーザー名更新:', userName.trim());
+    } catch (err) {
+      console.error('Failed to update user name:', err);
+      setError('ユーザー名の更新に失敗しました');
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -160,21 +184,29 @@ const SettingsPage: React.FC = () => {
     }
   }, [user?.id]);
 
+  // ユーザー名の初期値設定
+  useEffect(() => {
+    if (user?.email) {
+      // TODO: ユーザー名フィールドがAPIで利用可能になったら user.name を使用
+      setUserName(user.email.split('@')[0]);
+    }
+  }, [user?.email]);
+
   return (
     <Layout title="Lightlist - 設定" requireAuth>
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6">
+        {/* ヘッダー - CLIENT.md仕様準拠 */}
+        <div className="flex items-center h-12 mb-2 border-b border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => router.push('/')}
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            aria-label="ホームに戻る"
+          >
+            <Icon name="arrow-left" size={20} />
+          </button>
+          <h1 className="ml-4 text-lg font-semibold text-gray-900 dark:text-white">
             {t('settings.title')}
           </h1>
-          <Button
-            variant="secondary"
-            onClick={() => router.push('/')}
-            icon="arrow-left"
-            iconPosition="left"
-          >
-            {t('common.backToHome')}
-          </Button>
         </div>
 
         {error && (
@@ -189,216 +221,202 @@ const SettingsPage: React.FC = () => {
           </div>
         )}
 
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* プロフィール設定 */}
-          <Card variant="elevated" className="animate-fade-in">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Icon name="user" size={20} />
-                {t('settings.profile')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+          <section>
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+              {t('settings.profile')}
+            </h2>
+            <div className="space-y-4">
+              <div className="flex items-center">
+                <label 
+                  htmlFor="userName"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 w-24 flex-shrink-0"
+                >
+                  {t('settings.userName')}
+                </label>
                 <Input
-                  label={t('auth.email')}
-                  type="email"
-                  value={user?.email || ''}
-                  disabled
-                  state="disabled"
-                  icon="mail"
+                  id="userName"
+                  type="text"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  onBlur={handleUserNameUpdate}
+                  disabled={isUpdatingProfile}
+                  placeholder={t('settings.userNamePlaceholder')}
+                  className="flex-1 ml-4"
+                  aria-describedby="userName-description"
                 />
               </div>
-            </CardContent>
-          </Card>
+              <p id="userName-description" className="text-xs text-gray-500 dark:text-gray-400 ml-28">
+                フォーカスを外すと自動的に保存されます
+              </p>
+            </div>
+            <div className="border-t border-gray-200 dark:border-gray-700 my-6"></div>
+          </section>
 
-          {/* テーマ設定 */}
-          <Card variant="elevated" className="animate-fade-in">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Icon name="palette" size={20} />
-                {t('settings.theme')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoadingSettings ? (
-                <div className="flex items-center justify-center py-4">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
+          {/* 表示設定 */}
+          <section>
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+              {t('settings.displaySettings')}
+            </h2>
+            {isLoadingSettings ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 w-24 flex-shrink-0">
+                    テーマ
+                  </label>
+                  <div className="flex-1 ml-4">
+                    <select
+                      id="theme-select"
+                      value={userSettings.theme}
+                      onChange={(e) => handleThemeChange(e.target.value)}
+                      disabled={isSaving}
+                      className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
+                      aria-label="テーマを選択"
+                    >
+                      <option value="system">{t('settings.themes.system')}</option>
+                      <option value="light">{t('settings.themes.light')}</option>
+                      <option value="dark">{t('settings.themes.dark')}</option>
+                    </select>
+                  </div>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {['system', 'light', 'dark'].map((themeOption) => (
-                    <label key={themeOption} className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
-                      <input
-                        type="radio"
-                        name="theme"
-                        value={themeOption}
-                        checked={userSettings.theme === themeOption}
-                        onChange={(e) => handleThemeChange(e.target.value)}
-                        disabled={isSaving}
-                        className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300 disabled:opacity-50"
-                      />
-                      <span className="ml-3 text-gray-900 dark:text-white">
-                        {t(`settings.themes.${themeOption}`)}
-                      </span>
-                    </label>
-                  ))}
+                <div className="flex items-center">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 w-24 flex-shrink-0">
+                    言語
+                  </label>
+                  <div className="flex-1 ml-4">
+                    <select
+                      id="language-select"
+                      value={userSettings.language}
+                      onChange={(e) => handleLanguageChange(e.target.value)}
+                      disabled={isSaving}
+                      className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
+                      aria-label="言語を選択"
+                    >
+                      <option value="ja">{t('settings.languages.ja')}</option>
+                      <option value="en">{t('settings.languages.en')}</option>
+                    </select>
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* 言語設定 */}
-          <Card variant="elevated" className="animate-fade-in">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Icon name="language" size={20} />
-                {t('settings.language')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoadingSettings ? (
-                <div className="flex items-center justify-center py-4">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {['ja', 'en'].map((lang) => (
-                    <label key={lang} className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
-                      <input
-                        type="radio"
-                        name="language"
-                        value={lang}
-                        checked={userSettings.language === lang}
-                        onChange={(e) => handleLanguageChange(e.target.value)}
-                        disabled={isSaving}
-                        className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300 disabled:opacity-50"
-                      />
-                      <span className="ml-3 text-gray-900 dark:text-white">
-                        {t(`settings.languages.${lang}`)}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+            )}
+            <div className="border-t border-gray-200 dark:border-gray-700 my-6"></div>
+          </section>
 
           {/* タスク設定 */}
-          <Card variant="elevated" className="animate-fade-in">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Icon name="cog" size={20} />
-                タスク設定
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoadingApp ? (
-                <div className="flex items-center justify-center py-4">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
-                </div>
-              ) : appSettings ? (
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      {t('settings.taskInsertPosition')}
-                    </label>
-                    <div className="space-y-3">
-                      {['top', 'bottom'].map((position) => (
-                        <label key={position} className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
-                          <input
-                            type="radio"
-                            name="taskInsertPosition"
-                            value={position}
-                            checked={appSettings.taskInsertPosition === position}
-                            onChange={(e) => handleTaskInsertPositionChange(e.target.value)}
-                            disabled={isSaving}
-                            className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300 disabled:opacity-50"
-                          />
-                          <span className="ml-3 text-gray-900 dark:text-white">
-                            {t(`settings.insertPositions.${position}`)}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                    <label className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={appSettings.autoSort}
-                        onChange={(e) => handleAutoSortChange(e.target.checked)}
-                        disabled={isSaving}
-                        className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300 rounded disabled:opacity-50"
-                      />
-                      <span className="ml-3 text-gray-900 dark:text-white">
-                        {t('settings.autoSort')}
-                      </span>
-                    </label>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400">
-                  アプリ設定を読み込めませんでした
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* アカウント操作 */}
-          <Card variant="elevated" className="animate-fade-in">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Icon name="shield-check" size={20} />
-                アカウント
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <Button
-                  variant="secondary"
-                  onClick={handleLogout}
-                  disabled={isSaving}
-                  icon="arrow-right-on-rectangle"
-                  iconPosition="left"
-                  className="w-full sm:w-auto"
-                >
-                  {t('auth.logoutButton')}
-                </Button>
-
-                <Button
-                  variant="destructive"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  disabled={isSaving}
-                  icon="trash"
-                  iconPosition="left"
-                  className="w-full sm:w-auto"
-                >
-                  {t('settings.deleteAccount')}
-                </Button>
+          <section>
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+              {t('settings.taskSettings')}
+            </h2>
+            {isLoadingApp ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
               </div>
-            </CardContent>
-          </Card>
+            ) : appSettings ? (
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 w-24 flex-shrink-0">
+                    挿入位置
+                  </label>
+                  <div className="flex-1 ml-4">
+                    <select
+                      id="insert-position-select"
+                      value={appSettings.taskInsertPosition}
+                      onChange={(e) => handleTaskInsertPositionChange(e.target.value)}
+                      disabled={isSaving}
+                      className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
+                      aria-label="タスクの挿入位置を選択"
+                    >
+                      <option value="top">{t('settings.insertPositions.top')}</option>
+                      <option value="bottom">{t('settings.insertPositions.bottom')}</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex items-center">
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={appSettings.autoSort}
+                      onChange={(e) => handleAutoSortChange(e.target.checked)}
+                      disabled={isSaving}
+                      className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300 rounded disabled:opacity-50"
+                    />
+                    <span className="ml-3 text-sm text-gray-900 dark:text-white">
+                      {t('settings.autoSort')}
+                    </span>
+                  </label>
+                </div>
+              </div>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400 text-sm">
+                アプリ設定を読み込めませんでした
+              </p>
+            )}
+            <div className="border-t border-gray-200 dark:border-gray-700 my-6"></div>
+          </section>
+
+          {/* アカウント */}
+          <section>
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+              {t('settings.account')}
+            </h2>
+            <div className="space-y-4">
+              <Button
+                variant="secondary"
+                onClick={handleLogout}
+                disabled={isSaving}
+                icon="arrow-right-on-rectangle"
+                iconPosition="left"
+                className="w-full sm:w-auto"
+              >
+                {t('auth.logoutButton')}
+              </Button>
+
+              <Button
+                variant="destructive"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={isSaving}
+                icon="trash"
+                iconPosition="left"
+                className="w-full sm:w-auto text-red-600 border-red-600 hover:bg-red-50 dark:text-red-400 dark:border-red-400 dark:hover:bg-red-900"
+              >
+                {t('settings.deleteAccount')}
+              </Button>
+            </div>
+          </section>
         </div>
 
         {/* アカウント削除確認モーダル */}
         {showDeleteConfirm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in">
-            <div className="max-w-md w-full mx-4 animate-slide-up">
-              <Card variant="elevated" className="border-0 shadow-2xl">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
-                    <Icon name="exclamation-triangle" size={20} />
-                    アカウント削除の確認
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 dark:text-gray-400 mb-6">
-                    本当にアカウントを削除しますか？この操作は取り消すことができません。
-                  </p>
-                </CardContent>
-                <CardFooter className="flex space-x-4">
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in"
+            onClick={() => setShowDeleteConfirm(false)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setShowDeleteConfirm(false);
+              }
+            }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-confirm-title"
+          >
+            <div 
+              className="max-w-md w-full mx-4 bg-white dark:bg-gray-800 rounded-lg shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                <div className="flex items-center gap-2 text-red-600 dark:text-red-400 mb-4">
+                  <Icon name="exclamation-triangle" size={20} />
+                  <h3 id="delete-confirm-title" className="text-lg font-semibold">{t('settings.deleteAccountConfirm')}</h3>
+                </div>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  {t('settings.deleteAccountDescription')}
+                </p>
+                <div className="flex space-x-4">
                   <Button
                     variant="secondary"
                     onClick={() => setShowDeleteConfirm(false)}
@@ -417,8 +435,8 @@ const SettingsPage: React.FC = () => {
                   >
                     {t('common.delete')}
                   </Button>
-                </CardFooter>
-              </Card>
+                </div>
+              </div>
             </div>
           </div>
         )}

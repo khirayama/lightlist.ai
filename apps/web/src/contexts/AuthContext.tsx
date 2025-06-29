@@ -31,7 +31,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     token: null,
     refreshToken: null,
     isAuthenticated: false,
-    isLoading: false, // SSRとCSRで一貫性を保つため false に変更
+    isLoading: true, // 認証状態確認中は true に設定
     error: null,
   });
   const [isMounted, setIsMounted] = useState(false);
@@ -41,7 +41,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     const initAuth = () => {
       // ブラウザー環境でのみ localStorage にアクセス
-      if (typeof window === 'undefined') return;
+      if (typeof window === 'undefined') {
+        // サーバー環境では認証状態をfalseに設定
+        setAuthState(prev => ({ ...prev, isLoading: false }));
+        return;
+      }
       
       try {
         // SDKクライアントから認証状態を復元
@@ -53,6 +57,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (accessToken && refreshToken && userStr) {
           const user = JSON.parse(userStr);
+          console.log('Auth restored successfully for user:', user.email);
           setAuthState({
             user,
             token: accessToken,
@@ -61,9 +66,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             isLoading: false,
             error: null,
           });
+        } else {
+          // 認証情報がない場合はローディング完了
+          console.log('No auth tokens found, setting unauthenticated state');
+          setAuthState(prev => ({
+            ...prev,
+            isLoading: false,
+            isAuthenticated: false,
+          }));
         }
       } catch (error) {
         console.error('Failed to restore auth state:', error);
+        // エラー時もローディング完了
+        setAuthState(prev => ({
+          ...prev,
+          isLoading: false,
+          isAuthenticated: false,
+          error: 'Failed to restore authentication',
+        }));
       }
     };
 

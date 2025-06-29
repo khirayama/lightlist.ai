@@ -26,7 +26,18 @@ export const useSafeTranslation = () => {
         
         // 通常の翻訳を実行
         const result = originalT(key, options);
-        return typeof result === 'string' ? result : key;
+        
+        // 結果の型をより厳密にチェック
+        if (typeof result === 'string') {
+          return result;
+        }
+        
+        // 結果がReactコンポーネントオブジェクトの場合もキーを返す
+        if (typeof result === 'object' && result !== null) {
+          return key;
+        }
+        
+        return key;
       } catch (error) {
         // エラー時はキーをそのまま返す（静かに失敗）
         return key;
@@ -48,16 +59,14 @@ export const useSafeTranslation = () => {
     };
   }, [isClientMounted, i18n?.isInitialized, i18n?.changeLanguage]);
 
-  // 安全なi18nオブジェクトをメモ化
+  // 安全なi18nオブジェクトをメモ化（スプレッド演算子を避ける）
   const safeI18n = useMemo(() => {
     return {
-      // その他の必要なプロパティは元のi18nから継承
-      ...i18n,
       language: i18n?.language || 'ja',
       isInitialized: i18n?.isInitialized || false,
       changeLanguage: safeChangeLanguage,
     };
-  }, [i18n, safeChangeLanguage]);
+  }, [i18n?.language, i18n?.isInitialized, safeChangeLanguage]);
 
   return {
     t: safeT,

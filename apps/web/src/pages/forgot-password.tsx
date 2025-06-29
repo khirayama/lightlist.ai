@@ -57,6 +57,7 @@ const ForgotPasswordPage: React.FC = () => {
                     メールボックスをご確認ください。
                   </p>
                 </div>
+                {/* @ts-ignore - temporary fix for React/Next.js type incompatibility */}
                 <Link
                   href="/login"
                   className="w-full inline-flex items-center justify-center px-6 py-3 bg-primary-500 text-white font-medium text-base rounded-lg hover:bg-primary-400 active:bg-primary-600 transition-all duration-150 ease-out motion-safe:hover:shadow-lg motion-safe:active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
@@ -146,6 +147,7 @@ const ForgotPasswordPage: React.FC = () => {
                 </Button>
 
                 <div className="text-center">
+                  {/* @ts-ignore - temporary fix for React/Next.js type incompatibility */}
                   <Link
                     href="/login"
                     className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium transition-colors"

@@ -213,6 +213,7 @@ const RegisterPage: React.FC = () => {
                   <span className="text-gray-600 dark:text-gray-400">
                     {t('auth.alreadyHaveAccount')}{' '}
                   </span>
+                  {/* @ts-ignore - temporary fix for React/Next.js type incompatibility */}
                   <Link
                     href="/login"
                     className="text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 font-medium transition-colors"

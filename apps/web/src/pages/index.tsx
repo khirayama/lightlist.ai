@@ -516,7 +516,11 @@ export default function HomePage() {
                 onDeleteTask={deleteTask}
                 onDeleteCompletedTasks={deleteCompletedTasks}
                 onSortTasks={sortTasks}
-                onReorderTasks={reorderTasks}
+                onReorderTasks={(taskIds) => {
+                  if (selectedTaskListId) {
+                    reorderTasks(selectedTaskListId, taskIds);
+                  }
+                }}
                 editingTaskId={editingTaskId}
                 editingTaskText={editingTaskText}
                 setEditingTaskText={setEditingTaskText}

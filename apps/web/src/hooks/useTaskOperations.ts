@@ -234,9 +234,11 @@ export const useTaskOperations = ({ tasks, setTasks, setError, autoSort }: UseTa
     }
   }, [setTasks, setError, autoSort, applySorting]);
 
-  const reorderTasks = useCallback((newTaskIds: string[]) => {
+  const reorderTasks = useCallback(async (taskListId: string, newTaskIds: string[]) => {
     try {
       setError(null);
+      
+      // 楽観的更新
       setTasks(prev => {
         // 新しい順序でタスクを並び替え
         const taskMap = new Map(prev.map(task => [task.id, task]));
@@ -250,11 +252,16 @@ export const useTaskOperations = ({ tasks, setTasks, setError, autoSort }: UseTa
         
         return [...reorderedTasks, ...remainingTasks];
       });
+      
+      // サーバーに順序を保存
+      await sdkClient.task.updateTaskOrder(taskListId, newTaskIds);
     } catch (err) {
       console.error('Failed to reorder tasks:', err);
       setError('タスクの並び替えに失敗しました');
+      // エラー時は元に戻すため、タスクを再取得
+      await fetchTasks(taskListId);
     }
-  }, [setTasks, setError]);
+  }, [setTasks, setError, fetchTasks]);
 
   return {
     isLoadingTasks,

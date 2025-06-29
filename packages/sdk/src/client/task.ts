@@ -54,4 +54,18 @@ export class TaskApiClient extends BaseApiClient {
   async deleteTask(taskId: string): Promise<ApiResponse> {
     return this.delete<ApiResponse>(`/api/tasks/${taskId}`, true);
   }
+
+  /**
+   * タスク順序更新
+   */
+  async updateTaskOrder(
+    taskListId: string,
+    taskIds: string[]
+  ): Promise<ApiResponse<{ taskOrder: string[] }>> {
+    return this.put<ApiResponse<{ taskOrder: string[] }>>(
+      `/api/task-lists/${taskListId}/tasks/order`,
+      { taskIds },
+      true
+    );
+  }
 }

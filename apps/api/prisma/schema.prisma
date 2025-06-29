@@ -43,6 +43,7 @@ model TaskList {
   id         String   @id @default(cuid())
   name       String
   background String?  @default("") // 背景色は16進数カラーコード、透明は空文字
+  taskOrder  String[] @default([]) // タスクIDの配列で手動並び順を管理
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

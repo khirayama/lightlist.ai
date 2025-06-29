@@ -107,6 +107,11 @@ export const updateTaskSchema = z.object({
   date: z.string().nullable().optional(),
 });
 
+// タスク順序更新のスキーマ
+export const updateTaskOrderSchema = z.object({
+  taskIds: z.array(z.string().min(1, 'Task ID cannot be empty')),
+});
+
 // 共同編集同期のスキーマ
 export const collaborativeSyncSchema = z.object({
   stateVector: z.string().min(1, 'State vector is required'),

@@ -39,6 +39,7 @@
 - `POST /api/task-lists/:taskListId/tasks` - タスク作成
 - `PUT /api/tasks/:taskId` - タスク更新
 - `DELETE /api/tasks/:taskId` - タスク削除
+- `PUT /api/task-lists/:taskListId/tasks/order` - タスク順序更新
 
 #### 共有関連
 - `POST /api/task-lists/:taskListId/share` - タスクリスト共有リンク生成
@@ -533,7 +534,16 @@
 
 #### GET /api/task-lists/:taskListId/tasks
 
-説明: タスク一覧取得（共同編集機能が有効な場合はYjsドキュメントの順序、無効な場合はタスクリスト設定の順序で返却）
+説明: タスク一覧取得
+
+**並び順ルール**:
+1. **共同編集有効時**: Yjsドキュメントの順序
+2. **自動ソート有効時**: 
+   - 未完了タスクが上、完了タスクが下
+   - 日付ありタスクが上、日付なしタスクが下
+   - 日付は古い順
+   - 最終的に作成日時の新しい順
+3. **手動並び替えモード**: TaskList.taskOrderに従った順序（taskOrderに含まれないタスクは末尾に新しい順で追加）
 
 レスポンス（成功）:
 
@@ -628,6 +638,63 @@
   "message": "Task deleted successfully"
 }
 ```
+
+#### PUT /api/task-lists/:taskListId/tasks/order
+
+説明: タスク順序更新
+
+リクエスト:
+
+```json
+{
+  "taskIds": [
+    "cmbz060iw0002ki5g9h2hwg8n",
+    "cmbz060iw0003ki5g9h2hwg8n",
+    "cmbz060iw0004ki5g9h2hwg8n"
+  ]
+}
+```
+
+レスポンス（成功）:
+
+```json
+{
+  "message": "Task order updated successfully",
+  "data": {
+    "taskOrder": [
+      "cmbz060iw0002ki5g9h2hwg8n",
+      "cmbz060iw0003ki5g9h2hwg8n",
+      "cmbz060iw0004ki5g9h2hwg8n"
+    ]
+  }
+}
+```
+
+エラーレスポンス:
+
+```json
+{
+  "error": "Task order cannot be updated when collaborative editing is enabled"
+}
+```
+
+```json
+{
+  "error": "Task order cannot be updated when auto-sort is enabled"
+}
+```
+
+```json
+{
+  "error": "Invalid task IDs",
+  "details": ["The following task IDs are invalid: task_id_5, task_id_6"]
+}
+```
+
+**注意**: 
+- 共同編集機能が有効な場合は順序更新不可
+- 自動ソートが有効な場合は順序更新不可
+- 指定されたタスクIDは全て存在し、指定のタスクリストに属している必要がある
 
 #### POST /api/task-lists/:taskListId/share
 
@@ -915,6 +982,7 @@ model TaskList {
   id         String   @id @default(cuid())
   name       String
   background String?  @default("") // 背景色は16進数カラーコード、透明は空文字
+  taskOrder  String[] @default([]) // タスクIDの配列で手動並び順を管理
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -926,7 +994,12 @@ model TaskList {
 }
 ```
 
-**注意**: 現在のスキーマではTaskListとUserの直接的な関連付けがありません。所有権管理はAppテーブルのtaskListOrderフィールドを通じて行われています。これにより、ユーザーはApp.taskListOrderに含まれるタスクリストのみにアクセス可能です。タスクの並び順は共同編集機能が有効な場合はTaskListDocumentテーブルのYjsドキュメントで管理されます。
+**注意**: 
+- 現在のスキーマではTaskListとUserの直接的な関連付けがありません。所有権管理はAppテーブルのtaskListOrderフィールドを通じて行われています。これにより、ユーザーはApp.taskListOrderに含まれるタスクリストのみにアクセス可能です。
+- タスクの並び順は以下の優先順位で管理されます：
+  1. 共同編集機能が有効な場合: TaskListDocumentテーブルのYjsドキュメント
+  2. 自動ソートが有効な場合: 定義されたソートルール
+  3. それ以外の場合: taskOrderフィールドの順序
 
 ### Taskテーブル
 

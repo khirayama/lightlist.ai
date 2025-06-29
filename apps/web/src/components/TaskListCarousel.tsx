@@ -25,8 +25,6 @@ interface TaskListCarouselProps {
   selectedTaskId: string | null;
   onTaskClick: (taskId: string) => void;
   onOpenShareModal: () => void;
-  onGoToPrev: () => void;
-  onGoToNext: () => void;
   onGoToIndex: (index: number) => void;
 }
 
@@ -53,8 +51,6 @@ export const TaskListCarousel: React.FC<TaskListCarouselProps> = memo(({
   selectedTaskId,
   onTaskClick,
   onOpenShareModal,
-  onGoToPrev,
-  onGoToNext,
   onGoToIndex,
 }) => {
   // 選択されたタスクリストをメモ化
@@ -89,44 +85,11 @@ export const TaskListCarousel: React.FC<TaskListCarouselProps> = memo(({
       aria-describedby="carousel-description"
     >
       <div id="carousel-description" className="sr-only">
-        タスクリストのカルーセル表示。左右の矢印ボタンまたはキーボードで切り替え可能
+        タスクリストのカルーセル表示。ドットボタンまたはキーボードで切り替え可能
       </div>
 
-      {/* ナビゲーションボタン */}
-      {showNavigation && (
-        <>
-          <button 
-            onClick={onGoToPrev}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-            aria-label="前のタスクリスト"
-            aria-describedby="prev-button-hint"
-          >
-            <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <div id="prev-button-hint" className="sr-only">
-            前のタスクリストに移動します
-          </div>
-
-          <button 
-            onClick={onGoToNext}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-            aria-label="次のタスクリスト"
-            aria-describedby="next-button-hint"
-          >
-            <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-          <div id="next-button-hint" className="sr-only">
-            次のタスクリストに移動します
-          </div>
-        </>
-      )}
-
       {/* カルーセルコンテンツ */}
-      <div className="overflow-hidden mx-8">
+      <div className="overflow-hidden">
         <div 
           className="flex transition-transform duration-300 ease-in-out" 
           style={{ transform: `translateX(-${currentTaskListIndex * 100}%)` }}

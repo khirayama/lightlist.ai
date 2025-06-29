@@ -38,16 +38,6 @@ export const useTaskListCarousel = ({
     }
   }, [taskLists, setSelectedTaskListId]);
 
-  const goToPrevTaskList = useCallback(() => {
-    const newIndex = currentTaskListIndex > 0 ? currentTaskListIndex - 1 : taskLists.length - 1;
-    goToTaskList(newIndex);
-  }, [currentTaskListIndex, taskLists.length, goToTaskList]);
-
-  const goToNextTaskList = useCallback(() => {
-    const newIndex = currentTaskListIndex < taskLists.length - 1 ? currentTaskListIndex + 1 : 0;
-    goToTaskList(newIndex);
-  }, [currentTaskListIndex, taskLists.length, goToTaskList]);
-
   const selectTaskList = useCallback((taskListId: string) => {
     setSelectedTaskListId(taskListId);
     const index = taskLists.findIndex(list => list.id === taskListId);
@@ -59,8 +49,6 @@ export const useTaskListCarousel = ({
   return {
     currentTaskListIndex,
     goToTaskList,
-    goToPrevTaskList,
-    goToNextTaskList,
     selectTaskList,
   };
 };

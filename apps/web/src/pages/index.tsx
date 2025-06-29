@@ -231,18 +231,6 @@ export default function HomePage() {
   }, [selectedTaskForDate, setTaskDate, closeDatePicker]);
 
   // カルーセルナビゲーション
-  const handleGoToPrev = useCallback(() => {
-    const newIndex = currentTaskListIndex > 0 ? currentTaskListIndex - 1 : taskLists.length - 1;
-    setCurrentTaskListIndex(newIndex);
-    setSelectedTaskListId(taskLists[newIndex].id);
-  }, [currentTaskListIndex, taskLists]);
-
-  const handleGoToNext = useCallback(() => {
-    const newIndex = currentTaskListIndex < taskLists.length - 1 ? currentTaskListIndex + 1 : 0;
-    setCurrentTaskListIndex(newIndex);
-    setSelectedTaskListId(taskLists[newIndex].id);
-  }, [currentTaskListIndex, taskLists]);
-
   const handleGoToIndex = useCallback((index: number) => {
     setCurrentTaskListIndex(index);
     setSelectedTaskListId(taskLists[index].id);
@@ -458,8 +446,6 @@ export default function HomePage() {
                 selectedTaskId={selectedTaskId}
                 onTaskClick={setSelectedTaskId}
                 onOpenShareModal={handleOpenShareModal}
-                onGoToPrev={handleGoToPrev}
-                onGoToNext={handleGoToNext}
                 onGoToIndex={handleGoToIndex}
               />
             ) : (

@@ -193,5 +193,36 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    function({ addUtilities }) {
+      const newUtilities = {
+        '.scrollbar-hide': {
+          /* IE and Edge */
+          '-ms-overflow-style': 'none',
+          /* Firefox */
+          'scrollbar-width': 'none',
+          /* Safari and Chrome */
+          '&::-webkit-scrollbar': {
+            display: 'none'
+          }
+        },
+        '.snap-x': {
+          'scroll-snap-type': 'x mandatory'
+        },
+        '.snap-y': {
+          'scroll-snap-type': 'y mandatory'
+        },
+        '.snap-start': {
+          'scroll-snap-align': 'start'
+        },
+        '.snap-center': {
+          'scroll-snap-align': 'center'
+        },
+        '.snap-end': {
+          'scroll-snap-align': 'end'
+        }
+      }
+      addUtilities(newUtilities)
+    }
+  ],
 };

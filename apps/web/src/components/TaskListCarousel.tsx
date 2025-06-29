@@ -26,6 +26,8 @@ interface TaskListCarouselProps {
   onTaskClick: (taskId: string) => void;
   onOpenShareModal: () => void;
   onGoToIndex: (index: number) => void;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
+  scrollToIndex: (index: number) => void;
 }
 
 export const TaskListCarousel: React.FC<TaskListCarouselProps> = memo(({
@@ -52,6 +54,8 @@ export const TaskListCarousel: React.FC<TaskListCarouselProps> = memo(({
   onTaskClick,
   onOpenShareModal,
   onGoToIndex,
+  scrollContainerRef,
+  scrollToIndex,
 }) => {
   // 選択されたタスクリストをメモ化
   const selectedTaskList = useMemo(() => 
@@ -89,42 +93,40 @@ export const TaskListCarousel: React.FC<TaskListCarouselProps> = memo(({
       </div>
 
       {/* カルーセルコンテンツ */}
-      <div className="overflow-hidden">
-        <div 
-          className="flex transition-transform duration-300 ease-in-out" 
-          style={{ transform: `translateX(-${currentTaskListIndex * 100}%)` }}
-          role="tabpanel"
-          aria-live="polite"
-          aria-atomic="false"
-        >
-          {taskLists.map((taskList, index) => (
-            <div key={taskList.id} className="w-full flex-shrink-0 px-2">
-              <TaskListCard 
-                taskList={taskList} 
-                tasks={index === currentTaskListIndex ? tasks : []} 
-                isActive={index === currentTaskListIndex} 
-                isLoadingTasks={isLoadingTasks} 
-                newTaskText={newTaskText} 
-                setNewTaskText={setNewTaskText} 
-                onAddTask={onAddTask} 
-                onToggleTask={onToggleTask} 
-                onDeleteTask={onDeleteTask} 
-                onDeleteCompletedTasks={onDeleteCompletedTasks} 
-                onSortTasks={onSortTasks}
-                editingTaskId={editingTaskId}
-                editingTaskText={editingTaskText}
-                setEditingTaskText={setEditingTaskText}
-                onStartEditTask={onStartEditTask}
-                onUpdateTaskText={onUpdateTaskText}
-                onCancelEditTask={onCancelEditTask}
-                onSetTaskDate={onSetTaskDate}
-                selectedTaskId={selectedTaskId}
-                onTaskClick={onTaskClick}
-                onOpenShareModal={onOpenShareModal}
-              />
-            </div>
-          ))}
-        </div>
+      <div 
+        ref={scrollContainerRef}
+        className="flex overflow-x-scroll snap-x scrollbar-hide"
+        role="tabpanel"
+        aria-live="polite"
+        aria-atomic="false"
+      >
+        {taskLists.map((taskList, index) => (
+          <div key={taskList.id} className="w-full flex-shrink-0 snap-start px-2">
+            <TaskListCard 
+              taskList={taskList} 
+              tasks={index === currentTaskListIndex ? tasks : []} 
+              isActive={index === currentTaskListIndex} 
+              isLoadingTasks={isLoadingTasks} 
+              newTaskText={newTaskText} 
+              setNewTaskText={setNewTaskText} 
+              onAddTask={onAddTask} 
+              onToggleTask={onToggleTask} 
+              onDeleteTask={onDeleteTask} 
+              onDeleteCompletedTasks={onDeleteCompletedTasks} 
+              onSortTasks={onSortTasks}
+              editingTaskId={editingTaskId}
+              editingTaskText={editingTaskText}
+              setEditingTaskText={setEditingTaskText}
+              onStartEditTask={onStartEditTask}
+              onUpdateTaskText={onUpdateTaskText}
+              onCancelEditTask={onCancelEditTask}
+              onSetTaskDate={onSetTaskDate}
+              selectedTaskId={selectedTaskId}
+              onTaskClick={onTaskClick}
+              onOpenShareModal={onOpenShareModal}
+            />
+          </div>
+        ))}
       </div>
 
       {/* ページネーションインジケーター */}
@@ -137,7 +139,10 @@ export const TaskListCarousel: React.FC<TaskListCarouselProps> = memo(({
           {taskLists.map((taskList, index) => (
             <button 
               key={index} 
-              onClick={() => onGoToIndex(index)}
+              onClick={() => {
+                scrollToIndex(index);
+                onGoToIndex(index);
+              }}
               className={`w-2 h-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
                 index === currentTaskListIndex 
                   ? 'bg-primary-500' 

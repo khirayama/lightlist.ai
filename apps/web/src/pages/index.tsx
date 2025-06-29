@@ -8,6 +8,7 @@ import { useTaskListOperations } from '../hooks/useTaskListOperations';
 import { useTaskOperations } from '../hooks/useTaskOperations';
 import { useModalState } from '../hooks/useModalState';
 import { useShareOperations } from '../hooks/useShareOperations';
+import { useTaskListCarousel } from '../hooks/useTaskListCarousel';
 import { TaskListDrawer } from '../components/TaskListDrawer';
 import { TaskListCarousel } from '../components/TaskListCarousel';
 import { ShareModal } from '../components/ShareModal';
@@ -32,8 +33,18 @@ export default function HomePage() {
   const [newTaskText, setNewTaskText] = useState('');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
-  // カルーセル用状態
-  const [currentTaskListIndex, setCurrentTaskListIndex] = useState(0);
+  // カルーセル機能フック
+  const {
+    currentTaskListIndex,
+    goToTaskList,
+    selectTaskList,
+    scrollContainerRef,
+    scrollToIndex,
+  } = useTaskListCarousel({
+    taskLists,
+    selectedTaskListId,
+    setSelectedTaskListId,
+  });
 
   // レスポンシブ判定
   const [isMobile, setIsMobile] = useState(false);
@@ -132,21 +143,11 @@ export default function HomePage() {
     }
   }, [selectedTaskListId, fetchTasks]);
 
-  // 最初のタスクリストを自動選択
-  useEffect(() => {
-    if (taskLists.length > 0 && !selectedTaskListId) {
-      setSelectedTaskListId(taskLists[0].id);
-      setCurrentTaskListIndex(0);
-    }
-  }, [taskLists, selectedTaskListId]);
-
   // タスクリスト関連のイベントハンドラー
   const handleSelectTaskList = useCallback((taskListId: string) => {
-    const index = taskLists.findIndex(list => list.id === taskListId);
-    setSelectedTaskListId(taskListId);
-    setCurrentTaskListIndex(index);
+    selectTaskList(taskListId);
     setIsDrawerOpen(false); // モバイルでドロワーを閉じる
-  }, [taskLists]);
+  }, [selectTaskList]);
 
   const handleCreateTaskList = useCallback(async () => {
     if (newListName.trim()) {
@@ -232,9 +233,8 @@ export default function HomePage() {
 
   // カルーセルナビゲーション
   const handleGoToIndex = useCallback((index: number) => {
-    setCurrentTaskListIndex(index);
-    setSelectedTaskListId(taskLists[index].id);
-  }, [taskLists]);
+    goToTaskList(index);
+  }, [goToTaskList]);
 
   // ドロワー操作
   const handleOpenDrawer = useCallback(() => {
@@ -325,6 +325,22 @@ export default function HomePage() {
           openShortcutHelp();
           break;
 
+        // 左矢印: 前のタスクリストに移動
+        case event.key === 'ArrowLeft' && !isInputFocused:
+          event.preventDefault();
+          if (currentTaskListIndex > 0) {
+            handleGoToIndex(currentTaskListIndex - 1);
+          }
+          break;
+
+        // 右矢印: 次のタスクリストに移動
+        case event.key === 'ArrowRight' && !isInputFocused:
+          event.preventDefault();
+          if (currentTaskListIndex < taskLists.length - 1) {
+            handleGoToIndex(currentTaskListIndex + 1);
+          }
+          break;
+
         // Escape: モーダル・編集モードのキャンセル
         case event.key === 'Escape':
           if (editingTaskId) {
@@ -346,11 +362,14 @@ export default function HomePage() {
     editingTaskId,
     selectedTaskId,
     editingTaskListId,
+    currentTaskListIndex,
+    taskLists.length,
     handleUpdateTaskText,
     deleteTask,
     cancelEditTask,
     cancelEditTaskList,
     openShortcutHelp,
+    handleGoToIndex,
   ]);
   
   // ローディング中の表示
@@ -447,6 +466,8 @@ export default function HomePage() {
                 onTaskClick={setSelectedTaskId}
                 onOpenShareModal={handleOpenShareModal}
                 onGoToIndex={handleGoToIndex}
+                scrollContainerRef={scrollContainerRef}
+                scrollToIndex={scrollToIndex}
               />
             ) : (
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
@@ -631,6 +652,18 @@ export default function HomePage() {
                 <span className="text-gray-600 dark:text-gray-400">選択タスク削除</span>
                 <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded text-sm">
                   Delete
+                </kbd>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600 dark:text-gray-400">前のタスクリスト</span>
+                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded text-sm">
+                  ←
+                </kbd>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600 dark:text-gray-400">次のタスクリスト</span>
+                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded text-sm">
+                  →
                 </kbd>
               </div>
               <div className="flex justify-between items-center">

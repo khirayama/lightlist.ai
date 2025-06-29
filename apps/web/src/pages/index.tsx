@@ -73,6 +73,7 @@ export default function HomePage() {
     sortTasks,
     updateTaskText,
     setTaskDate,
+    reorderTasks,
   } = useTaskOperations({ 
     tasks, 
     setTasks, 
@@ -515,6 +516,7 @@ export default function HomePage() {
                 onDeleteTask={deleteTask}
                 onDeleteCompletedTasks={deleteCompletedTasks}
                 onSortTasks={sortTasks}
+                onReorderTasks={reorderTasks}
                 editingTaskId={editingTaskId}
                 editingTaskText={editingTaskText}
                 setEditingTaskText={setEditingTaskText}

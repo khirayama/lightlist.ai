@@ -15,6 +15,7 @@ interface TaskListCarouselProps {
   onDeleteTask: (taskId: string) => void;
   onDeleteCompletedTasks: () => void;
   onSortTasks: () => void;
+  onReorderTasks: (taskIds: string[]) => void;
   editingTaskId: string | null;
   editingTaskText: string;
   setEditingTaskText: (text: string) => void;
@@ -43,6 +44,7 @@ export const TaskListCarousel: React.FC<TaskListCarouselProps> = memo(({
   onDeleteTask,
   onDeleteCompletedTasks,
   onSortTasks,
+  onReorderTasks,
   editingTaskId,
   editingTaskText,
   setEditingTaskText,
@@ -114,6 +116,7 @@ export const TaskListCarousel: React.FC<TaskListCarouselProps> = memo(({
               onDeleteTask={onDeleteTask} 
               onDeleteCompletedTasks={onDeleteCompletedTasks} 
               onSortTasks={onSortTasks}
+              onReorderTasks={onReorderTasks}
               editingTaskId={editingTaskId}
               editingTaskText={editingTaskText}
               setEditingTaskText={setEditingTaskText}

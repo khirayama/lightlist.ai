@@ -234,6 +234,28 @@ export const useTaskOperations = ({ tasks, setTasks, setError, autoSort }: UseTa
     }
   }, [setTasks, setError, autoSort, applySorting]);
 
+  const reorderTasks = useCallback((newTaskIds: string[]) => {
+    try {
+      setError(null);
+      setTasks(prev => {
+        // 新しい順序でタスクを並び替え
+        const taskMap = new Map(prev.map(task => [task.id, task]));
+        const reorderedTasks = newTaskIds
+          .map(id => taskMap.get(id))
+          .filter((task): task is Task => task !== undefined);
+        
+        // 元の配列にあるが新しい配列にないタスクがあれば末尾に追加
+        const existingIds = new Set(newTaskIds);
+        const remainingTasks = prev.filter(task => !existingIds.has(task.id));
+        
+        return [...reorderedTasks, ...remainingTasks];
+      });
+    } catch (err) {
+      console.error('Failed to reorder tasks:', err);
+      setError('タスクの並び替えに失敗しました');
+    }
+  }, [setTasks, setError]);
+
   return {
     isLoadingTasks,
     fetchTasks,
@@ -244,5 +266,6 @@ export const useTaskOperations = ({ tasks, setTasks, setError, autoSort }: UseTa
     sortTasks,
     updateTaskText,
     setTaskDate,
+    reorderTasks,
   };
 };

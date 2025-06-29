@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
-import type { TaskList, Task } from '@lightlist/sdk';
+import type { TaskList, Task, AppSettings } from '@lightlist/sdk';
 import { useAuth } from '../contexts/AuthContext';
 import { useSafeTranslation } from '../hooks/useSafeTranslation';
 import { useAuthGuard } from '../hooks/useAuthGuard';
@@ -13,6 +13,7 @@ import { TaskListDrawer } from '../components/TaskListDrawer';
 import { TaskListCarousel } from '../components/TaskListCarousel';
 import { ShareModal } from '../components/ShareModal';
 import { ColorPicker } from '../components/ColorPicker';
+import { sdkClient } from '../lib/sdk-client';
 
 export default function HomePage() {
   const router = useRouter();
@@ -28,6 +29,8 @@ export default function HomePage() {
   const [selectedTaskListId, setSelectedTaskListId] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [appSettings, setAppSettings] = useState<AppSettings | null>(null);
+  const [isLoadingAppSettings, setIsLoadingAppSettings] = useState(false);
 
   // 基本的な状態（モーダル状態はuseModalStateで管理）
   const [newTaskText, setNewTaskText] = useState('');
@@ -70,7 +73,12 @@ export default function HomePage() {
     sortTasks,
     updateTaskText,
     setTaskDate,
-  } = useTaskOperations({ tasks, setTasks, setError });
+  } = useTaskOperations({ 
+    tasks, 
+    setTasks, 
+    setError,
+    autoSort: appSettings?.autoSort || false
+  });
 
   // モーダル状態管理フック
   const {
@@ -129,12 +137,41 @@ export default function HomePage() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // App設定の取得
+  const fetchAppSettings = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      setIsLoadingAppSettings(true);
+      setError(null);
+      const response = await sdkClient.user.getApp(user.id);
+      if (response.data?.app) {
+        setAppSettings(response.data.app);
+      }
+    } catch (err) {
+      console.error('Failed to fetch app settings:', err);
+      // App設定が存在しない場合はデフォルト値を設定
+      const defaultAppSettings: AppSettings = {
+        id: '',
+        taskListOrder: [],
+        taskInsertPosition: 'top',
+        autoSort: false,
+        createdAt: '',
+        updatedAt: ''
+      };
+      setAppSettings(defaultAppSettings);
+    } finally {
+      setIsLoadingAppSettings(false);
+    }
+  }, [user, setError]);
+
   // 初期データの取得
   useEffect(() => {
     if (user) {
       fetchTaskLists();
+      fetchAppSettings();
     }
-  }, [user, fetchTaskLists]);
+  }, [user, fetchTaskLists, fetchAppSettings]);
 
   // 選択されたタスクリストのタスクを取得
   useEffect(() => {
@@ -142,6 +179,29 @@ export default function HomePage() {
       fetchTasks(selectedTaskListId);
     }
   }, [selectedTaskListId, fetchTasks]);
+
+  // autoSort設定が変更された際の即座反映
+  useEffect(() => {
+    if (appSettings?.autoSort && tasks.length > 0) {
+      // sortTasks関数を使用して並び替えを実行
+      sortTasks();
+    }
+  }, [appSettings?.autoSort]); // tasksを依存配列から除外して無限ループを防ぐ
+
+  // ページフォーカス時にApp設定を再取得（設定画面での変更を反映）
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user) {
+        fetchAppSettings();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [user, fetchAppSettings]);
 
   // タスクリスト関連のイベントハンドラー
   const handleSelectTaskList = useCallback((taskListId: string) => {

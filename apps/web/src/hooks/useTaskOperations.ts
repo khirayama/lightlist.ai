@@ -6,10 +6,36 @@ interface UseTaskOperationsProps {
   tasks: Task[];
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
   setError: React.Dispatch<React.SetStateAction<string | null>>;
+  autoSort: boolean;
 }
 
-export const useTaskOperations = ({ tasks, setTasks, setError }: UseTaskOperationsProps) => {
+export const useTaskOperations = ({ tasks, setTasks, setError, autoSort }: UseTaskOperationsProps) => {
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
+
+  // 共通のソート関数
+  const applySorting = useCallback((tasksToSort: Task[]) => {
+    return [...tasksToSort].sort((a, b) => {
+      // 1. 完了・未完了で分類（未完了が上）
+      if (a.completed !== b.completed) {
+        return a.completed ? 1 : -1;
+      }
+      
+      // 2. 日付有無で分類（日付ありが上）
+      const aHasDate = !!a.date;
+      const bHasDate = !!b.date;
+      if (aHasDate !== bHasDate) {
+        return aHasDate ? -1 : 1;
+      }
+      
+      // 3. 日付順（古い順）
+      if (aHasDate && bHasDate) {
+        return new Date(a.date!).getTime() - new Date(b.date!).getTime();
+      }
+      
+      // 4. その他は作成日順を維持（新しい順）
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }, []);
 
   // 自然言語日付解析関数
   const parseDateFromText = useCallback((text: string): { text: string; date?: string } => {
@@ -102,29 +128,37 @@ export const useTaskOperations = ({ tasks, setTasks, setError }: UseTaskOperatio
         date: parsed.date || null
       });
       if (response.data?.task) {
-        setTasks(prev => [response.data!.task, ...prev]);
+        setTasks(prev => {
+          const newTasks = [response.data!.task, ...prev];
+          // 自動並び替えが有効な場合は、並び替えを実行
+          return autoSort ? applySorting(newTasks) : newTasks;
+        });
       }
     } catch (err) {
       console.error('Failed to add task:', err);
       setError('タスクの追加に失敗しました');
       throw err;
     }
-  }, [parseDateFromText, setTasks, setError]);
+  }, [parseDateFromText, setTasks, setError, autoSort, applySorting]);
 
   const toggleTask = useCallback(async (taskId: string, completed: boolean) => {
     try {
       setError(null);
       const response = await sdkClient.task.updateTask(taskId, { completed });
       if (response.data?.task) {
-        setTasks(prev => prev.map(task => 
-          task.id === taskId ? response.data!.task : task
-        ));
+        setTasks(prev => {
+          const updatedTasks = prev.map(task => 
+            task.id === taskId ? response.data!.task : task
+          );
+          // 自動並び替えが有効な場合は、並び替えを実行
+          return autoSort ? applySorting(updatedTasks) : updatedTasks;
+        });
       }
     } catch (err) {
       console.error('Failed to update task:', err);
       setError('タスクの更新に失敗しました');
     }
-  }, [setTasks, setError]);
+  }, [setTasks, setError, autoSort, applySorting]);
 
   const deleteTask = useCallback(async (taskId: string) => {
     try {
@@ -154,30 +188,9 @@ export const useTaskOperations = ({ tasks, setTasks, setError }: UseTaskOperatio
   }, [tasks, setTasks, setError]);
 
   const sortTasks = useCallback(() => {
-    const sortedTasks = [...tasks].sort((a, b) => {
-      // 1. 完了・未完了で分類（未完了が上）
-      if (a.completed !== b.completed) {
-        return a.completed ? 1 : -1;
-      }
-      
-      // 2. 日付有無で分類（日付ありが上）
-      const aHasDate = !!a.date;
-      const bHasDate = !!b.date;
-      if (aHasDate !== bHasDate) {
-        return aHasDate ? -1 : 1;
-      }
-      
-      // 3. 日付順（古い順）
-      if (aHasDate && bHasDate) {
-        return new Date(a.date!).getTime() - new Date(b.date!).getTime();
-      }
-      
-      // 4. その他は作成日順を維持（新しい順）
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-    
+    const sortedTasks = applySorting(tasks);
     setTasks(sortedTasks);
-  }, [tasks, setTasks]);
+  }, [tasks, setTasks, applySorting]);
 
   const updateTaskText = useCallback(async (taskId: string, newText: string) => {
     if (!newText.trim()) {
@@ -188,30 +201,38 @@ export const useTaskOperations = ({ tasks, setTasks, setError }: UseTaskOperatio
       setError(null);
       const response = await sdkClient.task.updateTask(taskId, { text: newText.trim() });
       if (response.data?.task) {
-        setTasks(prev => prev.map(task => 
-          task.id === taskId ? response.data!.task : task
-        ));
+        setTasks(prev => {
+          const updatedTasks = prev.map(task => 
+            task.id === taskId ? response.data!.task : task
+          );
+          // 自動並び替えが有効な場合は、並び替えを実行
+          return autoSort ? applySorting(updatedTasks) : updatedTasks;
+        });
       }
     } catch (err) {
       console.error('Failed to update task text:', err);
       setError('タスクの更新に失敗しました');
     }
-  }, [setTasks, setError]);
+  }, [setTasks, setError, autoSort, applySorting]);
 
   const setTaskDate = useCallback(async (taskId: string, date: string | null) => {
     try {
       setError(null);
       const response = await sdkClient.task.updateTask(taskId, { date });
       if (response.data?.task) {
-        setTasks(prev => prev.map(task => 
-          task.id === taskId ? response.data!.task : task
-        ));
+        setTasks(prev => {
+          const updatedTasks = prev.map(task => 
+            task.id === taskId ? response.data!.task : task
+          );
+          // 自動並び替えが有効な場合は、並び替えを実行
+          return autoSort ? applySorting(updatedTasks) : updatedTasks;
+        });
       }
     } catch (err) {
       console.error('Failed to update task date:', err);
       setError('タスクの日付更新に失敗しました');
     }
-  }, [setTasks, setError]);
+  }, [setTasks, setError, autoSort, applySorting]);
 
   return {
     isLoadingTasks,

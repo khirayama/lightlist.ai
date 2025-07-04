@@ -1,0 +1,34 @@
+{
+  "name": "lightlistv2",
+  "version": "1.0.0",
+  "description": "タスク管理アプリ",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "test": "turbo test",
+    "check": "turbo check",
+    "clean": "turbo clean",
+    "setup": "node scripts/setup.js",
+    "setup:dev": "npm run setup && npm run db:start && npm run db:setup",
+    "setup:test": "npm run setup && npm run db:start:test && npm run db:setup:test",
+    "setup:full": "npm run setup && npm run db:start && npm run db:setup && npm run db:start:test && npm run db:setup:test",
+    "db:start": "docker-compose up -d db",
+    "db:stop": "docker-compose down",
+    "db:setup": "npm run db:setup --workspace=@lightlist/api",
+    "db:start:test": "docker-compose up -d db-test",
+    "db:stop:test": "docker-compose down db-test",
+    "db:setup:test": "npm run db:setup:test --workspace=@lightlist/api"
+  },
+  "devDependencies": {
+    "@turbo/gen": "^1.10.12",
+    "turbo": "^1.10.12"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

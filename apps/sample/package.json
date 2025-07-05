@@ -10,6 +10,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
+    "@lightlist/sdk": "workspace:*",
     "i18next": "^23.7.0",
     "react-i18next": "^13.5.0",
     "next": "^14.0.0",

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
+import { useSDK } from './_app';
+import type { AuthCredential, AppError } from '@lightlist/sdk';
 
 interface FormData {
   email: string;
@@ -18,6 +20,7 @@ interface FormErrors {
 export default function RegisterPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { actions } = useSDK();
   const [formData, setFormData] = useState<FormData>({
     email: '',
     password: '',
@@ -65,30 +68,24 @@ export default function RegisterPage() {
     setErrors({});
 
     try {
-      // APIサーバーへの直接呼び出し
-      const response = await fetch('http://localhost:3001/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          deviceId: `web-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-        }),
-      });
+      // SDK経由でユーザー登録
+      const credential: AuthCredential = {
+        email: formData.email,
+        password: formData.password,
+        deviceId: `web-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      };
 
-      const data = await response.json();
+      const result = await actions.auth.register(credential);
 
-      if (!response.ok) {
-        throw new Error(data.message || t('register.errors.registrationFailed'));
+      if (!result.success) {
+        throw new Error(result.error?.message || t('register.errors.registrationFailed'));
       }
 
-      // 登録成功時の処理
-      if (data.data?.accessToken) {
-        localStorage.setItem('accessToken', data.data.accessToken);
-        localStorage.setItem('refreshToken', data.data.refreshToken);
+      // 登録成功時の処理（result.dataはApiResponseなので、result.data.dataでAuthSessionを取得）
+      const authSession = (result.data as any)?.data;
+      if (authSession?.accessToken) {
+        localStorage.setItem('accessToken', authSession.accessToken);
+        localStorage.setItem('refreshToken', authSession.refreshToken);
       }
       
       alert(t('register.success'));

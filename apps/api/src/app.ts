@@ -45,6 +45,11 @@ app.get('/health', (_req, res) => {
   );
 });
 
+// Metrics endpoint
+import { MetricsController } from '@/controllers/metrics';
+app.get('/metrics', MetricsController.getBasicMetrics);
+app.get('/metrics/detailed', MetricsController.getDetailedMetrics);
+
 // Routes
 import routes from '@/routes';
 app.use('/api', routes);

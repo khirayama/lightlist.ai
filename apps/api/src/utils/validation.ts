@@ -26,6 +26,35 @@ export const appSchema = z.object({
   autoSort: z.boolean().optional(),
 });
 
+export const collaborativeSessionSchema = z.object({
+  sessionType: z.enum(['active', 'background']).optional().default('active'),
+});
+
+export const updateSchema = z.object({
+  update: z.string().min(1, 'Update data is required'),
+});
+
+export const taskListCreateSchema = z.object({
+  name: z.string().min(1, 'Task list name is required'),
+  background: z.string().optional(),
+});
+
+export const taskListUpdateSchema = z.object({
+  name: z.string().min(1, 'Task list name is required').optional(),
+  background: z.string().optional(),
+});
+
+export const taskCreateSchema = z.object({
+  text: z.string().min(1, 'Task text is required'),
+  date: z.string().optional(),
+});
+
+export const taskUpdateSchema = z.object({
+  text: z.string().min(1, 'Task text is required').optional(),
+  completed: z.boolean().optional(),
+  date: z.string().optional(),
+});
+
 export const validateRequest = <T>(schema: z.ZodSchema<T>, data: any): T => {
   return schema.parse(data);
 };

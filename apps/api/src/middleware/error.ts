@@ -46,5 +46,50 @@ export const errorHandler = (
     return;
   }
 
+  if (error.message === 'DEVICE_ID_REQUIRED') {
+    sendError(res, 'DEVICE_ID_REQUIRED', 'Device ID header is required', 400);
+    return;
+  }
+
+  if (error.message === 'SESSION_NOT_FOUND') {
+    sendError(res, 'SESSION_NOT_FOUND', 'Session not found or expired', 404);
+    return;
+  }
+
+  if (error.message === 'DOCUMENT_NOT_FOUND') {
+    sendError(res, 'DOCUMENT_NOT_FOUND', 'Document not found', 404);
+    return;
+  }
+
+  if (error.message === 'TASK_LIST_NOT_FOUND') {
+    sendError(res, 'TASK_LIST_NOT_FOUND', 'Task list not found', 404);
+    return;
+  }
+
+  if (error.message === 'INVALID_DOCUMENT_STATE') {
+    sendError(res, 'INVALID_DOCUMENT_STATE', 'Invalid document state', 400);
+    return;
+  }
+
+  if (error.message === 'TASK_NOT_FOUND') {
+    sendError(res, 'TASK_NOT_FOUND', 'Task not found', 404);
+    return;
+  }
+
+  if (error.message === 'INVALID_TASK_ORDER') {
+    sendError(res, 'INVALID_TASK_ORDER', 'Invalid task order format', 400);
+    return;
+  }
+
+  if (error.message === 'INVALID_TASK_LIST_ORDER') {
+    sendError(res, 'INVALID_TASK_LIST_ORDER', 'Invalid task list order format', 400);
+    return;
+  }
+
+  if (error.message === 'SHARE_NOT_FOUND') {
+    sendError(res, 'SHARE_NOT_FOUND', 'Share link not found or expired', 404);
+    return;
+  }
+
   sendError(res, 'INTERNAL_SERVER_ERROR', 'Internal server error', 500);
 };

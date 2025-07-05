@@ -56,25 +56,32 @@ export class HttpClientImpl implements HttpClient {
     options?: RequestOptions
   ): Promise<ApiResponse<T>> {
     const fullUrl = url.startsWith('http') ? url : `${this.config.baseUrl}${url}`;
-    const headers = await this.buildHeaders(options?.headers);
     
-    const requestOptions: RequestInit = {
-      method,
-      headers,
-      body: data ? JSON.stringify(data) : null,
-      signal: AbortSignal.timeout(options?.timeout || this.config.timeout),
-    };
-
     const maxRetries = options?.retries ?? this.config.retries;
     
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
+        const headers = await this.buildHeaders(options?.headers);
+        
+        const requestOptions: RequestInit = {
+          method,
+          headers,
+          body: data ? JSON.stringify(data) : null,
+          signal: AbortSignal.timeout(options?.timeout || this.config.timeout),
+        };
+
         const response = await fetch(fullUrl, requestOptions);
         
         if (!response.ok) {
           if (response.status === 401 && this.config.onUnauthorized) {
-            await this.config.onUnauthorized();
-            throw this.createError('auth', 'UNAUTHORIZED', 'Authentication required');
+            try {
+              await this.config.onUnauthorized();
+              // リフレッシュ成功時、元のリクエストを再実行
+              continue;
+            } catch (refreshError) {
+              // リフレッシュ失敗時は認証エラーとして処理
+              throw this.createError('auth', 'UNAUTHORIZED', 'Authentication failed');
+            }
           }
           
           const errorText = await response.text();
@@ -87,6 +94,11 @@ export class HttpClientImpl implements HttpClient {
         const result = await response.json();
         return result;
       } catch (error) {
+        // 401エラーでリフレッシュが成功した場合は、continueでリトライ
+        if (error && typeof error === 'object' && 'type' in error && error.type === 'auth') {
+          throw error;
+        }
+        
         if (attempt === maxRetries) {
           if (error instanceof Error) {
             throw error;

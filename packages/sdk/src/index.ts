@@ -59,12 +59,6 @@ export interface SDKConfig {
 }
 
 export function createSDK(config: SDKConfig) {
-  const httpClient = new HttpClientImpl({
-    baseUrl: config.apiUrl,
-    timeout: config.apiTimeout || 10000,
-    retries: 3
-  });
-
   const store = new StoreImpl({});
   
   // 簡単なセッションストレージ実装（ブラウザまたはネイティブ対応）
@@ -74,7 +68,43 @@ export function createSDK(config: SDKConfig) {
     removeItem: () => {}
   };
 
-  const authService = new AuthServiceImpl(httpClient, sessionStorage);
+  // AuthServiceを先に作成（循環参照を避けるため、httpClientは後で設定）
+  let authService: AuthServiceImpl;
+  let isRefreshing = false;
+  
+  // HttpClientを設定（認証トークンの自動設定と401エラー時の自動リフレッシュ）
+  const httpClient = new HttpClientImpl({
+    baseUrl: config.apiUrl,
+    timeout: config.apiTimeout || 10000,
+    retries: 3,
+    getAuthToken: async () => {
+      if (authService) {
+        return authService.getAccessToken();
+      }
+      return null;
+    },
+    onUnauthorized: async () => {
+      if (authService && !isRefreshing) {
+        isRefreshing = true;
+        try {
+          const refreshToken = authService.getRefreshToken();
+          if (refreshToken) {
+            await authService.refresh(refreshToken);
+          }
+        } catch (error) {
+          // リフレッシュに失敗した場合、トークンをクリア
+          await authService.logout();
+          throw error;
+        } finally {
+          isRefreshing = false;
+        }
+      }
+    }
+  });
+
+  // AuthServiceを初期化
+  authService = new AuthServiceImpl(httpClient, sessionStorage);
+  
   const settingsService = new SettingsServiceImpl(httpClient);
   const collaborativeService = new CollaborativeServiceImpl(httpClient);
   const shareService = new ShareServiceImpl(httpClient);

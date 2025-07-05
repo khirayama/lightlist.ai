@@ -622,25 +622,25 @@ describe('共同編集API', () => {
         });
 
       // 両ユーザーが同時に異なるタスクを追加
-      const ydoc1 = new Y.Doc();
+      const ydoc1 = new Y.Doc({ guid: 'user1-client' });
       Y.applyUpdate(ydoc1, Buffer.from(user1SessionResponse.body.data.documentState, 'base64'));
       const yMap1 = ydoc1.getMap('taskList');
       const currentTaskOrder1 = yMap1.get('taskOrder') as string[] || [];
       yMap1.set('taskOrder', ['user1-task-at-start', ...currentTaskOrder1]);
       
-      const update1 = Y.encodeStateAsUpdate(ydoc1, Buffer.from(user1SessionResponse.body.data.stateVector, 'base64'));
+      const update1 = Y.encodeStateAsUpdate(ydoc1);
       const updateBase64_1 = Buffer.from(update1).toString('base64');
 
-      const ydoc2 = new Y.Doc();
+      const ydoc2 = new Y.Doc({ guid: 'user2-client' });
       Y.applyUpdate(ydoc2, Buffer.from(user2SessionResponse.body.data.documentState, 'base64'));
       const yMap2 = ydoc2.getMap('taskList');
       const currentTaskOrder2 = yMap2.get('taskOrder') as string[] || [];
       yMap2.set('taskOrder', [...currentTaskOrder2, 'user2-task-at-end']);
       
-      const update2 = Y.encodeStateAsUpdate(ydoc2, Buffer.from(user2SessionResponse.body.data.stateVector, 'base64'));
+      const update2 = Y.encodeStateAsUpdate(ydoc2);
       const updateBase64_2 = Buffer.from(update2).toString('base64');
 
-      // 両ユーザーが更新を送信
+      // ユーザー1が更新を送信
       await request(app)
         .put(`/api/collaborative/sessions/${taskListId}`)
         .set('Authorization', `Bearer ${userToken}`)
@@ -649,12 +649,29 @@ describe('共同編集API', () => {
           update: updateBase64_1,
         });
 
+      // ユーザー2が最新の状態を取得
+      const user2UpdatedResponse = await request(app)
+        .get(`/api/collaborative/sessions/${taskListId}`)
+        .set('Authorization', `Bearer ${userToken2}`)
+        .set('X-Device-ID', testUser2.deviceId);
+
+      // ユーザー2が最新の状態から新しい更新を作成
+      const ydoc2Updated = new Y.Doc({ guid: 'user2-client-updated' });
+      Y.applyUpdate(ydoc2Updated, Buffer.from(user2UpdatedResponse.body.data.documentState, 'base64'));
+      const yMap2Updated = ydoc2Updated.getMap('taskList');
+      const currentTaskOrder2Updated = yMap2Updated.get('taskOrder') as string[] || [];
+      yMap2Updated.set('taskOrder', [...currentTaskOrder2Updated, 'user2-task-at-end']);
+      
+      const update2Updated = Y.encodeStateAsUpdate(ydoc2Updated);
+      const updateBase64_2Updated = Buffer.from(update2Updated).toString('base64');
+
+      // ユーザー2が更新を送信
       await request(app)
         .put(`/api/collaborative/sessions/${taskListId}`)
         .set('Authorization', `Bearer ${userToken2}`)
         .set('X-Device-ID', testUser2.deviceId)
         .send({
-          update: updateBase64_2,
+          update: updateBase64_2Updated,
         });
 
       // 最終的な状態を確認

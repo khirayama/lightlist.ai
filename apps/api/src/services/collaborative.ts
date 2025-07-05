@@ -16,6 +16,9 @@ export class CollaborativeService {
     deviceId: string,
     sessionType: 'active' | 'background' = 'active'
   ): Promise<CollaborativeSessionResponse> {
+    // 期限切れセッションのクリーンアップ
+    await this.cleanupExpiredSessions();
+
     const app = await prisma.app.findUnique({
       where: { userId },
       select: { id: true, taskListOrder: true },

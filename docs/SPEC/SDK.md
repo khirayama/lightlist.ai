@@ -84,6 +84,12 @@ Actions Layer は Services Layer を呼び出してデータを取得・更新�
 
 参照: `@packages/sdk/src/actions/index.ts`
 
+**実装状況**: ✅ 完了（2025年1月5日実装）
+- AuthActions, SettingsActions, TaskListActions, TaskActions, ShareActions の全実装完了
+- 43個のテストが全て成功
+- t-wada式のTDDで実装（Red→Green→Blue）
+- Y.js協調編集とリアルタイム同期を内部で自動実行
+
 ## 4. 内部アーキテクチャ（Y.js統合とCollaborative機能）
 
 注意: このセクションは内部実装の説明です。これらのインターフェースはSDKの内部で使用され、ユーザーには公開されません。

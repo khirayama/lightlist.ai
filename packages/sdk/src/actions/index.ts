@@ -126,3 +126,11 @@ export interface Actions {
   //   - handleConflict() → 競合検出時に自動実行
   //   - retryFailedSync() → エラー時に自動リトライ
 }
+
+// 実装クラスのエクスポート
+export { AuthActionsImpl } from './implementation/auth-actions';
+export { SettingsActionsImpl } from './implementation/settings-actions';
+export { TaskListActionsImpl } from './implementation/tasklist-actions';
+export { TaskActionsImpl } from './implementation/task-actions';
+export { ShareActionsImpl } from './implementation/share-actions';
+export { ActionsImpl } from './implementation/actions';

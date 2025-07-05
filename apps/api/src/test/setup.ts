@@ -2,24 +2,23 @@ import { beforeAll, afterAll } from 'vitest';
 import { execSync } from 'child_process';
 
 beforeAll(async () => {
-  // Setup test database if needed
-  if (!process.env.SKIP_DB_SETUP) {
-    try {
-      execSync('npm run db:start:test', { stdio: 'inherit' });
-      execSync('npm run db:setup:test', { stdio: 'inherit' });
-    } catch (error) {
-      console.error('Failed to setup test database:', error);
-    }
+  // テスト用データベースのセットアップ
+  // DATABASE_URLはpackage.jsonのテストスクリプトで設定済み
+  console.log('Setting up test database...');
+  
+  try {
+    // テスト用データベースのマイグレーション実行
+    execSync('DATABASE_URL="postgresql://lightlist_user:lightlist_password@localhost:5435/lightlist_test_db?schema=public" npx prisma migrate dev', { 
+      stdio: 'inherit', 
+      cwd: process.cwd() 
+    });
+    console.log('Test database setup completed');
+  } catch (error) {
+    console.error('Failed to setup test database:', error);
   }
 });
 
 afterAll(async () => {
-  // Cleanup test database if needed
-  if (!process.env.SKIP_DB_CLEANUP) {
-    try {
-      execSync('npm run db:stop:test', { stdio: 'inherit' });
-    } catch (error) {
-      console.error('Failed to cleanup test database:', error);
-    }
-  }
+  // テスト後のクリーンアップは不要（次回テスト時に自動リセット）
+  console.log('Test completed');
 });

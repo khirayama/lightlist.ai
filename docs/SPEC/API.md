@@ -2,190 +2,19 @@
 
 ## 目次
 
-- [1. Prismaスキーマ](#1-prismaスキーマ)
-- [2. APIエンドポイント一覧](#2-apiエンドポイント一覧)
-- [3. リクエスト/レスポンス例](#3-リクエストレスポンス例)
-- [4. ユーザーシナリオごとのAPIコールフロー](#4-ユーザーシナリオごとのapiコールフロー)
-- [5. 共同編集機能のAPIコールフロー](#5-共同編集機能のapiコールフロー)
+- [1. APIエンドポイント一覧](#1-apiエンドポイント一覧)
+- [2. リクエスト/レスポンス例](#2-リクエストレスポンス例)
+- [3. ユーザーシナリオごとのAPIコールフロー](#3-ユーザーシナリオごとのapiコールフロー)
+- [4. 共同編集機能のAPIコールフロー](#4-共同編集機能のapiコールフロー)
 - [実装上の注意点](#実装上の注意点)
 
 ## 1. Prismaスキーマ
 
-### 基本スキーマ
+データベーススキーマの詳細については、実際のPrismaスキーマファイルを参照してください。
 
-```prisma
-generator client {
-  provider = "prisma-client-js"
-}
+参照: `@apps/api/prisma/schema.prisma`
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  app                  App?
-  settings             Settings?
-  refreshTokens        RefreshToken[]
-  passwordResetTokens  PasswordResetToken[]
-
-  @@map("users")
-}
-
-model App {
-  id                 String   @id @default(cuid())
-  userId             String   @unique
-  taskListOrder      String[] @default([])
-  taskInsertPosition String   @default("top")
-  autoSort           Boolean  @default(false)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-
-  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  collaborativeSessions CollaborativeSession[]
-
-  @@map("apps")
-}
-
-model TaskList {
-  id         String   @id @default(cuid())
-  name       String
-  background String?  @default("")
-  taskOrder  String[] @default([])
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  tasks                 Task[]
-  share                 TaskListShare?
-  document              TaskListDocument?
-  collaborativeSessions CollaborativeSession[]
-
-  @@map("task_lists")
-}
-
-model Task {
-  id         String   @id @default(cuid())
-  text       String
-  completed  Boolean  @default(false)
-  date       String?
-  taskListId String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  taskList TaskList @relation(fields: [taskListId], references: [id], onDelete: Cascade)
-
-  @@index([taskListId])
-  @@index([taskListId, completed])
-  @@index([taskListId, createdAt])
-  @@map("tasks")
-}
-
-model Settings {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  theme     String   @default("system")
-  language  String   @default("ja")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("settings")
-}
-
-model TaskListShare {
-  id         String   @id @default(cuid())
-  taskListId String   @unique
-  shareToken String   @unique
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  taskList TaskList @relation(fields: [taskListId], references: [id], onDelete: Cascade)
-
-  @@index([shareToken])
-  @@map("task_list_shares")
-}
-
-model TaskListDocument {
-  id                 String   @id @default(cuid())
-  taskListId         String   @unique
-  stateVector        Bytes
-  documentState      Bytes
-  activeSessionCount Int      @default(0)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-
-  taskList TaskList @relation(fields: [taskListId], references: [id], onDelete: Cascade)
-
-  @@map("task_list_documents")
-}
-
-model CollaborativeSession {
-  id             String   @id @default(cuid())
-  taskListId     String
-  appId          String
-  deviceId       String
-  sessionType    String   @default("active")
-  lastActivity   DateTime @default(now())
-  expiresAt      DateTime
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  taskList TaskList @relation(fields: [taskListId], references: [id], onDelete: Cascade)
-  app      App      @relation(fields: [appId], references: [id], onDelete: Cascade)
-
-  @@unique([taskListId, appId, deviceId])
-  @@index([taskListId])
-  @@index([expiresAt])
-  @@index([appId])
-  @@map("collaborative_sessions")
-}
-
-model RefreshToken {
-  id        String   @id @default(cuid())
-  userId    String
-  token     String   @unique
-  deviceId  String
-  expiresAt DateTime
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([token])
-  @@index([deviceId])
-  @@map("refresh_tokens")
-}
-
-model PasswordResetToken {
-  id        String   @id @default(cuid())
-  userId    String
-  token     String   @unique
-  expiresAt DateTime
-  isUsed    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([token])
-  @@index([expiresAt])
-  @@map("password_reset_tokens")
-}
-```
-
-## 2. APIエンドポイント一覧
+## 1. APIエンドポイント一覧
 
 ### 認証系
 - `POST /auth/register` - 新規ユーザー登録
@@ -219,7 +48,7 @@ model PasswordResetToken {
 - `GET /health` - ヘルスチェック
 - `GET /metrics` - 基本的なメトリクス取得
 
-## 3. リクエスト/レスポンス例
+## 2. リクエスト/レスポンス例
 
 ### 認証系
 
@@ -468,7 +297,7 @@ model PasswordResetToken {
 }
 ```
 
-## 4. ユーザーシナリオごとのAPIコールフロー
+## 3. ユーザーシナリオごとのAPIコールフロー
 
 ### アプリ起動フロー
 ```
@@ -529,7 +358,7 @@ model PasswordResetToken {
   PUT /app
 ```
 
-## 5. 共同編集機能のAPIコールフロー
+## 4. 共同編集機能のAPIコールフロー
 
 ### ユーザーA（最初の編集者）
 ```

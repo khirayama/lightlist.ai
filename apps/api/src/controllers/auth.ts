@@ -6,6 +6,8 @@ import {
   registerSchema,
   loginSchema,
   refreshTokenSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } from '@/utils/validation';
 
 export class AuthController {
@@ -99,6 +101,38 @@ export class AuthController {
       await AuthService.logout(refreshToken);
 
       sendSuccess(res, null, 'Logout successful');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async forgotPassword(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { email } = validateRequest(forgotPasswordSchema, req.body);
+
+      await AuthService.forgotPassword(email);
+
+      sendSuccess(res, null, 'Password reset email sent');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async resetPassword(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { token, newPassword } = validateRequest(resetPasswordSchema, req.body);
+
+      await AuthService.resetPassword(token, newPassword);
+
+      sendSuccess(res, null, 'Password reset successful');
     } catch (error) {
       next(error);
     }

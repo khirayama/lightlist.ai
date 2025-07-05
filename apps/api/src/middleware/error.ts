@@ -46,6 +46,11 @@ export const errorHandler = (
     return;
   }
 
+  if (error.message === 'INVALID_RESET_TOKEN') {
+    sendError(res, 'INVALID_RESET_TOKEN', 'Invalid or expired reset token', 401);
+    return;
+  }
+
   if (error.message === 'DEVICE_ID_REQUIRED') {
     sendError(res, 'DEVICE_ID_REQUIRED', 'Device ID header is required', 400);
     return;

@@ -167,7 +167,7 @@ export class AuthService {
     });
 
     const refreshTokenValue = jwt.sign(
-      { userId, deviceId },
+      { userId, deviceId, jti: Math.random().toString(36) },
       config.jwt.secret,
       {
         expiresIn: this.REFRESH_TOKEN_EXPIRES_IN,

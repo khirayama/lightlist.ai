@@ -5,8 +5,7 @@ import { HttpClient } from '../base/http-client';
 
 export class ShareServiceImpl extends ServiceBase implements ShareService {
   constructor(
-    httpClient: HttpClient,
-    private baseUrl: string
+    httpClient: HttpClient
   ) {
     super(httpClient);
   }

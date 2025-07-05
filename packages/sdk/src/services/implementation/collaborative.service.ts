@@ -11,8 +11,7 @@ import { HttpClient } from '../base/http-client';
 
 export class CollaborativeServiceImpl extends ServiceBase implements CollaborativeService {
   constructor(
-    httpClient: HttpClient,
-    private baseUrl: string
+    httpClient: HttpClient
   ) {
     super(httpClient);
   }

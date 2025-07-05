@@ -1,7 +1,7 @@
 import { SettingsActions } from '../index';
 import { SettingsService } from '../../services';
 import { Store } from '../../store';
-import { UserSettings, AppSettings, ActionResult, AppError } from '../../types';
+import { UserSettings, AppSettings, TaskList, ActionResult, AppError } from '../../types';
 
 export class SettingsActionsImpl implements SettingsActions {
   constructor(
@@ -11,33 +11,33 @@ export class SettingsActionsImpl implements SettingsActions {
 
   async getSettings(): Promise<ActionResult<UserSettings>> {
     return this.executeWithErrorHandling(async () => {
-      const settings = await this.settingsService.getSettings();
-      this.updateSettingsInStore(settings);
-      return settings;
+      const response = await this.settingsService.getSettings();
+      this.updateSettingsInStore(response.data);
+      return response.data;
     });
   }
 
   async updateSettings(settings: Partial<UserSettings>): Promise<ActionResult<UserSettings>> {
     return this.executeWithErrorHandling(async () => {
-      const updatedSettings = await this.settingsService.updateSettings(settings);
-      this.updateSettingsInStore(updatedSettings);
-      return updatedSettings;
+      const response = await this.settingsService.updateSettings(settings);
+      this.updateSettingsInStore(response.data);
+      return response.data;
     });
   }
 
   async getApp(): Promise<ActionResult<AppSettings>> {
     return this.executeWithErrorHandling(async () => {
-      const app = await this.settingsService.getApp();
-      this.updateAppInStore(app);
-      return app;
+      const response = await this.settingsService.getApp();
+      this.updateAppInStore(response.data);
+      return response.data;
     });
   }
 
   async updateApp(app: Partial<AppSettings>): Promise<ActionResult<AppSettings>> {
     return this.executeWithErrorHandling(async () => {
-      const updatedApp = await this.settingsService.updateApp(app);
-      this.updateAppInStore(updatedApp);
-      return updatedApp;
+      const response = await this.settingsService.updateApp(app);
+      this.updateAppInStore(response.data);
+      return response.data;
     });
   }
 
@@ -68,17 +68,17 @@ export class SettingsActionsImpl implements SettingsActions {
 
   // Store更新のヘルパーメソッド
   private updateSettingsInStore(settings: UserSettings): void {
-    this.store.setState({
-      ...this.store.getState(),
+    this.store.setState((state) => ({
+      ...state,
       settings
-    });
+    }));
   }
 
   private updateAppInStore(app: AppSettings): void {
-    this.store.setState({
-      ...this.store.getState(),
+    this.store.setState((state) => ({
+      ...state,
       app
-    });
+    }));
   }
 
   private reorderTaskListsInStore(order: string[]): void {
@@ -88,16 +88,16 @@ export class SettingsActionsImpl implements SettingsActions {
     // 順序に従ってタスクリストを並び替え
     const reorderedTaskLists = order
       .map(id => taskListsMap.get(id))
-      .filter(Boolean)
+      .filter((taskList): taskList is TaskList => taskList !== undefined)
       .concat(
         // 順序に含まれていないタスクリストを最後に追加
         currentState.taskLists.filter(tl => !order.includes(tl.id))
       );
 
-    this.store.setState({
-      ...currentState,
+    this.store.setState((state) => ({
+      ...state,
       taskLists: reorderedTaskLists
-    });
+    }));
   }
 
   private convertErrorToAppError(error: unknown): AppError {

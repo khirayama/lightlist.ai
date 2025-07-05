@@ -1,5 +1,6 @@
 // Store層（状態管理）インターフェース定義とエクスポート
 
+import * as Y from 'yjs';
 import { 
   StoreState, 
   User, 

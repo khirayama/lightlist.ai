@@ -1,5 +1,7 @@
 // タスク管理アプリ SDK 型定義
 
+import * as Y from 'yjs';
+
 // ユーザー関連
 export interface User {
   id: string;

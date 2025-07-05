@@ -10,8 +10,6 @@ import {
   ActionResult,
   StoreState
 } from '../../types';
-import { AuthService, SettingsService, CollaborativeService, ShareService } from '../../services';
-import { Store } from '../../store';
 
 // テスト用のモックデータ
 export const mockAuthSession: AuthSession = {
@@ -52,12 +50,10 @@ export const mockTaskList: TaskList = {
 };
 
 export const mockTaskListShare: TaskListShare = {
-  id: 'mock-share-id',
   taskListId: 'mock-tasklist-id',
   shareToken: 'mock-share-token',
   shareUrl: 'https://example.com/share/mock-share-token',
-  createdAt: '2024-01-01T00:00:00Z',
-  expiresAt: '2024-01-02T00:00:00Z'
+  isActive: true
 };
 
 export const mockAppError: AppError = {
@@ -93,7 +89,7 @@ export const mockAuthService = {
   sendPasswordResetRequest: vi.fn(),
   resetPassword: vi.fn(),
   bootstrap: vi.fn()
-} as jest.Mocked<AuthService>;
+} as any;
 
 export const mockSettingsService = {
   getSettings: vi.fn(),
@@ -102,7 +98,7 @@ export const mockSettingsService = {
   updateApp: vi.fn(),
   getTaskListOrder: vi.fn(),
   updateTaskListOrder: vi.fn()
-} as jest.Mocked<SettingsService>;
+} as any;
 
 export const mockCollaborativeService = {
   createTaskListDocument: vi.fn(),
@@ -121,7 +117,7 @@ export const mockCollaborativeService = {
   moveTaskInDocument: vi.fn(),
   sortTasksInDocument: vi.fn(),
   clearCompletedTasksInDocument: vi.fn()
-} as jest.Mocked<CollaborativeService>;
+} as any;
 
 export const mockShareService = {
   createShareLink: vi.fn(),
@@ -129,7 +125,7 @@ export const mockShareService = {
   copySharedTaskList: vi.fn(),
   removeShareLink: vi.fn(),
   refreshShareCode: vi.fn()
-} as jest.Mocked<ShareService>;
+} as any;
 
 // Store のモック
 export const mockStore = {
@@ -139,7 +135,7 @@ export const mockStore = {
   unsubscribe: vi.fn(),
   dispatch: vi.fn(),
   destroy: vi.fn()
-} as jest.Mocked<Store>;
+} as any;
 
 // ActionResult ヘルパー関数
 export function createSuccessResult<T>(data: T): ActionResult<T> {

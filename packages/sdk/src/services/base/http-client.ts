@@ -61,7 +61,7 @@ export class HttpClientImpl implements HttpClient {
     const requestOptions: RequestInit = {
       method,
       headers,
-      body: data ? JSON.stringify(data) : undefined,
+      body: data ? JSON.stringify(data) : null,
       signal: AbortSignal.timeout(options?.timeout || this.config.timeout),
     };
 

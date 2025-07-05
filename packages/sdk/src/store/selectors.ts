@@ -1,7 +1,7 @@
-import { Selectors, Store } from './index';
 import { StoreState, User, AppSettings, UserSettings, TaskList, Task, AppError } from '../types';
+import { Store, Selectors } from './index';
 
-export function createSelectors(store: Store): Selectors {
+export function createSelectors(_store: Store): Selectors {
   return {
     // 基本セレクター
     getUser(state: StoreState): User | null {
@@ -92,7 +92,7 @@ export function createSelectors(store: Store): Selectors {
       return state.user !== null;
     },
 
-    isAuthenticating(state: StoreState): boolean {
+    isAuthenticating(_state: StoreState): boolean {
       // 将来的に認証中状態をStoreStateに追加予定
       return false;
     }

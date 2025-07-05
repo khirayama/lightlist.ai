@@ -11,17 +11,17 @@ export class AuthActionsImpl implements AuthActions {
 
   async register(credential: AuthCredential): Promise<ActionResult<AuthSession>> {
     return this.executeWithErrorHandling(async () => {
-      const session = await this.authService.register(credential);
+      const response = await this.authService.register(credential);
       this.updateUserInStore(credential.email);
-      return session;
+      return response.data;
     });
   }
 
   async login(credential: AuthCredential): Promise<ActionResult<AuthSession>> {
     return this.executeWithErrorHandling(async () => {
-      const session = await this.authService.login(credential);
+      const response = await this.authService.login(credential);
       this.updateUserInStore(credential.email);
-      return session;
+      return response.data;
     });
   }
 
@@ -54,7 +54,7 @@ export class AuthActionsImpl implements AuthActions {
 
   async sendPasswordResetRequest(email: string): Promise<ActionResult<void>> {
     return this.executeWithErrorHandling(async () => {
-      await this.authService.sendPasswordResetRequest(email);
+      await this.authService.forgotPassword(email);
     });
   }
 
@@ -66,7 +66,7 @@ export class AuthActionsImpl implements AuthActions {
 
   async bootstrap(): Promise<ActionResult<void>> {
     return this.executeWithErrorHandling(async () => {
-      await this.authService.bootstrap();
+      // Bootstrap logic: initialize store with user data
       this.initializeStoreData();
     });
   }
@@ -91,40 +91,42 @@ export class AuthActionsImpl implements AuthActions {
 
   // Store更新のヘルパーメソッド
   private updateUserInStore(email: string): void {
-    this.store.setState({
-      ...this.store.getState(),
+    this.store.setState((state) => ({
+      ...state,
       user: this.createUser(email)
-    });
+    }));
   }
 
   private updateUserEmailInStore(email: string): void {
-    const currentState = this.store.getState();
-    if (currentState.user) {
-      this.store.setState({
-        ...currentState,
-        user: {
-          ...currentState.user,
-          email,
-          updatedAt: new Date().toISOString()
-        }
-      });
-    }
+    this.store.setState((state) => {
+      if (state.user) {
+        return {
+          ...state,
+          user: {
+            ...state.user,
+            email,
+            updatedAt: new Date().toISOString()
+          }
+        };
+      }
+      return state;
+    });
   }
 
   private clearUserDataInStore(): void {
-    this.store.setState({
-      ...this.store.getState(),
+    this.store.setState((state) => ({
+      ...state,
       user: null,
       taskLists: [],
       activeSessionIds: []
-    });
+    }));
   }
 
   private initializeStoreData(): void {
-    this.store.setState({
-      ...this.store.getState(),
+    this.store.setState((state) => ({
+      ...state,
       // 初期データの読み込み処理
-    });
+    }));
   }
 
   private createUser(email: string): User {

@@ -13,14 +13,15 @@ export class TaskListActionsImpl implements TaskListActions {
   async getTaskLists(): Promise<ActionResult<TaskList[]>> {
     return this.executeWithErrorHandling(async () => {
       // タスクリストの順序を取得
-      const order = await this.settingsService.getTaskListOrder();
+      const orderResponse = await this.settingsService.getTaskListOrder();
+      const order = orderResponse.data;
       
       // 各タスクリストのY.jsドキュメントを取得
       const taskLists: TaskList[] = [];
       for (const id of order) {
         try {
-          const taskList = await this.collaborativeService.getTaskListDocument(id);
-          taskLists.push(taskList);
+          const response = await this.collaborativeService.initializeTaskList(id);
+          taskLists.push(response.data);
         } catch (error) {
           // 個別のタスクリスト取得エラーはログに記録するが、処理を続行
           console.warn(`Failed to load task list ${id}:`, error);
@@ -35,23 +36,30 @@ export class TaskListActionsImpl implements TaskListActions {
   async createTaskList(taskList: Partial<TaskList>): Promise<ActionResult<TaskList>> {
     return this.executeWithErrorHandling(async () => {
       // Y.jsドキュメントを作成
-      const createdTaskList = await this.collaborativeService.createTaskListDocument(taskList);
+      const response = await this.collaborativeService.createTaskListDocument(taskList);
       
       // セッションを開始
-      await this.collaborativeService.startSession(createdTaskList.id);
+      await this.collaborativeService.startSession(response.data.id, 'active');
       
       // ストアを更新
-      this.addTaskListToStore(createdTaskList);
-      this.addActiveSessionToStore(createdTaskList.id);
+      this.addTaskListToStore(response.data);
+      this.addActiveSessionToStore(response.data.id);
       
-      return createdTaskList;
+      return response.data;
     });
   }
 
   async updateTaskList(taskListId: string, updates: Partial<TaskList>): Promise<ActionResult<TaskList>> {
     return this.executeWithErrorHandling(async () => {
+      // 現在のタスクリストを取得
+      const currentTaskList = this.getTaskListFromStore(taskListId);
+      if (!currentTaskList) throw new Error('TaskList not found');
+      
+      // 更新されたタスクリストを作成
+      const updatedTaskList = { ...currentTaskList, ...updates, updatedAt: new Date().toISOString() };
+      
       // Y.jsドキュメントを更新
-      const updatedTaskList = await this.collaborativeService.updateTaskListDocument(taskListId, updates);
+      await this.collaborativeService.updateTaskListDocument(taskListId, updates);
       
       // ストアを更新
       this.updateTaskListInStore(updatedTaskList);
@@ -103,27 +111,28 @@ export class TaskListActionsImpl implements TaskListActions {
   async duplicateTaskList(taskListId: string): Promise<ActionResult<TaskList>> {
     return this.executeWithErrorHandling(async () => {
       // 元のタスクリストを取得
-      const originalTaskList = await this.collaborativeService.getTaskListDocument(taskListId);
+      const originalTaskList = this.getTaskListFromStore(taskListId);
+      if (!originalTaskList) throw new Error('TaskList not found');
       
       // 複製用のデータを作成
+      const { id, ...taskListDataWithoutId } = originalTaskList;
       const duplicateData = {
-        ...originalTaskList,
-        id: undefined, // 新しいIDを生成させる
+        ...taskListDataWithoutId,
         name: `${originalTaskList.name} (Copy)`,
-        tasks: originalTaskList.tasks // タスクも複製
+        tasks: [] // タスクはあとで個別に複製
       };
       
       // 新しいY.jsドキュメントを作成
-      const duplicatedTaskList = await this.collaborativeService.createTaskListDocument(duplicateData);
+      const response = await this.collaborativeService.createTaskListDocument(duplicateData);
       
       // セッションを開始
-      await this.collaborativeService.startSession(duplicatedTaskList.id);
+      await this.collaborativeService.startSession(response.data.id, 'active');
       
       // ストアを更新
-      this.addTaskListToStore(duplicatedTaskList);
-      this.addActiveSessionToStore(duplicatedTaskList.id);
+      this.addTaskListToStore(response.data);
+      this.addActiveSessionToStore(response.data.id);
       
-      return duplicatedTaskList;
+      return response.data;
     });
   }
 
@@ -145,13 +154,20 @@ export class TaskListActionsImpl implements TaskListActions {
 
   async restoreTaskList(taskListId: string): Promise<ActionResult<void>> {
     return this.executeWithErrorHandling(async () => {
+      // 現在のタスクリストを取得
+      const currentTaskList = this.getTaskListFromStore(taskListId);
+      if (!currentTaskList) throw new Error('TaskList not found');
+      
       // アーカイブフラグを解除
-      const restoredTaskList = await this.collaborativeService.updateTaskListDocument(taskListId, { 
+      await this.collaborativeService.updateTaskListDocument(taskListId, { 
         archived: false 
       } as any);
       
+      // 更新されたタスクリストを作成
+      const restoredTaskList = { ...currentTaskList, archived: false, updatedAt: new Date().toISOString() } as TaskList;
+      
       // セッションを開始
-      await this.collaborativeService.startSession(taskListId);
+      await this.collaborativeService.startSession(taskListId, 'active');
       
       // ストアに追加
       this.addTaskListToStore(restoredTaskList);
@@ -178,61 +194,64 @@ export class TaskListActionsImpl implements TaskListActions {
   }
 
   // Store更新のヘルパーメソッド
+  private getTaskListFromStore(taskListId: string): TaskList | null {
+    const state = this.store.getState();
+    return state.taskLists.find(tl => tl.id === taskListId) || null;
+  }
+
   private updateTaskListsInStore(taskLists: TaskList[]): void {
-    this.store.setState({
-      ...this.store.getState(),
+    this.store.setState((state) => ({
+      ...state,
       taskLists
-    });
+    }));
   }
 
   private addTaskListToStore(taskList: TaskList): void {
-    const currentState = this.store.getState();
-    this.store.setState({
-      ...currentState,
-      taskLists: [...currentState.taskLists, taskList]
-    });
+    this.store.setState((state) => ({
+      ...state,
+      taskLists: [...state.taskLists, taskList]
+    }));
   }
 
   private updateTaskListInStore(updatedTaskList: TaskList): void {
-    const currentState = this.store.getState();
-    const taskLists = currentState.taskLists.map(tl => 
-      tl.id === updatedTaskList.id ? updatedTaskList : tl
-    );
-    
-    this.store.setState({
-      ...currentState,
-      taskLists
+    this.store.setState((state) => {
+      const taskLists = state.taskLists.map(tl => 
+        tl.id === updatedTaskList.id ? updatedTaskList : tl
+      );
+      return {
+        ...state,
+        taskLists
+      };
     });
   }
 
   private removeTaskListFromStore(taskListId: string): void {
-    const currentState = this.store.getState();
-    const taskLists = currentState.taskLists.filter(tl => tl.id !== taskListId);
-    
-    this.store.setState({
-      ...currentState,
-      taskLists
+    this.store.setState((state) => {
+      const taskLists = state.taskLists.filter(tl => tl.id !== taskListId);
+      return {
+        ...state,
+        taskLists
+      };
     });
   }
 
   private addActiveSessionToStore(sessionId: string): void {
-    const currentState = this.store.getState();
-    if (!currentState.activeSessionIds.includes(sessionId)) {
-      this.store.setState({
-        ...currentState,
-        activeSessionIds: [...currentState.activeSessionIds, sessionId]
-      });
-    }
+    this.store.setState((state) => {
+      if (!state.activeSessionIds.includes(sessionId)) {
+        return {
+          ...state,
+          activeSessionIds: [...state.activeSessionIds, sessionId]
+        };
+      }
+      return state;
+    });
   }
 
   private removeActiveSessionFromStore(sessionId: string): void {
-    const currentState = this.store.getState();
-    const activeSessionIds = currentState.activeSessionIds.filter(id => id !== sessionId);
-    
-    this.store.setState({
-      ...currentState,
-      activeSessionIds
-    });
+    this.store.setState((state) => ({
+      ...state,
+      activeSessionIds: state.activeSessionIds.filter(id => id !== sessionId)
+    }));
   }
 
   private convertErrorToAppError(error: unknown): AppError {

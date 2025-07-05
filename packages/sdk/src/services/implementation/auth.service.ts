@@ -13,8 +13,7 @@ interface SessionStorage {
 export class AuthServiceImpl extends ServiceBase implements AuthService {
   constructor(
     httpClient: HttpClient,
-    private storage: SessionStorage,
-    private baseUrl: string
+    private storage: SessionStorage
   ) {
     super(httpClient);
   }

@@ -5,8 +5,7 @@ import { HttpClient } from '../base/http-client';
 
 export class SettingsServiceImpl extends ServiceBase implements SettingsService {
   constructor(
-    httpClient: HttpClient,
-    private baseUrl: string
+    httpClient: HttpClient
   ) {
     super(httpClient);
   }

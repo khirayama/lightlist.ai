@@ -11,26 +11,26 @@ export class ShareActionsImpl implements ShareActions {
 
   async createShareLink(taskListId: string): Promise<ActionResult<TaskListShare>> {
     return this.executeWithErrorHandling(async () => {
-      const shareLink = await this.shareService.createShareLink(taskListId);
-      return shareLink;
+      const response = await this.shareService.createShareLink(taskListId);
+      return response.data;
     });
   }
 
   async getSharedTaskList(shareToken: string): Promise<ActionResult<TaskList>> {
     return this.executeWithErrorHandling(async () => {
-      const taskList = await this.shareService.getSharedTaskList(shareToken);
-      return taskList;
+      const response = await this.shareService.getSharedTaskList(shareToken);
+      return response.data;
     });
   }
 
   async copySharedTaskList(shareToken: string): Promise<ActionResult<TaskList>> {
     return this.executeWithErrorHandling(async () => {
-      const copiedTaskList = await this.shareService.copySharedTaskList(shareToken);
+      const response = await this.shareService.copySharedTaskList(shareToken);
       
       // コピーしたタスクリストをストアに追加
-      this.addTaskListToStore(copiedTaskList);
+      this.addTaskListToStore(response.data);
       
-      return copiedTaskList;
+      return response.data;
     });
   }
 
@@ -42,8 +42,10 @@ export class ShareActionsImpl implements ShareActions {
 
   async refreshShareCode(taskListId: string): Promise<ActionResult<TaskListShare>> {
     return this.executeWithErrorHandling(async () => {
-      const refreshedShare = await this.shareService.refreshShareCode(taskListId);
-      return refreshedShare;
+      // Refresh share code by removing and creating a new one
+      await this.shareService.removeShareLink(taskListId);
+      const response = await this.shareService.createShareLink(taskListId);
+      return response.data;
     });
   }
 
@@ -67,11 +69,10 @@ export class ShareActionsImpl implements ShareActions {
 
   // Store更新のヘルパーメソッド
   private addTaskListToStore(taskList: TaskList): void {
-    const currentState = this.store.getState();
-    this.store.setState({
-      ...currentState,
-      taskLists: [...currentState.taskLists, taskList]
-    });
+    this.store.setState((state) => ({
+      ...state,
+      taskLists: [...state.taskLists, taskList]
+    }));
   }
 
   private convertErrorToAppError(error: unknown): AppError {

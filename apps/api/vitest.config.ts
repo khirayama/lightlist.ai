@@ -7,7 +7,7 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     poolOptions: {
       threads: {
-        singleThread: true,
+        singleThread: false,
       },
     },
     coverage: {

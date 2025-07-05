@@ -18,11 +18,16 @@ export class CollaborativeService {
   ): Promise<CollaborativeSessionResponse> {
     const app = await prisma.app.findUnique({
       where: { userId },
-      select: { id: true },
+      select: { id: true, taskListOrder: true },
     });
 
     if (!app) {
       throw new Error('USER_NOT_FOUND');
+    }
+
+    // タスクリストの存在確認
+    if (!app.taskListOrder.includes(taskListId)) {
+      throw new Error('TASK_LIST_NOT_FOUND');
     }
 
     const expiresAt = new Date();
@@ -96,11 +101,16 @@ export class CollaborativeService {
   ): Promise<StateResponse> {
     const app = await prisma.app.findUnique({
       where: { userId },
-      select: { id: true },
+      select: { id: true, taskListOrder: true },
     });
 
     if (!app) {
       throw new Error('USER_NOT_FOUND');
+    }
+
+    // タスクリストの存在確認
+    if (!app.taskListOrder.includes(taskListId)) {
+      throw new Error('TASK_LIST_NOT_FOUND');
     }
 
     const session = await prisma.collaborativeSession.findUnique({
@@ -147,11 +157,16 @@ export class CollaborativeService {
   ): Promise<UpdateResponse> {
     const app = await prisma.app.findUnique({
       where: { userId },
-      select: { id: true },
+      select: { id: true, taskListOrder: true },
     });
 
     if (!app) {
       throw new Error('USER_NOT_FOUND');
+    }
+
+    // タスクリストの存在確認
+    if (!app.taskListOrder.includes(taskListId)) {
+      throw new Error('TASK_LIST_NOT_FOUND');
     }
 
     const session = await prisma.collaborativeSession.findUnique({
@@ -227,11 +242,16 @@ export class CollaborativeService {
   ): Promise<void> {
     const app = await prisma.app.findUnique({
       where: { userId },
-      select: { id: true },
+      select: { id: true, taskListOrder: true },
     });
 
     if (!app) {
       throw new Error('USER_NOT_FOUND');
+    }
+
+    // タスクリストの存在確認
+    if (!app.taskListOrder.includes(taskListId)) {
+      throw new Error('TASK_LIST_NOT_FOUND');
     }
 
     const session = await prisma.collaborativeSession.findUnique({
@@ -263,11 +283,16 @@ export class CollaborativeService {
   ): Promise<void> {
     const app = await prisma.app.findUnique({
       where: { userId },
-      select: { id: true },
+      select: { id: true, taskListOrder: true },
     });
 
     if (!app) {
       throw new Error('USER_NOT_FOUND');
+    }
+
+    // タスクリストの存在確認（endSessionは削除操作なので、存在しなくても成功扱い）
+    if (!app.taskListOrder.includes(taskListId)) {
+      return; // セッション終了は冪等性を保つため、エラーにしない
     }
 
     await prisma.$transaction(async (tx: any) => {

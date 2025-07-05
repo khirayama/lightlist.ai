@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { sendError } from '@/utils/response';
 
 export const errorHandler = (
@@ -14,6 +15,24 @@ export const errorHandler = (
     const messages = error.errors.map((err) => err.message);
     sendError(res, 'VALIDATION_ERROR', messages.join(', '), 400);
     return;
+  }
+
+  if (error instanceof PrismaClientKnownRequestError) {
+    if (error.code === 'P2003') {
+      // Foreign key constraint failed
+      sendError(res, 'RESOURCE_NOT_FOUND', 'Referenced resource not found', 404);
+      return;
+    }
+    if (error.code === 'P2002') {
+      // Unique constraint failed
+      sendError(res, 'DUPLICATE_RESOURCE', 'Resource already exists', 409);
+      return;
+    }
+    if (error.code === 'P2025') {
+      // Record not found
+      sendError(res, 'RESOURCE_NOT_FOUND', 'Resource not found', 404);
+      return;
+    }
   }
 
   if (error.name === 'JsonWebTokenError') {

@@ -12,17 +12,19 @@ const app = express();
 app.use(helmet());
 app.use(cors());
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: config.rateLimit.windowMs,
-  max: config.rateLimit.max,
-  message: {
-    error: 'RATE_LIMIT_EXCEEDED',
-    message: 'Too many requests from this IP, please try again later.',
-  },
-});
+// Rate limiting (disabled in test environment)
+if (config.env !== 'test') {
+  const limiter = rateLimit({
+    windowMs: config.rateLimit.windowMs,
+    max: config.rateLimit.max,
+    message: {
+      error: 'RATE_LIMIT_EXCEEDED',
+      message: 'Too many requests from this IP, please try again later.',
+    },
+  });
 
-app.use(limiter);
+  app.use(limiter);
+}
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));

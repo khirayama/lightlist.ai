@@ -3,6 +3,7 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import app from '@/app';
 import prisma from '@/config/database';
+import { cleanDatabase } from '@/test/helpers';
 
 describe('認証API', () => {
   const testUser = {
@@ -19,19 +20,7 @@ describe('認証API', () => {
     await cleanDatabase();
   });
 
-  // テストヘルパー関数
-  const cleanDatabase = async () => {
-    await prisma.passwordResetToken.deleteMany({});
-    await prisma.refreshToken.deleteMany({});
-    await prisma.collaborativeSession.deleteMany({});
-    await prisma.taskListDocument.deleteMany({});
-    await prisma.taskListShare.deleteMany({});
-    await prisma.task.deleteMany({});
-    await prisma.taskList.deleteMany({});
-    await prisma.settings.deleteMany({});
-    await prisma.app.deleteMany({});
-    await prisma.user.deleteMany({});
-  };
+  // 最適化されたヘルパー関数をインポートして使用
 
 
   describe('POST /api/auth/register', () => {

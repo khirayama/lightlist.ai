@@ -110,6 +110,7 @@ export const mockCollaborativeService = {
   sendUpdate: vi.fn(),
   getUpdates: vi.fn(),
   keepAlive: vi.fn(),
+  initializeTaskList: vi.fn(), // 追加
   // Task関連のメソッド
   createTaskInDocument: vi.fn(),
   updateTaskInDocument: vi.fn(),
@@ -152,6 +153,14 @@ export function createFailureResult<T>(error: AppError): ActionResult<T> {
   };
 }
 
+// ApiResponse ヘルパー関数
+export function createApiResponse<T>(data: T, message: string = 'Success'): { data: T; message: string } {
+  return {
+    data,
+    message
+  };
+}
+
 // t-wada式TDDのためのテストヘルパー関数
 export function expectActionSuccess<T>(result: ActionResult<T>): T {
   if (!result.success) {
@@ -178,38 +187,38 @@ export function setupActionsTests() {
     mockStore.subscribe.mockReturnValue(() => {});
     
     // Services のデフォルト設定
-    mockAuthService.register.mockResolvedValue(mockAuthSession);
-    mockAuthService.login.mockResolvedValue(mockAuthSession);
-    mockAuthService.logout.mockResolvedValue(undefined);
-    mockAuthService.bootstrap.mockResolvedValue(undefined);
+    mockAuthService.register.mockResolvedValue(createApiResponse(mockAuthSession));
+    mockAuthService.login.mockResolvedValue(createApiResponse(mockAuthSession));
+    mockAuthService.logout.mockResolvedValue(createApiResponse(undefined));
+    mockAuthService.bootstrap.mockResolvedValue(createApiResponse(undefined));
     
-    mockSettingsService.getSettings.mockResolvedValue(mockUserSettings);
-    mockSettingsService.updateSettings.mockResolvedValue(mockUserSettings);
-    mockSettingsService.getApp.mockResolvedValue(mockAppSettings);
-    mockSettingsService.updateApp.mockResolvedValue(mockAppSettings);
-    mockSettingsService.getTaskListOrder.mockResolvedValue([]);
-    mockSettingsService.updateTaskListOrder.mockResolvedValue(undefined);
+    mockSettingsService.getSettings.mockResolvedValue(createApiResponse(mockUserSettings));
+    // updateSettings と updateApp のモックは各テストで個別に設定
+    mockSettingsService.getApp.mockResolvedValue(createApiResponse(mockAppSettings));
+    mockSettingsService.getTaskListOrder.mockResolvedValue(createApiResponse([]));
+    mockSettingsService.updateTaskListOrder.mockResolvedValue(createApiResponse(undefined));
     
-    mockCollaborativeService.createTaskListDocument.mockResolvedValue(mockTaskList);
-    mockCollaborativeService.getTaskListDocument.mockResolvedValue(mockTaskList);
-    mockCollaborativeService.updateTaskListDocument.mockResolvedValue(mockTaskList);
-    mockCollaborativeService.deleteTaskListDocument.mockResolvedValue(undefined);
-    mockCollaborativeService.startSession.mockResolvedValue(undefined);
-    mockCollaborativeService.endSession.mockResolvedValue(undefined);
+    mockCollaborativeService.createTaskListDocument.mockResolvedValue(createApiResponse(mockTaskList));
+    mockCollaborativeService.getTaskListDocument.mockResolvedValue(createApiResponse(mockTaskList));
+    mockCollaborativeService.updateTaskListDocument.mockResolvedValue(createApiResponse(undefined));
+    mockCollaborativeService.deleteTaskListDocument.mockResolvedValue(createApiResponse(undefined));
+    mockCollaborativeService.startSession.mockResolvedValue(createApiResponse(undefined));
+    mockCollaborativeService.endSession.mockResolvedValue(createApiResponse(undefined));
+    mockCollaborativeService.initializeTaskList.mockResolvedValue(createApiResponse(mockTaskList));
     
     // Task関連のデフォルト設定
-    mockCollaborativeService.createTaskInDocument.mockResolvedValue(mockTask);
-    mockCollaborativeService.updateTaskInDocument.mockResolvedValue(mockTask);
-    mockCollaborativeService.deleteTaskInDocument.mockResolvedValue(undefined);
-    mockCollaborativeService.moveTaskInDocument.mockResolvedValue(undefined);
-    mockCollaborativeService.sortTasksInDocument.mockResolvedValue(undefined);
-    mockCollaborativeService.clearCompletedTasksInDocument.mockResolvedValue(undefined);
+    mockCollaborativeService.createTaskInDocument.mockResolvedValue(createApiResponse(mockTask));
+    mockCollaborativeService.updateTaskInDocument.mockResolvedValue(createApiResponse(undefined));
+    mockCollaborativeService.deleteTaskInDocument.mockResolvedValue(createApiResponse(undefined));
+    mockCollaborativeService.moveTaskInDocument.mockResolvedValue(createApiResponse(undefined));
+    mockCollaborativeService.sortTasksInDocument.mockResolvedValue(createApiResponse(undefined));
+    mockCollaborativeService.clearCompletedTasksInDocument.mockResolvedValue(createApiResponse(undefined));
     
-    mockShareService.createShareLink.mockResolvedValue(mockTaskListShare);
-    mockShareService.getSharedTaskList.mockResolvedValue(mockTaskList);
-    mockShareService.copySharedTaskList.mockResolvedValue(mockTaskList);
-    mockShareService.removeShareLink.mockResolvedValue(undefined);
-    mockShareService.refreshShareCode.mockResolvedValue(mockTaskListShare);
+    mockShareService.createShareLink.mockResolvedValue(createApiResponse(mockTaskListShare));
+    mockShareService.getSharedTaskList.mockResolvedValue(createApiResponse(mockTaskList));
+    mockShareService.copySharedTaskList.mockResolvedValue(createApiResponse(mockTaskList));
+    mockShareService.removeShareLink.mockResolvedValue(createApiResponse(undefined));
+    mockShareService.refreshShareCode.mockResolvedValue(createApiResponse(mockTaskListShare));
   });
 
   afterEach(() => {

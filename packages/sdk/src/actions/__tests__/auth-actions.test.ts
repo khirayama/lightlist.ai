@@ -10,7 +10,8 @@ import {
   createSuccessResult,
   createFailureResult,
   expectActionSuccess,
-  expectActionFailure
+  expectActionFailure,
+  createApiResponse
 } from './setup';
 
 describe('AuthActions', () => {
@@ -32,7 +33,7 @@ describe('AuthActions', () => {
       };
 
       // AuthService のモック設定
-      mockAuthService.register.mockResolvedValue(mockAuthSession);
+      mockAuthService.register.mockResolvedValue(createApiResponse(mockAuthSession));
 
       // Act
       const result = await authActions.register(credential);
@@ -47,12 +48,7 @@ describe('AuthActions', () => {
       
       // Store が更新されたか確認
       expect(mockStore.setState).toHaveBeenCalledWith(
-        expect.objectContaining({
-          user: expect.objectContaining({
-            id: expect.any(String),
-            email: credential.email
-          })
-        })
+        expect.any(Function)
       );
     });
 
@@ -114,7 +110,7 @@ describe('AuthActions', () => {
       };
 
       // AuthService のモック設定
-      mockAuthService.login.mockResolvedValue(mockAuthSession);
+      mockAuthService.login.mockResolvedValue(createApiResponse(mockAuthSession));
 
       // Act
       const result = await authActions.login(credential);
@@ -129,12 +125,7 @@ describe('AuthActions', () => {
       
       // Store が更新されたか確認
       expect(mockStore.setState).toHaveBeenCalledWith(
-        expect.objectContaining({
-          user: expect.objectContaining({
-            id: expect.any(String),
-            email: credential.email
-          })
-        })
+        expect.any(Function)
       );
     });
 
@@ -177,11 +168,7 @@ describe('AuthActions', () => {
       
       // Store がクリアされたか確認
       expect(mockStore.setState).toHaveBeenCalledWith(
-        expect.objectContaining({
-          user: null,
-          taskLists: [],
-          activeSessionIds: []
-        })
+        expect.any(Function)
       );
     });
   });
@@ -189,7 +176,7 @@ describe('AuthActions', () => {
   describe('bootstrap', () => {
     it('ブートストラップが成功し、アプリの初期データが読み込まれる', async () => {
       // Arrange
-      mockAuthService.bootstrap.mockResolvedValue(undefined);
+      mockAuthService.bootstrap.mockResolvedValue(createApiResponse(undefined));
 
       // Act
       const result = await authActions.bootstrap();

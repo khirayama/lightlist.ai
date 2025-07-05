@@ -80,7 +80,10 @@ describe('Actions（統合）', () => {
 
     // Assert
     expect(result.success).toBe(true);
-    expect(mockCollaborativeService.createTaskInDocument).toHaveBeenCalledWith(newTask);
+    expect(mockCollaborativeService.createTaskInDocument).toHaveBeenCalledWith(
+      'list1',
+      expect.objectContaining(newTask)
+    );
   });
 
   it('ShareActionsが正しく動作する', async () => {

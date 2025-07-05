@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TaskActions } from '../index';
 import { TaskActionsImpl } from '../implementation/task-actions';
 import { 
@@ -8,7 +8,8 @@ import {
   mockTask,
   mockTaskList,
   expectActionSuccess,
-  expectActionFailure
+  expectActionFailure,
+  createApiResponse
 } from './setup';
 
 describe('TaskActions', () => {
@@ -28,7 +29,7 @@ describe('TaskActions', () => {
         taskListId: 'list1'
       };
       
-      mockCollaborativeService.createTaskInDocument.mockResolvedValue(mockTask);
+      mockCollaborativeService.createTaskInDocument.mockResolvedValue(createApiResponse(mockTask));
 
       // Act
       const result = await taskActions.createTask(newTask);
@@ -39,6 +40,7 @@ describe('TaskActions', () => {
       
       // CollaborativeService が正しく呼び出されたか確認
       expect(mockCollaborativeService.createTaskInDocument).toHaveBeenCalledWith(
+        'list1',
         expect.objectContaining(newTask)
       );
       
@@ -50,9 +52,13 @@ describe('TaskActions', () => {
   describe('updateTask', () => {
     it('タスクを更新し、Y.js経由で同期する', async () => {
       // Arrange
-      const taskId = 'task1';
+      const taskId = 'mock-task-id';
       const updates = { text: 'Updated Task' };
-      const updatedTask = { ...mockTask, ...updates };
+      const updatedTask = { ...mockTask, ...updates, updatedAt: '2024-01-01T00:00:00.000Z' };
+      
+      // Date を固定値にモック化
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2024-01-01T00:00:00Z'));
       
       mockCollaborativeService.updateTaskInDocument.mockResolvedValue(updatedTask);
 
@@ -65,16 +71,20 @@ describe('TaskActions', () => {
       
       // CollaborativeService が正しく呼び出されたか確認
       expect(mockCollaborativeService.updateTaskInDocument).toHaveBeenCalledWith(
+        mockTask.taskListId, 
         taskId, 
         updates
       );
+      
+      // システム時刻を元に戻す
+      vi.useRealTimers();
     });
   });
 
   describe('deleteTask', () => {
     it('タスクを削除し、Y.js経由で同期する', async () => {
       // Arrange
-      const taskId = 'task1';
+      const taskId = 'mock-task-id';
       
       mockCollaborativeService.deleteTaskInDocument.mockResolvedValue(undefined);
 
@@ -85,16 +95,19 @@ describe('TaskActions', () => {
       expectActionSuccess(result);
       
       // CollaborativeService が正しく呼び出されたか確認
-      expect(mockCollaborativeService.deleteTaskInDocument).toHaveBeenCalledWith(taskId);
+      expect(mockCollaborativeService.deleteTaskInDocument).toHaveBeenCalledWith(
+        mockTask.taskListId, 
+        taskId
+      );
     });
   });
 
   describe('toggleTaskCompletion', () => {
     it('タスクの完了状態を切り替える', async () => {
       // Arrange
-      const taskId = 'task1';
+      const taskId = 'mock-task-id';
       const existingTask = { ...mockTask, id: taskId };
-      const toggledTask = { ...existingTask, completed: !existingTask.completed };
+      const toggledTask = { ...existingTask, completed: !existingTask.completed, updatedAt: '2024-01-01T00:00:00.000Z' };
       
       // ストアにタスクが存在するように設定
       const mockStateWithTask = {
@@ -105,6 +118,10 @@ describe('TaskActions', () => {
         }]
       };
       mockStore.getState.mockReturnValue(mockStateWithTask);
+      
+      // Date を固定値にモック化
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2024-01-01T00:00:00Z'));
       
       mockCollaborativeService.updateTaskInDocument.mockResolvedValue(toggledTask);
 
@@ -117,16 +134,20 @@ describe('TaskActions', () => {
       
       // CollaborativeService が正しく呼び出されたか確認
       expect(mockCollaborativeService.updateTaskInDocument).toHaveBeenCalledWith(
+        mockTask.taskListId, 
         taskId, 
         expect.objectContaining({ completed: expect.any(Boolean) })
       );
+      
+      // システム時刻を元に戻す
+      vi.useRealTimers();
     });
   });
 
   describe('moveTask', () => {
     it('タスクを移動し、Y.js経由で順序を同期する', async () => {
       // Arrange
-      const taskId = 'task1';
+      const taskId = 'mock-task-id';
       const fromIndex = 0;
       const toIndex = 1;
       
@@ -140,10 +161,10 @@ describe('TaskActions', () => {
       
       // CollaborativeService が正しく呼び出されたか確認
       expect(mockCollaborativeService.moveTaskInDocument).toHaveBeenCalledWith(
+        mockTask.taskListId, 
         taskId, 
         fromIndex, 
-        toIndex,
-        undefined
+        toIndex
       );
     });
   });

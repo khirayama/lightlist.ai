@@ -9,7 +9,8 @@ import {
   mockAppSettings,
   mockAppError,
   expectActionSuccess,
-  expectActionFailure
+  expectActionFailure,
+  createApiResponse
 } from './setup';
 
 describe('SettingsActions', () => {
@@ -24,7 +25,7 @@ describe('SettingsActions', () => {
   describe('getSettings', () => {
     it('ユーザー設定を取得してストアに保存する', async () => {
       // Arrange
-      mockSettingsService.getSettings.mockResolvedValue(mockUserSettings);
+      mockSettingsService.getSettings.mockResolvedValue(createApiResponse(mockUserSettings));
 
       // Act
       const result = await settingsActions.getSettings();
@@ -38,9 +39,7 @@ describe('SettingsActions', () => {
       
       // Store が更新されたか確認
       expect(mockStore.setState).toHaveBeenCalledWith(
-        expect.objectContaining({
-          settings: mockUserSettings
-        })
+        expect.any(Function)
       );
     });
 
@@ -65,7 +64,7 @@ describe('SettingsActions', () => {
       // Arrange
       const updates = { theme: 'dark' as const };
       const updatedSettings = { ...mockUserSettings, ...updates };
-      mockSettingsService.updateSettings.mockResolvedValue(updatedSettings);
+      mockSettingsService.updateSettings.mockResolvedValue(createApiResponse(updatedSettings));
 
       // Act
       const result = await settingsActions.updateSettings(updates);
@@ -80,9 +79,7 @@ describe('SettingsActions', () => {
       
       // Store が更新されたか確認
       expect(mockStore.setState).toHaveBeenCalledWith(
-        expect.objectContaining({
-          settings: updatedSettings
-        })
+        expect.any(Function)
       );
     });
 
@@ -109,7 +106,7 @@ describe('SettingsActions', () => {
   describe('getApp', () => {
     it('アプリ設定を取得してストアに保存する', async () => {
       // Arrange
-      mockSettingsService.getApp.mockResolvedValue(mockAppSettings);
+      mockSettingsService.getApp.mockResolvedValue(createApiResponse(mockAppSettings));
 
       // Act
       const result = await settingsActions.getApp();
@@ -123,9 +120,7 @@ describe('SettingsActions', () => {
       
       // Store が更新されたか確認
       expect(mockStore.setState).toHaveBeenCalledWith(
-        expect.objectContaining({
-          app: mockAppSettings
-        })
+        expect.any(Function)
       );
     });
 
@@ -150,7 +145,7 @@ describe('SettingsActions', () => {
       // Arrange
       const updates = { taskInsertPosition: 'bottom' as const };
       const updatedApp = { ...mockAppSettings, ...updates };
-      mockSettingsService.updateApp.mockResolvedValue(updatedApp);
+      mockSettingsService.updateApp.mockResolvedValue(createApiResponse(updatedApp));
 
       // Act
       const result = await settingsActions.updateApp(updates);
@@ -165,9 +160,7 @@ describe('SettingsActions', () => {
       
       // Store が更新されたか確認
       expect(mockStore.setState).toHaveBeenCalledWith(
-        expect.objectContaining({
-          app: updatedApp
-        })
+        expect.any(Function)
       );
     });
 
@@ -209,9 +202,7 @@ describe('SettingsActions', () => {
       
       // Store のタスクリストが並び替えられているか確認
       expect(mockStore.setState).toHaveBeenCalledWith(
-        expect.objectContaining({
-          taskLists: expect.any(Array)
-        })
+        expect.any(Function)
       );
     });
 

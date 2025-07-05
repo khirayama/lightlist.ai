@@ -8,7 +8,8 @@ import {
   mockTaskList,
   mockTaskListShare,
   expectActionSuccess,
-  expectActionFailure
+  expectActionFailure,
+  createApiResponse
 } from './setup';
 
 describe('ShareActions', () => {
@@ -25,7 +26,7 @@ describe('ShareActions', () => {
       // Arrange
       const taskListId = 'list1';
       
-      mockShareService.createShareLink.mockResolvedValue(mockTaskListShare);
+      mockShareService.createShareLink.mockResolvedValue(createApiResponse(mockTaskListShare));
 
       // Act
       const result = await shareActions.createShareLink(taskListId);
@@ -44,7 +45,7 @@ describe('ShareActions', () => {
       // Arrange
       const shareToken = 'share-token';
       
-      mockShareService.getSharedTaskList.mockResolvedValue(mockTaskList);
+      mockShareService.getSharedTaskList.mockResolvedValue(createApiResponse(mockTaskList));
 
       // Act
       const result = await shareActions.getSharedTaskList(shareToken);
@@ -63,7 +64,7 @@ describe('ShareActions', () => {
       // Arrange
       const shareToken = 'share-token';
       
-      mockShareService.copySharedTaskList.mockResolvedValue(mockTaskList);
+      mockShareService.copySharedTaskList.mockResolvedValue(createApiResponse(mockTaskList));
 
       // Act
       const result = await shareActions.copySharedTaskList(shareToken);

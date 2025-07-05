@@ -66,7 +66,8 @@ export class AuthActionsImpl implements AuthActions {
 
   async bootstrap(): Promise<ActionResult<void>> {
     return this.executeWithErrorHandling(async () => {
-      // Bootstrap logic: initialize store with user data
+      // Bootstrap logic: call auth service and initialize store with user data
+      await this.authService.bootstrap();
       this.initializeStoreData();
     });
   }

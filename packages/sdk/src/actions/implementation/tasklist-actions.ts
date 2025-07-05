@@ -53,7 +53,7 @@ export class TaskListActionsImpl implements TaskListActions {
     return this.executeWithErrorHandling(async () => {
       // 現在のタスクリストを取得
       const currentTaskList = this.getTaskListFromStore(taskListId);
-      if (!currentTaskList) throw new Error('TaskList not found');
+      if (!currentTaskList) throw new Error('Task list not found');
       
       // 更新されたタスクリストを作成
       const updatedTaskList = { ...currentTaskList, ...updates, updatedAt: new Date().toISOString() };
@@ -112,7 +112,7 @@ export class TaskListActionsImpl implements TaskListActions {
     return this.executeWithErrorHandling(async () => {
       // 元のタスクリストを取得
       const originalTaskList = this.getTaskListFromStore(taskListId);
-      if (!originalTaskList) throw new Error('TaskList not found');
+      if (!originalTaskList) throw new Error('Task list not found');
       
       // 複製用のデータを作成
       const { id, ...taskListDataWithoutId } = originalTaskList;
@@ -156,7 +156,7 @@ export class TaskListActionsImpl implements TaskListActions {
     return this.executeWithErrorHandling(async () => {
       // 現在のタスクリストを取得
       const currentTaskList = this.getTaskListFromStore(taskListId);
-      if (!currentTaskList) throw new Error('TaskList not found');
+      if (!currentTaskList) throw new Error('Task list not found');
       
       // アーカイブフラグを解除
       await this.collaborativeService.updateTaskListDocument(taskListId, { 

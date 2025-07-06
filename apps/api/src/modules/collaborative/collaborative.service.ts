@@ -470,4 +470,137 @@ export class CollaborativeService {
       },
     });
   }
+
+  // TaskList management for collaborative operations
+  static async getTaskList(taskListId: string, userId: string) {
+    const app = await prisma.app.findUnique({
+      where: { userId },
+      select: { id: true, taskListOrder: true },
+    });
+
+    if (!app) {
+      throw new Error('USER_NOT_FOUND');
+    }
+
+    if (!app.taskListOrder.includes(taskListId)) {
+      throw new Error('TASK_LIST_NOT_FOUND');
+    }
+
+    const taskList = await prisma.taskList.findUnique({
+      where: { id: taskListId },
+      include: {
+        tasks: {
+          orderBy: { createdAt: 'asc' }
+        }
+      }
+    });
+
+    if (!taskList) {
+      throw new Error('TASK_LIST_NOT_FOUND');
+    }
+
+    return taskList;
+  }
+
+  static async createTaskList(taskListData: any, userId: string) {
+    const app = await prisma.app.findUnique({
+      where: { userId },
+      select: { id: true, taskListOrder: true },
+    });
+
+    if (!app) {
+      throw new Error('USER_NOT_FOUND');
+    }
+
+    return await prisma.$transaction(async (tx: any) => {
+      // タスクリストを作成
+      const taskList = await tx.taskList.create({
+        data: {
+          name: taskListData.name || 'New Task List',
+          background: taskListData.background || '#007AFF',
+          taskOrder: [],
+        },
+        include: {
+          tasks: true
+        }
+      });
+
+      // App のタスクリスト順序を更新
+      const newOrder = [...app.taskListOrder, taskList.id];
+      await tx.app.update({
+        where: { userId },
+        data: { taskListOrder: newOrder },
+      });
+
+      return taskList;
+    });
+  }
+
+  static async updateTaskList(taskListId: string, updates: any, userId: string) {
+    const app = await prisma.app.findUnique({
+      where: { userId },
+      select: { id: true, taskListOrder: true },
+    });
+
+    if (!app) {
+      throw new Error('USER_NOT_FOUND');
+    }
+
+    if (!app.taskListOrder.includes(taskListId)) {
+      throw new Error('TASK_LIST_NOT_FOUND');
+    }
+
+    const taskList = await prisma.taskList.update({
+      where: { id: taskListId },
+      data: {
+        ...updates,
+        updatedAt: new Date(),
+      },
+      include: {
+        tasks: {
+          orderBy: { createdAt: 'asc' }
+        }
+      }
+    });
+
+    return taskList;
+  }
+
+  static async deleteTaskList(taskListId: string, userId: string) {
+    const app = await prisma.app.findUnique({
+      where: { userId },
+      select: { id: true, taskListOrder: true },
+    });
+
+    if (!app) {
+      throw new Error('USER_NOT_FOUND');
+    }
+
+    if (!app.taskListOrder.includes(taskListId)) {
+      throw new Error('TASK_LIST_NOT_FOUND');
+    }
+
+    return await prisma.$transaction(async (tx: any) => {
+      // タスクリストを削除
+      await tx.taskList.delete({
+        where: { id: taskListId },
+      });
+
+      // App のタスクリスト順序から削除
+      const newOrder = app.taskListOrder.filter(id => id !== taskListId);
+      await tx.app.update({
+        where: { userId },
+        data: { taskListOrder: newOrder },
+      });
+
+      // 関連するセッションとドキュメントも削除
+      await tx.collaborativeSession.deleteMany({
+        where: { taskListId },
+      });
+
+      await tx.taskListDocument.deleteMany({
+        where: { taskListId },
+      });
+    });
+  }
 }

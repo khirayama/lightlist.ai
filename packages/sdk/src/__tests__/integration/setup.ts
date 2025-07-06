@@ -3,13 +3,14 @@ import { join } from 'path';
 import { setTimeout } from 'timers/promises';
 
 let apiServer: ChildProcess | null = null;
+let isServerInitialized = false;
 const API_PORT = 3002; // 3001の代わりに3002を使用
 const API_BASE_URL = `http://localhost:${API_PORT}`;
 
-// APIサーバーの起動ヘルパー
+// APIサーバーの起動ヘルパー（全テストスイートで一度だけ実行）
 export async function startApiServer(): Promise<void> {
-  if (apiServer) {
-    console.log('API server already running');
+  if (isServerInitialized) {
+    console.log('API server already initialized');
     return;
   }
 
@@ -17,7 +18,7 @@ export async function startApiServer(): Promise<void> {
   try {
     const { execSync } = require('child_process');
     execSync(`lsof -ti:${API_PORT} | xargs kill -9 2>/dev/null || true`, { stdio: 'ignore' });
-    await setTimeout(1000); // 停止処理を待機
+    await setTimeout(2000); // 停止処理を待機
   } catch (error) {
     // プロセス停止エラーは無視
   }
@@ -88,12 +89,13 @@ export async function startApiServer(): Promise<void> {
     throw new Error('API server failed to start within 30 seconds');
   }
 
+  isServerInitialized = true;
   console.log('API server started successfully');
 }
 
-// APIサーバーの停止ヘルパー
+// APIサーバーの停止ヘルパー（全テストスイート完了後に一度だけ実行）
 export async function stopApiServer(): Promise<void> {
-  if (!apiServer) {
+  if (!apiServer || !isServerInitialized) {
     return;
   }
 
@@ -111,33 +113,21 @@ export async function stopApiServer(): Promise<void> {
   }
   
   apiServer = null;
+  isServerInitialized = false;
   console.log('API server stopped');
 }
 
-// テスト用データベースのクリーンアップ
-export async function cleanTestDatabase(): Promise<void> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/test/cleanup`, {
-      method: 'POST'
-    });
-    
-    if (!response.ok) {
-      // /test/cleanup エンドポイントが存在しない場合のフォールバック
-      // 直接データベースクリーンアップを実行
-      console.warn('Test cleanup endpoint not available, skipping database cleanup');
-    }
-  } catch (error) {
-    console.warn('Failed to clean test database:', error);
-  }
-}
+// Note: cleanTestDatabase関数は削除されました
+// 各テストで独立したユーザーを使用するため、データベースクリーンアップは不要です
 
-// テスト用ユーザーデータ生成
+// テスト用ユーザーデータ生成（各テストで独立したユーザーを作成）
 export function generateTestUser(suffix = '') {
   const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 8);
   return {
-    email: `test${suffix}${timestamp}@example.com`,
+    email: `test${suffix}${timestamp}${random}@example.com`,
     password: 'testpassword123',
-    deviceId: `test-device-${timestamp}${suffix}`
+    deviceId: `test-device-${timestamp}${suffix}${random}`
   };
 }
 

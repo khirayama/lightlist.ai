@@ -41,4 +41,29 @@ router.delete(
   CollaborativeController.endSession
 );
 
+// TaskList management endpoints for collaborative operations
+router.get(
+  '/taskLists/:taskListId',
+  authenticate,
+  CollaborativeController.getTaskList
+);
+
+router.post(
+  '/taskLists',
+  authenticate,
+  CollaborativeController.createTaskList
+);
+
+router.put(
+  '/taskLists/:taskListId',
+  authenticate,
+  CollaborativeController.updateTaskList
+);
+
+router.delete(
+  '/taskLists/:taskListId',
+  authenticate,
+  CollaborativeController.deleteTaskList
+);
+
 export default router;

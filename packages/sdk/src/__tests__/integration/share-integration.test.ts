@@ -3,7 +3,6 @@ import { createSDK } from '../../index';
 import { 
   startApiServer, 
   stopApiServer, 
-  cleanTestDatabase, 
   generateTestUser,
   TestStorage,
   INTEGRATION_CONFIG
@@ -43,8 +42,7 @@ describe('共有機能結合テスト', () => {
   });
 
   beforeEach(async () => {
-    // 各テスト前にデータベースとストレージをクリーンアップ
-    await cleanTestDatabase();
+    // 各テスト前にストレージをクリーンアップ
     testStorageOwner.clear();
     testStorageViewer.clear();
     

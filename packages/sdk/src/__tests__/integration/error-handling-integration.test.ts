@@ -3,7 +3,6 @@ import { createSDK } from '../../index';
 import { 
   startApiServer, 
   stopApiServer, 
-  cleanTestDatabase, 
   generateTestUser,
   TestStorage,
   INTEGRATION_CONFIG
@@ -40,11 +39,10 @@ describe('エラーハンドリング結合テスト', () => {
   });
 
   beforeEach(async () => {
-    // 各テスト前にデータベースとストレージをクリーンアップ
-    await cleanTestDatabase();
+    // 各テスト前にストレージをクリーンアップ
     testStorage.clear();
     
-    // テスト用ユーザーを登録してログイン
+    // テスト用ユーザーを登録してログイン（各テストで独立したユーザーを作成）
     const testUser = generateTestUser('error-test');
     await sdk.actions.auth.register(testUser);
   });

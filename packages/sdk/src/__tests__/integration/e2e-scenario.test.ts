@@ -3,7 +3,6 @@ import { createSDK } from '../../index';
 import { 
   startApiServer, 
   stopApiServer, 
-  cleanTestDatabase, 
   generateTestUser,
   TestStorage,
   INTEGRATION_CONFIG
@@ -40,8 +39,7 @@ describe('E2Eシナリオテスト', () => {
   });
 
   beforeEach(async () => {
-    // 各テスト前にデータベースとストレージをクリーンアップ
-    await cleanTestDatabase();
+    // 各テスト前にストレージをクリーンアップ
     testStorage.clear();
   });
 
@@ -222,20 +220,17 @@ describe('E2Eシナリオテスト', () => {
       
       // ユーザーA用のSDKとストレージ
       const storageA = new TestStorage();
+      
+      // ユーザーB用のSDKとストレージ
+      const storageB = new TestStorage();
+      
+      // ユーザーAの操作
+      vi.stubGlobal('window', { localStorage: storageA });
+      
       const sdkA = createSDK({
         apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
         apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT
       });
-      
-      // ユーザーB用のSDKとストレージ
-      const storageB = new TestStorage();
-      const sdkB = createSDK({
-        apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
-        apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT
-      });
-      
-      // ユーザーAの操作
-      vi.stubGlobal('window', { localStorage: storageA });
       
       const userA = generateTestUser('user-a');
       const registerA = await sdkA.actions.auth.register(userA);
@@ -249,8 +244,13 @@ describe('E2Eシナリオテスト', () => {
       
       console.log('✅ User A operations completed');
       
-      // ユーザーBの操作
+      // ユーザーBの操作（新しいSDKインスタンスを作成）
       vi.stubGlobal('window', { localStorage: storageB });
+      
+      const sdkB = createSDK({
+        apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
+        apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT
+      });
       
       const userB = generateTestUser('user-b');
       const registerB = await sdkB.actions.auth.register(userB);

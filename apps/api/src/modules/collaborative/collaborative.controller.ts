@@ -171,4 +171,93 @@ export class CollaborativeController {
       next(error);
     }
   }
+
+  // TaskList management for collaborative operations
+  static async getTaskList(
+    req: CollaborativeRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      if (!req.userId) {
+        throw new Error('USER_NOT_FOUND');
+      }
+
+      const { taskListId } = req.params;
+
+      const result = await CollaborativeService.getTaskList(
+        taskListId,
+        req.userId
+      );
+
+      sendSuccess(res, result, 'Task list retrieved successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async createTaskList(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      if (!req.userId) {
+        throw new Error('USER_NOT_FOUND');
+      }
+
+      const result = await CollaborativeService.createTaskList(
+        req.body,
+        req.userId
+      );
+
+      sendSuccess(res, result, 'Task list created successfully', 201);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async updateTaskList(
+    req: CollaborativeRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      if (!req.userId) {
+        throw new Error('USER_NOT_FOUND');
+      }
+
+      const { taskListId } = req.params;
+
+      const result = await CollaborativeService.updateTaskList(
+        taskListId,
+        req.body,
+        req.userId
+      );
+
+      sendSuccess(res, result, 'Task list updated successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async deleteTaskList(
+    req: CollaborativeRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      if (!req.userId) {
+        throw new Error('USER_NOT_FOUND');
+      }
+
+      const { taskListId } = req.params;
+
+      await CollaborativeService.deleteTaskList(taskListId, req.userId);
+
+      sendSuccess(res, { success: true }, 'Task list deleted successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
 }

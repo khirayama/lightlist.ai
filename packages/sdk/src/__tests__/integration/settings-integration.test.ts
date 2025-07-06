@@ -3,7 +3,6 @@ import { createSDK } from '../../index';
 import { 
   startApiServer, 
   stopApiServer, 
-  cleanTestDatabase, 
   generateTestUser,
   TestStorage,
   INTEGRATION_CONFIG
@@ -40,11 +39,10 @@ describe('設定管理結合テスト', () => {
   });
 
   beforeEach(async () => {
-    // 各テスト前にデータベースとストレージをクリーンアップ
-    await cleanTestDatabase();
+    // 各テスト前にストレージをクリーンアップ
     testStorage.clear();
     
-    // テスト用ユーザーを登録してログイン（設定APIには認証が必要）
+    // テスト用ユーザーを登録してログイン（設定APIには認証が必要、各テストで独立したユーザーを作成）
     const testUser = generateTestUser('settings-test');
     await sdk.actions.auth.register(testUser);
   });

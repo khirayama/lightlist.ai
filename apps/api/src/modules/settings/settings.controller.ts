@@ -97,7 +97,7 @@ export class SettingsController {
 
       const taskListOrder = await SettingsService.getTaskListOrder(req.userId);
 
-      sendSuccess(res, { taskListOrder }, 'Task list order retrieved successfully');
+      sendSuccess(res, taskListOrder, 'Task list order retrieved successfully');
     } catch (error) {
       next(error);
     }

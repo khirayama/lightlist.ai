@@ -1,18 +1,18 @@
 // SDK メインエントリポイント
 
 // Actions
-export { ActionsImpl } from './actions/implementation/actions';
-export { SettingsActionsImpl } from './actions/implementation/settings-actions';
-export { AuthActionsImpl } from './actions/implementation/auth-actions';
-export { TaskListActionsImpl } from './actions/implementation/tasklist-actions';
-export { TaskActionsImpl } from './actions/implementation/task-actions';
-export { ShareActionsImpl } from './actions/implementation/share-actions';
+export { ActionsImpl } from './actions/actions';
+export { SettingsActionsImpl } from './actions/settings-actions';
+export { AuthActionsImpl } from './actions/auth-actions';
+export { TaskListActionsImpl } from './actions/tasklist-actions';
+export { TaskActionsImpl } from './actions/task-actions';
+export { ShareActionsImpl } from './actions/share-actions';
 
 // Services
-export { SettingsServiceImpl } from './services/implementation/settings.service';
-export { AuthServiceImpl } from './services/implementation/auth.service';
-export { CollaborativeServiceImpl } from './services/implementation/collaborative.service';
-export { ShareServiceImpl } from './services/implementation/share.service';
+export { SettingsServiceImpl } from './services/settings.service';
+export { AuthServiceImpl } from './services/auth.service';
+export { CollaborativeServiceImpl } from './services/collaborative.service';
+export { ShareServiceImpl } from './services/share.service';
 
 // Store
 export { StoreImpl as Store } from './store/implementation';
@@ -41,11 +41,11 @@ export type {
 export type { Store as StoreInterface } from './store';
 
 // SDK Factory Function
-import { ActionsImpl } from './actions/implementation/actions';
-import { SettingsServiceImpl } from './services/implementation/settings.service';
-import { AuthServiceImpl } from './services/implementation/auth.service';
-import { CollaborativeServiceImpl } from './services/implementation/collaborative.service';
-import { ShareServiceImpl } from './services/implementation/share.service';
+import { ActionsImpl } from './actions/actions';
+import { SettingsServiceImpl } from './services/settings.service';
+import { AuthServiceImpl } from './services/auth.service';
+import { CollaborativeServiceImpl } from './services/collaborative.service';
+import { ShareServiceImpl } from './services/share.service';
 import { StoreImpl } from './store/implementation';
 import { HttpClientImpl } from './services/base/http-client';
 

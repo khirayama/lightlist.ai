@@ -11,7 +11,7 @@ import {
   CollaborativeSession,
   CollaborativeState,
   ApiResponse 
-} from '../types';
+} from '../../types';
 
 // 認証サービス
 export interface AuthService {

@@ -4,7 +4,7 @@ import { resolve } from 'path';
 export default defineConfig({
   test: {
     environment: 'node',
-    setupFiles: ['./src/test/setup.ts'],
+    setupFiles: ['./src/__tests__/setup.ts'],
     env: {
       NODE_ENV: 'test',
     },

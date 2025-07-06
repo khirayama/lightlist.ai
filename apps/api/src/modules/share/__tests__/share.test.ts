@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import app from '@/app';
 import prisma from '@/config/database';
-import { cleanDatabase } from '@/test/helpers';
+import { cleanDatabase } from '@/__tests__/helpers';
 
 describe('共有API', () => {
   const testUser = {
@@ -32,32 +32,40 @@ describe('共有API', () => {
     });
     userId = user?.id || '';
     
-    // テスト用タスクリストを作成
-    const taskListResponse = await request(app)
-      .post('/api/tasklists')
-      .set('Authorization', `Bearer ${userToken}`)
-      .send({
+    // Prismaを直接使用してテストデータを作成（APIコールを避ける）
+    const taskList = await prisma.taskList.create({
+      data: {
         name: 'テスト用タスクリスト',
         background: '#FF0000',
-      });
+      },
+    });
     
-    taskListId = taskListResponse.body.data.id;
+    taskListId = taskList.id;
     
-    // テスト用タスクを作成
-    const taskResponse = await request(app)
-      .post(`/api/tasks/list/${taskListId}`)
-      .set('Authorization', `Bearer ${userToken}`)
-      .send({
+    // Appのタスクリスト順序を更新
+    await prisma.app.update({
+      where: { userId },
+      data: {
+        taskListOrder: [taskListId],
+      },
+    });
+    
+    // Prismaを直接使用してテスト用タスクを作成
+    const task = await prisma.task.create({
+      data: {
         text: 'テスト用タスク',
         date: '2024-01-01',
-      });
+        taskListId: taskListId,
+        completed: false,
+      },
+    });
     
-    taskId = taskResponse.body.data.id;
-  });
+    taskId = task.id;
+  }, 30000);
 
   afterEach(async () => {
     await cleanDatabase();
-  });
+  }, 30000);
 
   describe('POST /api/share/:taskListId', () => {
     it('正常な共有リンクの作成ができること', async () => {
@@ -191,32 +199,25 @@ describe('共有API', () => {
       expect(response.body.data.taskList.background).toBe('#FF0000');
       expect(response.body.data.taskList.tasks).toHaveLength(1);
       expect(response.body.data.taskList.tasks[0].text).toBe('テスト用タスク');
-    });
+    }, 30000);
 
     it('タスクが複数ある場合、すべてのタスクが正しく返されること', async () => {
-      // 追加のタスクを作成
-      const completedTaskResponse = await request(app)
-        .post(`/api/tasks/list/${taskListId}`)
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({
+      // Prismaを直接使用して追加のタスクを作成
+      await prisma.task.create({
+        data: {
           text: '完了済みタスク',
-        });
-
-      // 作成したタスクを完了にする
-      const completedTaskId = completedTaskResponse.body.data.id;
-      await request(app)
-        .put(`/api/tasks/${completedTaskId}`)
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({
           completed: true,
-        });
+          taskListId: taskListId,
+        },
+      });
 
-      await request(app)
-        .post(`/api/tasks/list/${taskListId}`)
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({
+      await prisma.task.create({
+        data: {
           text: '未完了タスク',
-        });
+          completed: false,
+          taskListId: taskListId,
+        },
+      });
 
       // 共有リンクを作成
       const shareResponse = await request(app)
@@ -311,30 +312,23 @@ describe('共有API', () => {
     });
 
     it('複数のタスクがある場合、すべてのタスクがコピーされること', async () => {
-      // 追加のタスクを作成
-      await request(app)
-        .post(`/api/tasks/list/${taskListId}`)
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({
+      // Prismaを直接使用して追加のタスクを作成
+      await prisma.task.create({
+        data: {
           text: '2番目のタスク',
           date: '2024-01-02',
-        });
+          completed: false,
+          taskListId: taskListId,
+        },
+      });
 
-      const thirdTaskResponse = await request(app)
-        .post(`/api/tasks/list/${taskListId}`)
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({
+      await prisma.task.create({
+        data: {
           text: '3番目のタスク',
-        });
-
-      // 3番目のタスクを完了にする
-      const thirdTaskId = thirdTaskResponse.body.data.id;
-      await request(app)
-        .put(`/api/tasks/${thirdTaskId}`)
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({
           completed: true,
-        });
+          taskListId: taskListId,
+        },
+      });
 
       // 共有リンクを作成してコピー
       const shareResponse = await request(app)

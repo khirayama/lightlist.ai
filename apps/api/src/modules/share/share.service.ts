@@ -81,17 +81,9 @@ export class ShareService {
   ): Promise<SharedTaskListResponse> {
     const share = await prisma.taskListShare.findUnique({
       where: { shareToken },
-      include: {
-        taskList: {
-          include: {
-            tasks: {
-              orderBy: [
-                { completed: 'asc' },
-                { createdAt: 'asc' },
-              ],
-            },
-          },
-        },
+      select: {
+        isActive: true,
+        taskListId: true,
       },
     });
 
@@ -99,12 +91,40 @@ export class ShareService {
       throw new Error('SHARE_NOT_FOUND');
     }
 
+    // タスクリストとタスクを分けて取得してパフォーマンスを改善
+    const taskList = await prisma.taskList.findUnique({
+      where: { id: share.taskListId },
+      select: {
+        id: true,
+        name: true,
+        background: true,
+      },
+    });
+
+    if (!taskList) {
+      throw new Error('TASK_LIST_NOT_FOUND');
+    }
+
+    const tasks = await prisma.task.findMany({
+      where: { taskListId: share.taskListId },
+      select: {
+        id: true,
+        text: true,
+        completed: true,
+        date: true,
+      },
+      orderBy: [
+        { completed: 'asc' },
+        { createdAt: 'asc' },
+      ],
+    });
+
     return {
       taskList: {
-        id: share.taskList.id,
-        name: share.taskList.name,
-        background: share.taskList.background || '',
-        tasks: share.taskList.tasks.map((task) => ({
+        id: taskList.id,
+        name: taskList.name,
+        background: taskList.background || '',
+        tasks: tasks.map((task) => ({
           id: task.id,
           text: task.text,
           completed: task.completed,

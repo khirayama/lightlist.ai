@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import app from '@/app';
 import prisma from '@/config/database';
-import { cleanDatabase } from '@/test/helpers';
+import { cleanDatabase } from '@/__tests__/helpers';
 
 describe('設定系API', () => {
   const testUser = {

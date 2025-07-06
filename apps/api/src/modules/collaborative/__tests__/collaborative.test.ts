@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import app from '@/app';
 import prisma from '@/config/database';
-import { cleanDatabase } from '@/test/helpers';
+import { cleanDatabase } from '@/__tests__/helpers';
 import * as Y from 'yjs';
 
 describe('共同編集API', () => {

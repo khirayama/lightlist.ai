@@ -3,7 +3,7 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import app from '@/app';
 import prisma from '@/config/database';
-import { cleanDatabase } from '@/test/helpers';
+import { cleanDatabase } from '@/__tests__/helpers';
 
 describe('認証API', () => {
   const testUser = {

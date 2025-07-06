@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createTestStore } from './setup';
 import { Store } from '../index';
-import { User, AppSettings, UserSettings, TaskList, Task } from '../../types';
+import { User, AppSettings, UserSettings, TaskList, Task } from '../types';
 
 describe('Store State更新機能', () => {
   let store: Store;

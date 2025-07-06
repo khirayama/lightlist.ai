@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createTestStore } from './setup';
 import { Store } from '../index';
-import { StoreState } from '../../types';
+import { StoreState } from '../types';
 
 describe('Store 基本実装', () => {
   let store: Store;

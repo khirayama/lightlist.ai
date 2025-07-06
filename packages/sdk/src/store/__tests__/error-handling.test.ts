@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createTestStore } from './setup';
 import { Store } from '../index';
 import { createSelectors } from '../selectors';
-import { AppError } from '../../types';
+import { AppError } from '../types';
 
 describe('Store エラーハンドリング', () => {
   let store: Store;

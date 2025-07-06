@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createTestStore } from './setup';
 import { Store, StoreListener } from '../index';
-import { StoreState, User, TaskList, Task } from '../../types';
+import { StoreState, User, TaskList, Task } from '../types';
 
 describe('Store 購読機能', () => {
   let store: Store;

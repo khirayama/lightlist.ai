@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createTestStore } from './setup';
 import { Store } from '../index';
 import { createSelectors } from '../selectors';
-import { User, AppSettings, UserSettings, TaskList, Task, AppError } from '../../types';
+import { User, AppSettings, UserSettings, TaskList, Task, AppError } from '../types';
 
 describe('Store セレクター機能', () => {
   let store: Store;

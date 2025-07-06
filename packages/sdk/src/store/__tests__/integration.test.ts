@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createTestStore } from './setup';
 import { Store } from '../index';
 import { createSelectors } from '../selectors';
-import { User, AppSettings, UserSettings, TaskList, Task, AppError } from '../../types';
+import { User, AppSettings, UserSettings, TaskList, Task, AppError } from '../types';
 import * as Y from 'yjs';
 
 describe('Store 統合テスト', () => {

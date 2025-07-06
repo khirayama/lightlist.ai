@@ -115,6 +115,8 @@ describe('AuthService', () => {
   describe('logout', () => {
     it('ログアウトが成功してトークンが削除される', async () => {
       // Arrange
+      const refreshToken = 'mock-refresh-token';
+      mockStorage.getItem.mockReturnValue(refreshToken);
       mockHttpClient.post.mockResolvedValue({
         data: null,
         message: 'Logout successful'
@@ -125,7 +127,7 @@ describe('AuthService', () => {
 
       // Assert
       expect(result.message).toBe('Logout successful');
-      expect(mockHttpClient.post).toHaveBeenCalledWith('/auth/logout');
+      expect(mockHttpClient.post).toHaveBeenCalledWith('/auth/logout', { refreshToken });
       expect(mockStorage.removeItem).toHaveBeenCalledWith('accessToken');
       expect(mockStorage.removeItem).toHaveBeenCalledWith('refreshToken');
     });

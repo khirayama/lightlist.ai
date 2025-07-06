@@ -1,15 +1,14 @@
-import { CollaborativeService } from '../index';
 import { 
   CollaborativeSession, 
   CollaborativeState, 
   TaskList, 
   Task, 
   ApiResponse 
-} from '../../types';
+} from '../types';
 import { ServiceBase } from './base/service-base';
-import { HttpClient } from '../base/http-client';
+import { HttpClient } from './base/http-client';
 
-export class CollaborativeServiceImpl extends ServiceBase implements CollaborativeService {
+export class CollaborativeServiceImpl extends ServiceBase {
   constructor(
     httpClient: HttpClient
   ) {

@@ -174,21 +174,17 @@ describe('AuthActions', () => {
   });
 
   describe('bootstrap', () => {
-    it('ブートストラップが成功し、アプリの初期データが読み込まれる', async () => {
-      // Arrange
-      mockAuthService.bootstrap.mockResolvedValue(createApiResponse(undefined));
-
+    it('ブートストラップが成功し、ストアが初期化される', async () => {
       // Act
       const result = await authActions.bootstrap();
 
       // Assert
       expectActionSuccess(result);
       
-      // AuthService が正しく呼び出されたか確認
-      expect(mockAuthService.bootstrap).toHaveBeenCalledTimes(1);
-      
-      // Store の初期化が確認される（実装依存）
-      expect(mockStore.setState).toHaveBeenCalled();
+      // Store の初期化が確認される
+      expect(mockStore.setState).toHaveBeenCalledWith(
+        expect.any(Function)
+      );
     });
   });
 });

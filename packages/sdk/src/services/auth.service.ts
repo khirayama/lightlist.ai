@@ -1,7 +1,6 @@
-import { AuthService } from '../index';
-import { AuthCredential, AuthSession, ApiResponse } from '../../types';
+import { AuthCredential, AuthSession, ApiResponse } from '../types';
 import { ServiceBase } from './base/service-base';
-import { HttpClient } from '../base/http-client';
+import { HttpClient } from './base/http-client';
 
 // セッションストレージのインターフェース（Web/Native抽象化）
 interface SessionStorage {
@@ -10,7 +9,7 @@ interface SessionStorage {
   removeItem(key: string): void;
 }
 
-export class AuthServiceImpl extends ServiceBase implements AuthService {
+export class AuthServiceImpl extends ServiceBase {
   constructor(
     httpClient: HttpClient,
     private storage: SessionStorage

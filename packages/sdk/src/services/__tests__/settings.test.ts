@@ -195,12 +195,21 @@ describe('SettingsService', () => {
         expect(mockHttpClient.put).toHaveBeenCalledWith('/app/taskListOrder', { order: newOrder });
       });
 
-      it('空の配列でバリデーションエラーが発生する', async () => {
+      it('空の配列でも正常に処理される（初期状態や全削除時に必要）', async () => {
         // Arrange
         const emptyOrder: string[] = [];
+        
+        mockHttpClient.put.mockResolvedValue({
+          data: null,
+          message: 'Task list order updated successfully'
+        });
 
-        // Act & Assert
-        await expect(settingsService.updateTaskListOrder(emptyOrder)).rejects.toThrow('Task list order cannot be empty');
+        // Act
+        const result = await settingsService.updateTaskListOrder(emptyOrder);
+
+        // Assert
+        expect(result.message).toBe('Task list order updated successfully');
+        expect(mockHttpClient.put).toHaveBeenCalledWith('/app/taskListOrder', { order: emptyOrder });
       });
 
       it('無効な配列でバリデーションエラーが発生する', async () => {

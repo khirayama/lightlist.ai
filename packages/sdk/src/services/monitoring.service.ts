@@ -1,9 +1,8 @@
-import { MonitoringService } from '../index';
-import { ApiResponse } from '../../types';
+import { ApiResponse } from '../types';
 import { ServiceBase } from './base/service-base';
-import { HttpClient } from '../base/http-client';
+import { HttpClient } from './base/http-client';
 
-export class MonitoringServiceImpl extends ServiceBase implements MonitoringService {
+export class MonitoringServiceImpl extends ServiceBase {
   constructor(
     httpClient: HttpClient
   ) {

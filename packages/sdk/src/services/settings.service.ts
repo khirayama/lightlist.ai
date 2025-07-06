@@ -1,9 +1,8 @@
-import { SettingsService } from '../index';
-import { UserSettings, AppSettings, ApiResponse } from '../../types';
+import { UserSettings, AppSettings, ApiResponse } from '../types';
 import { ServiceBase } from './base/service-base';
-import { HttpClient } from '../base/http-client';
+import { HttpClient } from './base/http-client';
 
-export class SettingsServiceImpl extends ServiceBase implements SettingsService {
+export class SettingsServiceImpl extends ServiceBase {
   constructor(
     httpClient: HttpClient
   ) {

@@ -1,9 +1,8 @@
-import { ShareService } from '../index';
-import { TaskListShare, TaskList, ApiResponse } from '../../types';
+import { TaskListShare, TaskList, ApiResponse } from '../types';
 import { ServiceBase } from './base/service-base';
-import { HttpClient } from '../base/http-client';
+import { HttpClient } from './base/http-client';
 
-export class ShareServiceImpl extends ServiceBase implements ShareService {
+export class ShareServiceImpl extends ServiceBase {
   constructor(
     httpClient: HttpClient
   ) {

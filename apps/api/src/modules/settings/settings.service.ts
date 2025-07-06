@@ -74,7 +74,7 @@ export class SettingsService {
       throw new Error('USER_NOT_FOUND');
     }
 
-    return app.taskListOrder;
+    return { taskListOrder: app.taskListOrder };
   }
 
   static async updateTaskListOrder(userId: string, taskListOrder: string[]) {

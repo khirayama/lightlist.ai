@@ -3,7 +3,6 @@ import { createSDK } from '../../index';
 import { 
   startApiServer, 
   stopApiServer, 
-  cleanTestDatabase, 
   generateTestUser,
   TestStorage,
   INTEGRATION_CONFIG
@@ -40,8 +39,7 @@ describe('認証フロー結合テスト', () => {
   });
 
   beforeEach(async () => {
-    // 各テスト前にデータベースとストレージをクリーンアップ
-    await cleanTestDatabase();
+    // 各テスト前にストレージをクリーンアップ
     testStorage.clear();
   });
 

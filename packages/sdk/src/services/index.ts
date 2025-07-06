@@ -59,6 +59,7 @@ export interface CollaborativeService {
   endSession(taskListId: string): Promise<ApiResponse<void>>;
   
   // 初期データ読み込み（Y.jsドキュメント初期化用）
+  getTaskLists(): Promise<ApiResponse<TaskList[]>>;
   initializeTaskList(taskListId: string): Promise<ApiResponse<TaskList>>;
   
   // Y.js操作ヘルパー（内部でsendUpdateを使用）

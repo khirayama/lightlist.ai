@@ -22,6 +22,7 @@ export interface HttpClientConfig {
   timeout: number;
   retries: number;
   getAuthToken?: () => Promise<string | null>;
+  getDeviceId?: () => string | null;
   onUnauthorized?: () => Promise<void>;
 }
 
@@ -143,6 +144,13 @@ export class HttpClientImpl implements HttpClient {
       const token = await this.config.getAuthToken();
       if (token) {
         headers.Authorization = `Bearer ${token}`;
+      }
+    }
+
+    if (this.config.getDeviceId) {
+      const deviceId = this.config.getDeviceId();
+      if (deviceId) {
+        headers['X-Device-ID'] = deviceId;
       }
     }
 

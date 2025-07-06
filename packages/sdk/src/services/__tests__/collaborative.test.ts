@@ -10,7 +10,7 @@ describe('CollaborativeService', () => {
   setupServiceTests();
 
   beforeEach(() => {
-    collaborativeService = new CollaborativeServiceImpl(mockHttpClient, TEST_BASE_URL);
+    collaborativeService = new CollaborativeServiceImpl(mockHttpClient);
   });
 
   describe('セッション管理', () => {
@@ -224,7 +224,7 @@ describe('CollaborativeService', () => {
 
         // Assert
         expect(result.data).toEqual(mockTaskList);
-        expect(mockHttpClient.get).toHaveBeenCalledWith('/collaborative/taskLists/list-123');
+        expect(mockHttpClient.get).toHaveBeenCalledWith('/tasklists/list-123');
       });
     });
   });
@@ -257,7 +257,7 @@ describe('CollaborativeService', () => {
 
         // Assert
         expect(result.data).toEqual(createdTaskList);
-        expect(mockHttpClient.post).toHaveBeenCalledWith('/collaborative/taskLists', taskList);
+        expect(mockHttpClient.post).toHaveBeenCalledWith('/tasklists', taskList);
       });
     });
 

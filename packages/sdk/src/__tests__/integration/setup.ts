@@ -211,6 +211,12 @@ export function createTestSDK(config: { apiUrl: string; apiTimeout?: number }) {
       }
       return null;
     },
+    getDeviceId: () => {
+      if (authService) {
+        return authService.getDeviceId();
+      }
+      return null;
+    },
     onUnauthorized: async () => {
       if (authService && !isRefreshing) {
         isRefreshing = true;

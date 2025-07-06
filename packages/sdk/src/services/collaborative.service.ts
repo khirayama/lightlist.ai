@@ -93,12 +93,21 @@ export class CollaborativeServiceImpl extends ServiceBase {
   }
 
   // 初期データ読み込み
+  async getTaskLists(): Promise<ApiResponse<TaskList[]>> {
+    try {
+      const response = await this.httpClient.get<TaskList[]>('/tasklists');
+      return response;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
   async initializeTaskList(taskListId: string): Promise<ApiResponse<TaskList>> {
     try {
       this.validatePathParam(taskListId, 'taskListId');
 
       const response = await this.httpClient.get<TaskList>(
-        `/collaborative/taskLists/${taskListId}`
+        `/tasklists/${taskListId}`
       );
 
       return response;
@@ -114,7 +123,7 @@ export class CollaborativeServiceImpl extends ServiceBase {
       this.validateTaskListData(taskList);
 
       const response = await this.httpClient.post<TaskList>(
-        '/collaborative/taskLists',
+        '/tasklists',
         taskList
       );
 
@@ -130,7 +139,7 @@ export class CollaborativeServiceImpl extends ServiceBase {
       this.validateTaskListUpdates(updates);
 
       const response = await this.httpClient.put<void>(
-        `/collaborative/taskLists/${taskListId}`,
+        `/tasklists/${taskListId}`,
         updates
       );
 
@@ -145,7 +154,7 @@ export class CollaborativeServiceImpl extends ServiceBase {
       this.validatePathParam(taskListId, 'taskListId');
 
       const response = await this.httpClient.delete<void>(
-        `/collaborative/taskLists/${taskListId}`
+        `/tasklists/${taskListId}`
       );
 
       return response;

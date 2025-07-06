@@ -12,21 +12,9 @@ export class TaskListActionsImpl implements TaskListActions {
 
   async getTaskLists(): Promise<ActionResult<TaskList[]>> {
     return this.executeWithErrorHandling(async () => {
-      // タスクリストの順序を取得
-      const orderResponse = await this.settingsService.getTaskListOrder();
-      const order = orderResponse.data;
-      
-      // 各タスクリストのY.jsドキュメントを取得
-      const taskLists: TaskList[] = [];
-      for (const id of order) {
-        try {
-          const response = await this.collaborativeService.initializeTaskList(id);
-          taskLists.push(response.data);
-        } catch (error) {
-          // 個別のタスクリスト取得エラーはログに記録するが、処理を続行
-          console.warn(`Failed to load task list ${id}:`, error);
-        }
-      }
+      // タスクリスト一覧を取得
+      const response = await this.collaborativeService.getTaskLists();
+      const taskLists = response.data;
       
       this.updateTaskListsInStore(taskLists);
       return taskLists;

@@ -29,11 +29,9 @@ describe('TaskListActions', () => {
   describe('getTaskLists', () => {
     it('タスクリスト一覧を取得してストアに保存する', async () => {
       // Arrange
-      const taskListOrder = ['list1', 'list2'];
       const taskLists = [mockTaskList, { ...mockTaskList, id: 'list2' }];
       
-      mockSettingsService.getTaskListOrder.mockResolvedValue(createApiResponse(taskListOrder));
-      mockCollaborativeService.initializeTaskList.mockResolvedValue(createApiResponse(mockTaskList));
+      mockCollaborativeService.getTaskLists.mockResolvedValue(createApiResponse(taskLists));
 
       // Act
       const result = await taskListActions.getTaskLists();
@@ -42,9 +40,8 @@ describe('TaskListActions', () => {
       const data = expectActionSuccess(result);
       expect(data).toHaveLength(2);
       
-      // SettingsService とCollaborativeService が正しく呼び出されたか確認
-      expect(mockSettingsService.getTaskListOrder).toHaveBeenCalledTimes(1);
-      expect(mockCollaborativeService.initializeTaskList).toHaveBeenCalledTimes(2);
+      // CollaborativeService が正しく呼び出されたか確認
+      expect(mockCollaborativeService.getTaskLists).toHaveBeenCalledTimes(1);
       
       // Store が更新されたか確認
       expect(mockStore.setState).toHaveBeenCalledWith(
@@ -54,8 +51,8 @@ describe('TaskListActions', () => {
 
     it('サービスエラーの場合、エラーを返す', async () => {
       // Arrange
-      mockSettingsService.getTaskListOrder.mockRejectedValue(
-        new Error('Failed to fetch task list order')
+      mockCollaborativeService.getTaskLists.mockRejectedValue(
+        new Error('Failed to fetch task lists')
       );
 
       // Act
@@ -64,7 +61,7 @@ describe('TaskListActions', () => {
       // Assert
       const error = expectActionFailure(result);
       expect(error.type).toBe('network');
-      expect(error.message).toContain('Failed to fetch task list order');
+      expect(error.message).toContain('Failed to fetch task lists');
     });
   });
 

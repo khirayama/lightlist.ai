@@ -65,7 +65,7 @@ describe('Actions（統合）', () => {
 
     // Assert
     expect(result.success).toBe(true);
-    expect(mockSettingsService.getTaskListOrder).toHaveBeenCalled();
+    expect(mockCollaborativeService.getTaskLists).toHaveBeenCalled();
   });
 
   it('TaskActionsが正しく動作する', async () => {

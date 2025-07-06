@@ -110,6 +110,7 @@ export const mockCollaborativeService = {
   sendUpdate: vi.fn(),
   getUpdates: vi.fn(),
   keepAlive: vi.fn(),
+  getTaskLists: vi.fn(), // 追加
   initializeTaskList: vi.fn(), // 追加
   // Task関連のメソッド
   createTaskInDocument: vi.fn(),
@@ -204,6 +205,7 @@ export function setupActionsTests() {
     mockCollaborativeService.deleteTaskListDocument.mockResolvedValue(createApiResponse(undefined));
     mockCollaborativeService.startSession.mockResolvedValue(createApiResponse(undefined));
     mockCollaborativeService.endSession.mockResolvedValue(createApiResponse(undefined));
+    mockCollaborativeService.getTaskLists.mockResolvedValue(createApiResponse([mockTaskList]));
     mockCollaborativeService.initializeTaskList.mockResolvedValue(createApiResponse(mockTaskList));
     
     // Task関連のデフォルト設定

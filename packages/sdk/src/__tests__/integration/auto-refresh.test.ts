@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createSDK } from '../index';
+import { createSDK } from '../../index';
 
 // fetchをモック
 global.fetch = vi.fn();

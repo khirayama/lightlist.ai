@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SettingsActions } from '../index';
-import { SettingsActionsImpl } from '../implementation/settings-actions';
+import { SettingsActionsImpl } from '../settings-actions';
 import { 
   setupActionsTests, 
   mockSettingsService, 

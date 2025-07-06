@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ShareService } from '../index';
-import { ShareServiceImpl } from '../implementation/share.service';
+import { ShareServiceImpl } from '../share.service';
 import { setupServiceTests, mockHttpClient, TEST_BASE_URL } from './setup';
 import { TaskListShare, TaskList } from '../types';
 

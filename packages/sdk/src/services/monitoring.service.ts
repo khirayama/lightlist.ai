@@ -1,6 +1,6 @@
 import { MonitoringService } from '../index';
 import { ApiResponse } from '../../types';
-import { ServiceBase } from '../base/service-base';
+import { ServiceBase } from './base/service-base';
 import { HttpClient } from '../base/http-client';
 
 export class MonitoringServiceImpl extends ServiceBase implements MonitoringService {

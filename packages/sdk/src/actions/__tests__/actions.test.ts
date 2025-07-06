@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Actions } from '../index';
-import { ActionsImpl } from '../implementation/actions';
+import { ActionsImpl } from '../actions';
 import { 
   setupActionsTests, 
   mockAuthService,

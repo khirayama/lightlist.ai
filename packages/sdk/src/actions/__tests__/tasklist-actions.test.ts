@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { TaskListActions } from '../index';
-import { TaskListActionsImpl } from '../implementation/tasklist-actions';
+import { TaskListActionsImpl } from '../tasklist-actions';
 import { 
   setupActionsTests, 
   mockCollaborativeService,

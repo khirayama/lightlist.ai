@@ -1,6 +1,6 @@
 import { ShareService } from '../index';
 import { TaskListShare, TaskList, ApiResponse } from '../../types';
-import { ServiceBase } from '../base/service-base';
+import { ServiceBase } from './base/service-base';
 import { HttpClient } from '../base/http-client';
 
 export class ShareServiceImpl extends ServiceBase implements ShareService {

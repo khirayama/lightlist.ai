@@ -196,11 +196,11 @@ export class TestStorage {
 export function createTestSDK(config: { apiUrl: string; apiTimeout?: number }) {
   // 動的インポートを使用してモジュールを読み込み
   const { StoreImpl } = require('../../store/implementation');
-  const { AuthServiceImpl } = require('../../services/implementation/auth.service');
-  const { SettingsServiceImpl } = require('../../services/implementation/settings.service');
-  const { CollaborativeServiceImpl } = require('../../services/implementation/collaborative.service');
-  const { ShareServiceImpl } = require('../../services/implementation/share.service');
-  const { ActionsImpl } = require('../../actions/implementation/actions');
+  const { AuthServiceImpl } = require('../../services/auth.service');
+  const { SettingsServiceImpl } = require('../../services/settings.service');
+  const { CollaborativeServiceImpl } = require('../../services/collaborative.service');
+  const { ShareServiceImpl } = require('../../services/share.service');
+  const { ActionsImpl } = require('../../actions/actions');
   const { HttpClientImpl } = require('../../services/base/http-client');
 
   const store = new StoreImpl({});

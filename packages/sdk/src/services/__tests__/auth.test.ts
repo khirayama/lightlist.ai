@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AuthService } from '../index';
-import { AuthServiceImpl } from '../implementation/auth.service';
+import { AuthServiceImpl } from '../auth.service';
 import { setupServiceTests, mockHttpClient, mockStorage, mockAuthSession, TEST_BASE_URL } from './setup';
 
 describe('AuthService', () => {

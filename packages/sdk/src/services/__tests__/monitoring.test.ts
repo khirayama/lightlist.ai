@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MonitoringService } from '../index';
-import { MonitoringServiceImpl } from '../implementation/monitoring.service';
+import { MonitoringServiceImpl } from '../monitoring.service';
 import { setupServiceTests, mockHttpClient, TEST_BASE_URL } from './setup';
 
 describe('MonitoringService', () => {

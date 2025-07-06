@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CollaborativeService } from '../index';
-import { CollaborativeServiceImpl } from '../implementation/collaborative.service';
+import { CollaborativeServiceImpl } from '../collaborative.service';
 import { setupServiceTests, mockHttpClient, TEST_BASE_URL } from './setup';
 import { CollaborativeSession, CollaborativeState, TaskList, Task } from '../types';
 

@@ -1,6 +1,6 @@
 import { AuthService } from '../index';
 import { AuthCredential, AuthSession, ApiResponse } from '../../types';
-import { ServiceBase } from '../base/service-base';
+import { ServiceBase } from './base/service-base';
 import { HttpClient } from '../base/http-client';
 
 // セッションストレージのインターフェース（Web/Native抽象化）

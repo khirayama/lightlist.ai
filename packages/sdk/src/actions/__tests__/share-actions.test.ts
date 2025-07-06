@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ShareActions } from '../index';
-import { ShareActionsImpl } from '../implementation/share-actions';
+import { ShareActionsImpl } from '../share-actions';
 import { 
   setupActionsTests, 
   mockShareService,

@@ -6,7 +6,7 @@ import {
   Task, 
   ApiResponse 
 } from '../../types';
-import { ServiceBase } from '../base/service-base';
+import { ServiceBase } from './base/service-base';
 import { HttpClient } from '../base/http-client';
 
 export class CollaborativeServiceImpl extends ServiceBase implements CollaborativeService {

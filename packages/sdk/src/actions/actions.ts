@@ -9,8 +9,8 @@ import {
   SettingsService, 
   CollaborativeService, 
   ShareService 
-} from '../../services';
-import { Store } from '../../store';
+} from '../services';
+import { Store } from '../store';
 
 export class ActionsImpl implements Actions {
   public readonly auth: AuthActionsImpl;

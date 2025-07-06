@@ -1,7 +1,7 @@
 import { TaskListActions } from '../index';
-import { CollaborativeService, SettingsService } from '../../services';
-import { Store } from '../../store';
-import { TaskList, ActionResult, AppError } from '../../types';
+import { CollaborativeService, SettingsService } from '../services';
+import { Store } from '../store';
+import { TaskList, ActionResult, AppError } from '../types';
 
 export class TaskListActionsImpl implements TaskListActions {
   constructor(

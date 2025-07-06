@@ -60,8 +60,14 @@ export class AuthServiceImpl extends ServiceBase implements AuthService {
 
   async logout(): Promise<ApiResponse<void>> {
     try {
+      // refreshTokenを取得してAPIに送信
+      const refreshToken = this.getRefreshToken();
+      if (!refreshToken) {
+        throw this.createError('auth', 'NO_REFRESH_TOKEN', 'No refresh token available for logout');
+      }
+      
       // API呼び出し
-      const response = await this.httpClient.post<void>('/auth/logout');
+      const response = await this.httpClient.post<void>('/auth/logout', { refreshToken });
       
       // トークンの削除
       await this.clearTokens();

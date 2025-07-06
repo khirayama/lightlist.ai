@@ -118,8 +118,9 @@ export class SettingsServiceImpl extends ServiceBase implements SettingsService 
       throw this.createError('validation', 'INVALID_TASK_LIST_ORDER', 'Task list order must be an array');
     }
 
+    // 空の配列は許可する（初期状態や全削除時に必要）
     if (order.length === 0) {
-      throw this.createError('validation', 'EMPTY_TASK_LIST_ORDER', 'Task list order cannot be empty');
+      return;
     }
 
     for (let i = 0; i < order.length; i++) {

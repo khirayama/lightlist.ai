@@ -1,7 +1,7 @@
 import { SettingsActions } from '../index';
-import { SettingsService } from '../../services';
-import { Store } from '../../store';
-import { UserSettings, AppSettings, TaskList, ActionResult, AppError } from '../../types';
+import { SettingsService } from '../services';
+import { Store } from '../store';
+import { UserSettings, AppSettings, TaskList, ActionResult, AppError } from '../types';
 
 export class SettingsActionsImpl implements SettingsActions {
   constructor(
@@ -101,6 +101,11 @@ export class SettingsActionsImpl implements SettingsActions {
   }
 
   private convertErrorToAppError(error: unknown): AppError {
+    // 既にAppError構造の場合はそのまま返す
+    if (error && typeof error === 'object' && 'type' in error && 'code' in error && 'message' in error) {
+      return error as AppError;
+    }
+    
     if (error instanceof Error) {
       const status = (error as any).status;
       

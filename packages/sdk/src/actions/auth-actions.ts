@@ -1,7 +1,7 @@
 import { AuthActions } from '../index';
-import { AuthService } from '../../services';
-import { Store } from '../../store';
-import { AuthCredential, AuthSession, ActionResult, AppError, User } from '../../types';
+import { AuthService } from '../services';
+import { Store } from '../store';
+import { AuthCredential, AuthSession, ActionResult, AppError, User } from '../types';
 
 export class AuthActionsImpl implements AuthActions {
   constructor(

@@ -1,7 +1,7 @@
 import { ShareActions } from '../index';
-import { ShareService } from '../../services';
-import { Store } from '../../store';
-import { TaskList, TaskListShare, ActionResult, AppError } from '../../types';
+import { ShareService } from '../services';
+import { Store } from '../store';
+import { TaskList, TaskListShare, ActionResult, AppError } from '../types';
 
 export class ShareActionsImpl implements ShareActions {
   constructor(

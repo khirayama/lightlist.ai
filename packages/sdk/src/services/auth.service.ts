@@ -25,8 +25,12 @@ export class AuthServiceImpl extends ServiceBase {
       // API呼び出し
       const response = await this.httpClient.post<AuthSession>('/auth/register', credential);
       
-      // トークンの保存
-      await this.saveTokens(response.data);
+      // トークンの保存（deviceIdは元のcredentialから確実に保存）
+      const sessionWithDeviceId = {
+        ...response.data,
+        deviceId: response.data.deviceId || credential.deviceId
+      };
+      await this.saveTokens(sessionWithDeviceId);
 
       return response;
     } catch (error) {
@@ -48,8 +52,12 @@ export class AuthServiceImpl extends ServiceBase {
         deviceId: response.data.deviceId
       });
       
-      // トークンの保存
-      await this.saveTokens(response.data);
+      // トークンの保存（deviceIdは元のcredentialから確実に保存）
+      const sessionWithDeviceId = {
+        ...response.data,
+        deviceId: response.data.deviceId || credential.deviceId
+      };
+      await this.saveTokens(sessionWithDeviceId);
 
       return response;
     } catch (error) {
@@ -187,7 +195,15 @@ export class AuthServiceImpl extends ServiceBase {
       });
       this.storage.setItem('accessToken', authSession.accessToken);
       this.storage.setItem('refreshToken', authSession.refreshToken);
-      this.storage.setItem('deviceId', authSession.deviceId);
+      
+      // deviceIdが存在する場合は必ず保存（undefinedまたはnullでない場合）
+      if (authSession.deviceId !== undefined && authSession.deviceId !== null) {
+        this.storage.setItem('deviceId', authSession.deviceId);
+        console.log('DeviceId saved to storage:', authSession.deviceId);
+      } else {
+        console.log('Warning: No deviceId in authSession, keeping existing storage value');
+      }
+      
       console.log('Tokens saved successfully');
     } catch (error) {
       console.error('Failed to save tokens:', error);
@@ -215,6 +231,8 @@ export class AuthServiceImpl extends ServiceBase {
   }
 
   public getDeviceId(): string | null {
-    return this.storage.getItem('deviceId');
+    const deviceId = this.storage.getItem('deviceId');
+    console.log('AuthService - getDeviceId called, retrieved:', deviceId);
+    return deviceId;
   }
 }

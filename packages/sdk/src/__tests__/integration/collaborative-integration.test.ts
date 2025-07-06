@@ -22,15 +22,17 @@ describe('共同編集機能結合テスト', () => {
     testStorageA = new TestStorage();
     testStorageB = new TestStorage();
     
-    // 両方のユーザー用SDKを初期化
+    // 両方のユーザー用SDKを初期化（TestStorageを使用）
     sdkUserA = createSDK({
       apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
-      apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT
+      apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT,
+      storage: testStorageA
     });
     
     sdkUserB = createSDK({
       apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
-      apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT
+      apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT,
+      storage: testStorageB
     });
   }, INTEGRATION_CONFIG.SETUP_TIMEOUT);
 

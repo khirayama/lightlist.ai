@@ -9,14 +9,17 @@ export abstract class ServiceBase {
   protected handleError(error: any): never {
     if (error && typeof error === 'object' && 'type' in error) {
       // 既にAppErrorの場合はそのまま投げる
+      console.log('ServiceBase - AppError passed through:', error);
       throw error as AppError;
     }
 
     if (error instanceof Error) {
+      console.log('ServiceBase - Converting Error to AppError:', error.message);
       // 一般的なエラーをAppErrorに変換
       throw this.createError('unknown', 'UNKNOWN_ERROR', error.message, { originalError: error });
     }
 
+    console.log('ServiceBase - Unexpected error type:', typeof error, error);
     // 予期しないエラー
     throw this.createError('unknown', 'UNEXPECTED_ERROR', 'An unexpected error occurred', { error });
   }

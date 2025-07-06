@@ -85,6 +85,36 @@ export class HttpClientImpl implements HttpClient {
             }
           }
           
+          // 401エラーの場合は自動リフレッシュが無効でも認証エラーとして扱う
+          if (response.status === 401) {
+            let errorMessage = 'Authentication failed';
+            let errorDetails: any = {
+              status: response.status,
+              statusText: response.statusText
+            };
+            
+            try {
+              const errorJson = await response.json();
+              if (errorJson && errorJson.message) {
+                errorMessage = errorJson.message;
+                errorDetails = { ...errorDetails, ...errorJson };
+              } else if (errorJson && errorJson.error) {
+                errorMessage = errorJson.error;
+                errorDetails = { ...errorDetails, ...errorJson };
+              }
+            } catch (parseError) {
+              // JSONパースに失敗した場合はテキストとして取得
+              try {
+                const errorText = await response.text();
+                errorMessage = errorText || errorMessage;
+              } catch (textError) {
+                // テキスト取得も失敗した場合はデフォルトメッセージ
+              }
+            }
+            
+            throw this.createError('auth', 'UNAUTHORIZED', errorMessage, errorDetails);
+          }
+          
           let errorMessage = `HTTP ${response.status}`;
           let errorDetails: any = {
             status: response.status,
@@ -94,17 +124,25 @@ export class HttpClientImpl implements HttpClient {
           try {
             // APIエラーレスポンスをJSONとしてパース
             const errorJson = await response.json();
+            console.log('HttpClient - Error response JSON:', errorJson);
+            
             if (errorJson && errorJson.message) {
               errorMessage = errorJson.message;
+              errorDetails = { ...errorDetails, ...errorJson };
+            } else if (errorJson && errorJson.error) {
+              // errorフィールドにエラーコードが含まれている場合
+              errorMessage = errorJson.error;
               errorDetails = { ...errorDetails, ...errorJson };
             }
           } catch (parseError) {
             // JSONパースに失敗した場合はテキストとして取得
+            console.log('HttpClient - JSON parse failed, trying text:', parseError);
             try {
               const errorText = await response.text();
               errorMessage = errorText || errorMessage;
             } catch (textError) {
               // テキスト取得も失敗した場合はHTTPステータスのみ
+              console.log('HttpClient - Text parse also failed:', textError);
             }
           }
           
@@ -121,7 +159,11 @@ export class HttpClientImpl implements HttpClient {
         
         if (attempt === maxRetries) {
           if (error instanceof Error) {
-            throw error;
+            // タイムアウトエラーはnetworkタイプとして処理
+            if (error.name === 'TimeoutError' || error.message.includes('timeout') || error.message.includes('aborted')) {
+              throw this.createError('network', 'TIMEOUT_ERROR', 'Request timeout', { error });
+            }
+            throw this.createError('network', 'NETWORK_ERROR', error.message, { error });
           }
           throw this.createError('network', 'NETWORK_ERROR', 'Network request failed', { error });
         }
@@ -144,13 +186,20 @@ export class HttpClientImpl implements HttpClient {
       const token = await this.config.getAuthToken();
       if (token) {
         headers.Authorization = `Bearer ${token}`;
+      } else {
+        // トークンがない場合は空のAuthorizationヘッダーを設定（401エラーを確実に発生させる）
+        headers.Authorization = `Bearer `;
       }
     }
 
     if (this.config.getDeviceId) {
       const deviceId = this.config.getDeviceId();
+      console.log('HttpClient - DeviceId retrieved:', deviceId);
       if (deviceId) {
         headers['X-Device-ID'] = deviceId;
+        console.log('HttpClient - X-Device-ID header set:', deviceId);
+      } else {
+        console.log('HttpClient - Warning: No deviceId available for X-Device-ID header');
       }
     }
 

@@ -24,10 +24,11 @@ describe('エラーハンドリング結合テスト', () => {
       localStorage: testStorage
     });
     
-    // SDKを初期化
+    // SDKを初期化（TestStorageを使用）
     sdk = createSDK({
       apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
-      apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT
+      apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT,
+      storage: testStorage
     });
   }, INTEGRATION_CONFIG.SETUP_TIMEOUT);
 
@@ -123,7 +124,8 @@ describe('エラーハンドリング結合テスト', () => {
       const sdkWithRetry = createSDK({
         apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
         apiTimeout: 1000, // 短いタイムアウト
-        retries: 2
+        retries: 2,
+        storage: testStorage
       });
       
       // ウィンドウオブジェクトを設定
@@ -196,7 +198,8 @@ describe('エラーハンドリング結合テスト', () => {
       const sdkWithTimeout = createSDK({
         apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
         apiTimeout: 1, // 1ミリ秒（必ずタイムアウトする）
-        retries: 0 // リトライなし
+        retries: 0, // リトライなし
+        storage: testStorage
       });
       
       // ウィンドウオブジェクトを設定

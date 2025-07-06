@@ -243,8 +243,17 @@ export class TaskListActionsImpl implements TaskListActions {
   }
 
   private convertErrorToAppError(error: unknown): AppError {
+    console.log('TaskListActions - convertErrorToAppError input:', error);
+    
+    // 既にAppErrorの場合はそのまま返す
+    if (error && typeof error === 'object' && 'type' in error) {
+      console.log('TaskListActions - Already AppError, returning as-is');
+      return error as AppError;
+    }
+
     if (error instanceof Error) {
       const status = (error as any).status;
+      console.log('TaskListActions - Error instance with status:', status);
       
       if (status === 400) {
         return {
@@ -266,7 +275,7 @@ export class TaskListActionsImpl implements TaskListActions {
       
       if (status === 404) {
         return {
-          type: 'network',
+          type: 'validation',  // 404は通常、無効なIDなどバリデーションエラー
           code: 'NOT_FOUND_ERROR',
           message: error.message,
           details: { status }
@@ -281,6 +290,7 @@ export class TaskListActionsImpl implements TaskListActions {
       };
     }
 
+    console.log('TaskListActions - Unknown error type, converting to unknown');
     return {
       type: 'unknown',
       code: 'UNKNOWN_ERROR',

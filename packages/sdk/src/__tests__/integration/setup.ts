@@ -166,18 +166,23 @@ export class TestStorage {
   private storage = new Map<string, string>();
 
   getItem(key: string): string | null {
-    return this.storage.get(key) || null;
+    const value = this.storage.get(key) || null;
+    console.log(`TestStorage - getItem(${key}):`, value);
+    return value;
   }
 
   setItem(key: string, value: string): void {
+    console.log(`TestStorage - setItem(${key}):`, value);
     this.storage.set(key, value);
   }
 
   removeItem(key: string): void {
+    console.log(`TestStorage - removeItem(${key})`);
     this.storage.delete(key);
   }
 
   clear(): void {
+    console.log('TestStorage - clear()');
     this.storage.clear();
   }
 }

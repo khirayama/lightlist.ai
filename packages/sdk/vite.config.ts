@@ -22,7 +22,6 @@ export default defineConfig({
         '**/*.spec.ts',
         'src/examples/'
       ]
-    },
-    exclude: ["./src/__tests__/**/*.test.ts",]
+    }
   }
 });

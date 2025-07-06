@@ -19,15 +19,11 @@ describe('認証フロー結合テスト', () => {
     // テスト用ストレージを作成
     testStorage = new TestStorage();
     
-    // ウィンドウオブジェクトをモック
-    vi.stubGlobal('window', {
-      localStorage: testStorage
-    });
-    
-    // SDKを初期化
+    // SDKを初期化（TestStorageを使用）
     sdk = createSDK({
       apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
-      apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT
+      apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT,
+      storage: testStorage
     });
   }, INTEGRATION_CONFIG.SETUP_TIMEOUT);
 

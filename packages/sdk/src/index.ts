@@ -53,20 +53,28 @@ import { HttpClientImpl } from './services/base/http-client';
 export type { HttpClient } from './services/base/http-client';
 export { HttpClientImpl } from './services/base/http-client';
 
+// セッションストレージのインターフェース
+interface SessionStorage {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem(key: string): void;
+}
+
 export interface SDKConfig {
   apiUrl: string;
   apiTimeout?: number;
+  storage?: SessionStorage;
 }
 
 export function createSDK(config: SDKConfig) {
   const store = new StoreImpl({});
   
-  // 簡単なストレージ実装（ブラウザまたはネイティブ対応）
-  const storage = typeof window !== 'undefined' ? window.localStorage : {
+  // ストレージ実装（設定で指定されている場合はそれを使用、なければデフォルト）
+  const storage = config.storage || (typeof window !== 'undefined' ? window.localStorage : {
     getItem: () => null,
     setItem: () => {},
     removeItem: () => {}
-  };
+  });
 
   // AuthServiceを先に作成（循環参照を避けるため、httpClientは後で設定）
   let authService: AuthServiceImpl;

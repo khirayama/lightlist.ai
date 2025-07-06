@@ -114,7 +114,7 @@ describe('共有機能結合テスト', () => {
       
       expect(copyResult.success).toBe(true);
       expect(copyResult.data).toBeDefined();
-      expect(copyResult.data?.name).toBe('共有テストリスト');
+      expect(copyResult.data?.name).toBe('共有テストリスト (Copy)');
       expect(copyResult.data?.id).not.toBe(taskListId); // 新しいIDが生成される
       
       console.log('Copied task list:', copyResult.data?.id);

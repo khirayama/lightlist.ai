@@ -27,9 +27,44 @@ export class ShareServiceImpl extends ServiceBase {
       // バリデーション
       this.validateShareToken(shareToken);
 
-      const response = await this.httpClient.get<TaskList>(`/share/${shareToken}`);
+      // APIは { taskList: {...}, isReadOnly: boolean } 構造を返すので、正しい型を指定
+      const response = await this.httpClient.get<{
+        taskList: {
+          id: string;
+          name: string;
+          background: string;
+          tasks: Array<{
+            id: string;
+            text: string;
+            completed: boolean;
+            date?: string;
+          }>;
+        };
+        isReadOnly: boolean;
+      }>(`/share/${shareToken}`);
 
-      return response;
+      // TaskList型に変換（不足フィールドを補完）
+      const taskList: TaskList = {
+        id: response.data.taskList.id,
+        name: response.data.taskList.name,
+        background: response.data.taskList.background,
+        tasks: response.data.taskList.tasks.map(task => ({
+          id: task.id,
+          text: task.text,
+          completed: task.completed,
+          date: task.date,
+          taskListId: response.data.taskList.id,
+          createdAt: new Date().toISOString(), // ダミー値
+          updatedAt: new Date().toISOString(), // ダミー値
+        })),
+        createdAt: new Date().toISOString(), // ダミー値
+        updatedAt: new Date().toISOString(), // ダミー値
+      };
+
+      return {
+        data: taskList,
+        message: response.message
+      };
     } catch (error) {
       this.handleError(error);
     }
@@ -40,9 +75,40 @@ export class ShareServiceImpl extends ServiceBase {
       // バリデーション
       this.validateShareToken(shareToken);
 
-      const response = await this.httpClient.post<TaskList>(`/share/${shareToken}/copy`);
+      // APIは { taskList: {...} } 構造を返すので、正しい型を指定
+      const response = await this.httpClient.post<{
+        taskList: {
+          id: string;
+          name: string;
+          background: string;
+          tasks: Array<{
+            id: string;
+            text: string;
+            completed: boolean;
+            date?: string;
+            taskListId: string;
+            createdAt: string;
+            updatedAt: string;
+          }>;
+          createdAt: string;
+          updatedAt: string;
+        };
+      }>(`/share/${shareToken}/copy`);
 
-      return response;
+      // TaskList型に変換
+      const taskList: TaskList = {
+        id: response.data.taskList.id,
+        name: response.data.taskList.name,
+        background: response.data.taskList.background,
+        tasks: response.data.taskList.tasks,
+        createdAt: response.data.taskList.createdAt,
+        updatedAt: response.data.taskList.updatedAt,
+      };
+
+      return {
+        data: taskList,
+        message: response.message
+      };
     } catch (error) {
       this.handleError(error);
     }

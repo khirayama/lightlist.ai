@@ -1,64 +1,60 @@
 import { useState, useEffect } from 'react';
+import { useSDK } from './_app';
+import type { TaskList as TaskListType } from '@lightlist/sdk';
 
-interface TaskList {
-  id: string;
-  name: string;
-  background: string;
-  taskCount?: number;
-}
 
 export default function HomePage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [taskLists, setTaskLists] = useState<TaskList[]>([]);
+  const [taskLists, setTaskLists] = useState<TaskListType[]>([]);
+  const { actions, authService } = useSDK();
   const [error, setError] = useState<string>('');
 
   // 認証状態をチェック
   useEffect(() => {
     const checkAuth = () => {
-      const token = localStorage.getItem('accessToken');
+      const token = authService.getAccessToken();
       setIsAuthenticated(!!token);
       setIsLoading(false);
     };
 
     checkAuth();
-  }, []);
+  }, [authService]);
 
   // ログイン済みの場合、タスクリストを取得
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
       fetchTaskLists();
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading, actions.taskLists]);
 
   const fetchTaskLists = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch('http://localhost:3001/api/tasklists', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('タスクリストの取得に失敗しました');
+      const result = await actions.taskLists.getTaskLists();
+      
+      if (!result.success) {
+        throw new Error(result.error?.message || 'タスクリストの取得に失敗しました');
       }
-
-      const data = await response.json();
-      setTaskLists(data.data || []);
+      
+      setTaskLists(result.data || []);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'エラーが発生しました');
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    setIsAuthenticated(false);
-    setTaskLists([]);
-    setError('');
+  const handleLogout = async () => {
+    try {
+      await actions.auth.logout();
+      setIsAuthenticated(false);
+      setTaskLists([]);
+      setError('');
+    } catch (error) {
+      console.error('ログアウトエラー:', error);
+      // エラーが発生してもローカル状態はクリア
+      setIsAuthenticated(false);
+      setTaskLists([]);
+      setError('');
+    }
   };
 
   if (isLoading) {
@@ -105,9 +101,9 @@ export default function HomePage() {
                     backgroundColor: taskList.background || '#f9f9f9'
                   }}>
                     <strong>{taskList.name}</strong>
-                    {taskList.taskCount !== undefined && (
+                    {taskList.tasks && (
                       <span style={{ marginLeft: '10px', color: '#666' }}>
-                        ({taskList.taskCount} タスク)
+                        ({taskList.tasks.length} タスク)
                       </span>
                     )}
                   </li>

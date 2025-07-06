@@ -61,8 +61,8 @@ export interface SDKConfig {
 export function createSDK(config: SDKConfig) {
   const store = new StoreImpl({});
   
-  // 簡単なセッションストレージ実装（ブラウザまたはネイティブ対応）
-  const sessionStorage = typeof window !== 'undefined' ? window.sessionStorage : {
+  // 簡単なストレージ実装（ブラウザまたはネイティブ対応）
+  const storage = typeof window !== 'undefined' ? window.localStorage : {
     getItem: () => null,
     setItem: () => {},
     removeItem: () => {}
@@ -103,7 +103,7 @@ export function createSDK(config: SDKConfig) {
   });
 
   // AuthServiceを初期化
-  authService = new AuthServiceImpl(httpClient, sessionStorage);
+  authService = new AuthServiceImpl(httpClient, storage);
   
   const settingsService = new SettingsServiceImpl(httpClient);
   const collaborativeService = new CollaborativeServiceImpl(httpClient);
@@ -120,6 +120,7 @@ export function createSDK(config: SDKConfig) {
   return {
     actions,
     store,
-    httpClient
+    httpClient,
+    authService
   };
 }

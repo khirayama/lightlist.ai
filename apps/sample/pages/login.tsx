@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
+import { useSDK } from './_app';
+import type { AuthCredential } from '@lightlist/sdk';
 
 interface FormData {
   email: string;
@@ -16,6 +18,7 @@ interface FormErrors {
 export default function LoginPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { actions } = useSDK();
   const [formData, setFormData] = useState<FormData>({
     email: '',
     password: ''
@@ -53,32 +56,19 @@ export default function LoginPage() {
     setErrors({});
 
     try {
-      // APIサーバーへの直接呼び出し
-      const response = await fetch('http://localhost:3001/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          deviceId: `web-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-        }),
-      });
+      // SDK経由でログイン
+      const credential: AuthCredential = {
+        email: formData.email,
+        password: formData.password,
+        deviceId: `web-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      };
 
-      const data = await response.json();
+      const result = await actions.auth.login(credential);
 
-      if (!response.ok) {
-        throw new Error(data.message || t('login.errors.loginFailed'));
+      if (!result.success) {
+        throw new Error(result.error?.message || t('login.errors.loginFailed'));
       }
 
-      // ログイン成功時の処理
-      if (data.data?.accessToken) {
-        localStorage.setItem('accessToken', data.data.accessToken);
-        localStorage.setItem('refreshToken', data.data.refreshToken);
-      }
-      
       alert(t('login.success'));
       router.push('/');
     } catch (error) {

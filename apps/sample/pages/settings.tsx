@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { useSDK } from './_app';
 
 interface UserSettings {
   theme: 'system' | 'light' | 'dark';
@@ -18,6 +19,7 @@ interface FormErrors {
 
 export default function SettingsPage() {
   const router = useRouter();
+  const { actions, authService } = useSDK();
   const [userSettings, setUserSettings] = useState<UserSettings>({
     theme: 'system',
     language: 'ja'
@@ -34,13 +36,13 @@ export default function SettingsPage() {
 
   // 認証チェック
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
+    const token = authService.getAccessToken();
     if (!token) {
       router.push('/login');
       return;
     }
     setIsAuthenticated(true);
-  }, [router]);
+  }, [router, authService]);
 
   // 設定データの取得
   useEffect(() => {
@@ -48,65 +50,35 @@ export default function SettingsPage() {
     
     const fetchSettings = async () => {
       try {
-        const token = localStorage.getItem('accessToken');
-        if (!token) {
-          throw new Error('認証トークンが見つかりません');
-        }
-        
         console.log('設定取得開始');
 
-        // ユーザー設定とApp設定を並列取得
-        const [userResponse, appResponse] = await Promise.all([
-          fetch('http://localhost:3001/api/settings', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-          }),
-          fetch('http://localhost:3001/api/app', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-          })
+        // SDK経由でユーザー設定とApp設定を並列取得
+        const [userResult, appResult] = await Promise.all([
+          actions.settings.getSettings(),
+          actions.settings.getApp()
         ]);
 
-        console.log('取得レスポンス:', {
-          userStatus: userResponse.status,
-          appStatus: appResponse.status
+        console.log('取得結果:', {
+          userSuccess: userResult.success,
+          appSuccess: appResult.success
         });
 
-        // 認証エラーの場合、ログイン画面にリダイレクト
-        if (userResponse.status === 401 || appResponse.status === 401) {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          router.push('/login');
-          return;
+        if (!userResult.success) {
+          throw new Error(userResult.error?.message || 'ユーザー設定の取得に失敗しました');
         }
 
-        const userData = await userResponse.json();
-        const appData = await appResponse.json();
-
-        console.log('取得データ:', { userData, appData });
-
-        if (!userResponse.ok) {
-          throw new Error(userData.message || `ユーザー設定の取得に失敗しました (${userResponse.status})`);
+        if (!appResult.success) {
+          throw new Error(appResult.error?.message || 'App設定の取得に失敗しました');
         }
 
-        if (!appResponse.ok) {
-          throw new Error(appData.message || `App設定の取得に失敗しました (${appResponse.status})`);
-        }
-
-        if (userData.data) {
-          setUserSettings(userData.data);
-          console.log('ユーザー設定設定:', userData.data);
+        if (userResult.data) {
+          setUserSettings(userResult.data);
+          console.log('ユーザー設定設定:', userResult.data);
         }
         
-        if (appData.data) {
-          setAppSettings(appData.data);
-          console.log('App設定設定:', appData.data);
+        if (appResult.data) {
+          setAppSettings(appResult.data);
+          console.log('App設定設定:', appResult.data);
         }
 
         console.log('設定取得完了');
@@ -121,7 +93,7 @@ export default function SettingsPage() {
     };
 
     fetchSettings();
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, actions.settings]);
 
   const handleUserSettingChange = (key: keyof UserSettings, value: string) => {
     setUserSettings(prev => ({
@@ -142,76 +114,39 @@ export default function SettingsPage() {
     setErrors({});
 
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        throw new Error('認証トークンが見つかりません。再ログインしてください。');
-      }
-
       console.log('設定保存開始:', { userSettings, appSettings });
 
-      // ユーザー設定とApp設定を並列更新
-      const [userResponse, appResponse] = await Promise.all([
-        fetch('http://localhost:3001/api/settings', {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            theme: userSettings.theme,
-            language: userSettings.language
-          }),
+      // SDK経由でユーザー設定とApp設定を並列更新
+      const [userResult, appResult] = await Promise.all([
+        actions.settings.updateSettings({
+          theme: userSettings.theme,
+          language: userSettings.language
         }),
-        fetch('http://localhost:3001/api/app', {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            taskInsertPosition: appSettings.taskInsertPosition,
-            autoSort: appSettings.autoSort
-          }),
+        actions.settings.updateApp({
+          taskInsertPosition: appSettings.taskInsertPosition,
+          autoSort: appSettings.autoSort
         })
       ]);
 
-      console.log('APIレスポンス:', {
-        userStatus: userResponse.status,
-        appStatus: appResponse.status
+      console.log('保存結果:', {
+        userSuccess: userResult.success,
+        appSuccess: appResult.success
       });
 
-      // 認証エラーの場合、ログイン画面にリダイレクト
-      if (userResponse.status === 401 || appResponse.status === 401) {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        router.push('/login');
-        return;
+      if (!userResult.success) {
+        throw new Error(userResult.error?.message || 'ユーザー設定の保存に失敗しました');
       }
 
-      // レスポンスのJSONデータを取得
-      const [userData, appData] = await Promise.all([
-        userResponse.json(),
-        appResponse.json()
-      ]);
-
-      console.log('レスポンスデータ:', { userData, appData });
-
-      if (!userResponse.ok) {
-        throw new Error(userData.message || `ユーザー設定の保存に失敗しました (${userResponse.status})`);
-      }
-
-      if (!appResponse.ok) {
-        throw new Error(appData.message || `App設定の保存に失敗しました (${appResponse.status})`);
+      if (!appResult.success) {
+        throw new Error(appResult.error?.message || 'App設定の保存に失敗しました');
       }
 
       // 保存成功時にローカル状態を更新
-      if (userData.data) {
-        setUserSettings(userData.data);
+      if (userResult.data) {
+        setUserSettings(userResult.data);
       }
-      if (appData.data) {
-        setAppSettings(appData.data);
+      if (appResult.data) {
+        setAppSettings(appResult.data);
       }
 
       console.log('設定保存完了');

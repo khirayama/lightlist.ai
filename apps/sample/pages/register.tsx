@@ -81,12 +81,7 @@ export default function RegisterPage() {
         throw new Error(result.error?.message || t('register.errors.registrationFailed'));
       }
 
-      // 登録成功時の処理（result.dataはApiResponseなので、result.data.dataでAuthSessionを取得）
-      const authSession = (result.data as any)?.data;
-      if (authSession?.accessToken) {
-        localStorage.setItem('accessToken', authSession.accessToken);
-        localStorage.setItem('refreshToken', authSession.refreshToken);
-      }
+      // 登録成功時の処理（SDKが自動的にトークンを保存）
       
       alert(t('register.success'));
       router.push('/login');

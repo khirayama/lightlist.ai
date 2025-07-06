@@ -84,11 +84,30 @@ export class HttpClientImpl implements HttpClient {
             }
           }
           
-          const errorText = await response.text();
-          throw this.createError('network', 'HTTP_ERROR', `HTTP ${response.status}: ${errorText}`, {
+          let errorMessage = `HTTP ${response.status}`;
+          let errorDetails: any = {
             status: response.status,
             statusText: response.statusText
-          });
+          };
+          
+          try {
+            // APIエラーレスポンスをJSONとしてパース
+            const errorJson = await response.json();
+            if (errorJson && errorJson.message) {
+              errorMessage = errorJson.message;
+              errorDetails = { ...errorDetails, ...errorJson };
+            }
+          } catch (parseError) {
+            // JSONパースに失敗した場合はテキストとして取得
+            try {
+              const errorText = await response.text();
+              errorMessage = errorText || errorMessage;
+            } catch (textError) {
+              // テキスト取得も失敗した場合はHTTPステータスのみ
+            }
+          }
+          
+          throw this.createError('network', 'HTTP_ERROR', errorMessage, errorDetails);
         }
 
         const result = await response.json();

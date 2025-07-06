@@ -43,6 +43,12 @@ export class AuthServiceImpl extends ServiceBase implements AuthService {
       // API呼び出し
       const response = await this.httpClient.post<AuthSession>('/auth/login', credential);
       
+      console.log('Login response received:', {
+        accessToken: response.data.accessToken?.substring(0, 20) + '...',
+        refreshToken: response.data.refreshToken?.substring(0, 20) + '...',
+        deviceId: response.data.deviceId
+      });
+      
       // トークンの保存
       await this.saveTokens(response.data);
 
@@ -72,6 +78,8 @@ export class AuthServiceImpl extends ServiceBase implements AuthService {
       if (!refreshToken || typeof refreshToken !== 'string') {
         throw this.createError('validation', 'INVALID_REFRESH_TOKEN', 'Refresh token is required');
       }
+
+      console.log('Refreshing with token:', refreshToken.substring(0, 20) + '...');
 
       // API呼び出し
       const response = await this.httpClient.post<AuthSession>('/auth/refresh', { refreshToken });
@@ -167,10 +175,17 @@ export class AuthServiceImpl extends ServiceBase implements AuthService {
 
   private async saveTokens(authSession: AuthSession): Promise<void> {
     try {
+      console.log('Saving tokens:', {
+        accessToken: authSession.accessToken?.substring(0, 20) + '...',
+        refreshToken: authSession.refreshToken?.substring(0, 20) + '...',
+        deviceId: authSession.deviceId
+      });
       this.storage.setItem('accessToken', authSession.accessToken);
       this.storage.setItem('refreshToken', authSession.refreshToken);
       this.storage.setItem('deviceId', authSession.deviceId);
+      console.log('Tokens saved successfully');
     } catch (error) {
+      console.error('Failed to save tokens:', error);
       throw this.createError('unknown', 'STORAGE_ERROR', 'Failed to save tokens', { error });
     }
   }

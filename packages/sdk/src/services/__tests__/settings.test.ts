@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SettingsService } from '../index';
 import { SettingsServiceImpl } from '../implementation/settings.service';
 import { setupServiceTests, mockHttpClient, TEST_BASE_URL } from './setup';
-import { UserSettings, AppSettings } from '../../types';
+import { UserSettings, AppSettings } from '../types';
 
 describe('SettingsService', () => {
   let settingsService: SettingsService;

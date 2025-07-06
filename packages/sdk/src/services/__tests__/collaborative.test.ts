@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CollaborativeService } from '../index';
 import { CollaborativeServiceImpl } from '../implementation/collaborative.service';
 import { setupServiceTests, mockHttpClient, TEST_BASE_URL } from './setup';
-import { CollaborativeSession, CollaborativeState, TaskList, Task } from '../../types';
+import { CollaborativeSession, CollaborativeState, TaskList, Task } from '../types';
 
 describe('CollaborativeService', () => {
   let collaborativeService: CollaborativeService;

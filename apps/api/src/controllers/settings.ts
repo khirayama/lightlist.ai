@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { SettingsService } from '@/services/settings';
 import { sendSuccess } from '@/utils/response';
 import { validateRequest } from '@/utils/validation';
-import { settingsSchema, appSchema } from '@/utils/validation';
+import { settingsSchema, appSchema, taskListOrderSchema } from '@/utils/validation';
 
 interface AuthenticatedRequest extends Request {
   userId?: string;
@@ -98,6 +98,26 @@ export class SettingsController {
       const taskListOrder = await SettingsService.getTaskListOrder(req.userId);
 
       sendSuccess(res, { taskListOrder }, 'Task list order retrieved successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async updateTaskListOrder(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      if (!req.userId) {
+        throw new Error('USER_NOT_FOUND');
+      }
+
+      const { order } = validateRequest(taskListOrderSchema, req.body);
+
+      await SettingsService.updateTaskListOrder(req.userId, order);
+
+      sendSuccess(res, null, 'Task list order updated successfully');
     } catch (error) {
       next(error);
     }

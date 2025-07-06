@@ -35,6 +35,10 @@ export const appSchema = z.object({
   autoSort: z.boolean().optional(),
 });
 
+export const taskListOrderSchema = z.object({
+  order: z.array(z.string()).min(0, 'Order must be an array'),
+});
+
 export const collaborativeSessionSchema = z.object({
   sessionType: z.enum(['active', 'background']).optional().default('active'),
 });

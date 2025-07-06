@@ -25,12 +25,14 @@ describe('共有機能結合テスト', () => {
     // オーナーとビューワー用SDKを初期化
     sdkOwner = createSDK({
       apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
-      apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT
+      apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT,
+      storage: testStorageOwner
     });
     
     sdkViewer = createSDK({
       apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
-      apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT
+      apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT,
+      storage: testStorageViewer
     });
   }, INTEGRATION_CONFIG.SETUP_TIMEOUT);
 

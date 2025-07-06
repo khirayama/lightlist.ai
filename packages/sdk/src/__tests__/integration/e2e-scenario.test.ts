@@ -27,7 +27,8 @@ describe('E2Eシナリオテスト', () => {
     // SDKを初期化
     sdk = createSDK({
       apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
-      apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT
+      apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT,
+      storage: testStorage
     });
   }, INTEGRATION_CONFIG.SETUP_TIMEOUT);
 
@@ -229,7 +230,8 @@ describe('E2Eシナリオテスト', () => {
       
       const sdkA = createSDK({
         apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
-        apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT
+        apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT,
+        storage: storageA
       });
       
       const userA = generateTestUser('user-a');
@@ -249,7 +251,8 @@ describe('E2Eシナリオテスト', () => {
       
       const sdkB = createSDK({
         apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
-        apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT
+        apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT,
+        storage: storageB
       });
       
       const userB = generateTestUser('user-b');
@@ -317,7 +320,8 @@ describe('E2Eシナリオテスト', () => {
       // 新しいSDKインスタンスを作成（アプリ再起動をシミュレート）
       const newSdk = createSDK({
         apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
-        apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT
+        apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT,
+        storage: testStorage
       });
       
       // 同じストレージを使用して状態を復元

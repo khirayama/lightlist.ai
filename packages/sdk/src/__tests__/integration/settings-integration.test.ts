@@ -27,7 +27,8 @@ describe('設定管理結合テスト', () => {
     // SDKを初期化
     sdk = createSDK({
       apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
-      apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT
+      apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT,
+      storage: testStorage
     });
   }, INTEGRATION_CONFIG.SETUP_TIMEOUT);
 

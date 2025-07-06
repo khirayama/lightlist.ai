@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { SettingsController } from '@/controllers/settings';
-import { authenticate } from '@/middleware/auth';
-import { validateBody } from '@/middleware/validation';
-import { appSchema, taskListOrderSchema } from '@/utils/validation';
+import { SettingsController } from '../modules/settings/settings.controller';
+import { authenticate } from '@/shared/middleware/auth';
+import { validateBody } from '@/shared/middleware/validation';
+import { appSchema, taskListOrderSchema } from '@/shared/utils/validation';
 
 const router = Router();
 

@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import authRoutes from './auth';
-import settingsRoutes from './settings';
+import authRoutes from '@/modules/auth/auth.routes';
+import settingsRoutes from '@/modules/settings/settings.routes';
 import appRoutes from './app';
-import collaborativeRoutes from './collaborative';
-import taskListRoutes from './taskList';
-import taskRoutes from './task';
-import shareRoutes from './share';
+import collaborativeRoutes from '@/modules/collaborative/collaborative.routes';
+import taskListRoutes from '@/modules/taskList/taskList.routes';
+import taskRoutes from '@/modules/task/task.routes';
+import shareRoutes from '@/modules/share/share.routes';
 
 const router = Router();
 

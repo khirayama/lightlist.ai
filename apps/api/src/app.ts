@@ -3,8 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { config } from '@/config';
-import { errorHandler } from '@/middleware/error';
-import { sendSuccess } from '@/utils/response';
+import { errorHandler } from '@/shared/middleware/error';
+import { sendSuccess } from '@/shared/utils/response';
 
 const app = express();
 
@@ -51,7 +51,7 @@ app.get('/health', (_req, res) => {
 });
 
 // Metrics endpoint
-import { MetricsController } from '@/controllers/metrics';
+import { MetricsController } from '@/modules/metrics/metrics.controller';
 app.get('/metrics', MetricsController.getBasicMetrics);
 app.get('/metrics/detailed', MetricsController.getDetailedMetrics);
 

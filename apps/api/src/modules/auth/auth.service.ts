@@ -110,6 +110,7 @@ export class AuthService {
   }
 
   static async refresh(refreshToken: string): Promise<AuthTokens> {
+    console.log('Auth.refresh - Starting token refresh');
     const tokenRecord = await prisma.refreshToken.findFirst({
       where: {
         token: refreshToken,
@@ -129,14 +130,21 @@ export class AuthService {
     });
 
     if (!tokenRecord) {
+      console.log('Auth.refresh - Invalid refresh token');
       throw new Error('INVALID_REFRESH_TOKEN');
     }
 
+    console.log('Auth.refresh - Generating new tokens for user:', tokenRecord.user.id);
     const tokens = await this.generateTokens(
       tokenRecord.user.id,
       tokenRecord.user.email,
       tokenRecord.deviceId
     );
+
+    console.log('Auth.refresh - New tokens generated:', {
+      accessToken: tokens.accessToken.substring(0, 50) + '...',
+      refreshToken: tokens.refreshToken.substring(0, 50) + '...'
+    });
 
     return tokens;
   }
@@ -259,20 +267,37 @@ export class AuthService {
     email: string,
     deviceId: string
   ): Promise<AuthTokens> {
+    const now = Date.now();
+    console.log('Auth.generateTokens - Creating tokens for user:', userId, 'at:', new Date().toISOString(), 'ms:', now);
+    
+    // ミリ秒を含むタイムスタンプを明示的に指定してユニークなトークンを保証
     const accessTokenPayload: Omit<JwtPayload, 'iat' | 'exp'> = {
       userId,
       email,
     };
 
-    const accessToken = jwt.sign(accessTokenPayload, config.jwt.secret, {
-      expiresIn: this.ACCESS_TOKEN_EXPIRES_IN,
-    });
+    // 手動でiatとexpを設定してユニーク性を保証
+    const accessToken = jwt.sign({
+      ...accessTokenPayload,
+      iat: Math.floor(now / 1000),
+      exp: Math.floor(now / 1000) + 3600, // 1時間後
+      jti: now.toString() // ミリ秒タイムスタンプをJTIとして使用
+    }, config.jwt.secret);
 
+    const refreshJti = `${now}.${Math.random().toString(36)}`;
+    console.log('Auth.generateTokens - Generated refresh jti:', refreshJti);
+    
     const refreshTokenValue = jwt.sign(
-      { userId, deviceId, jti: Math.random().toString(36) },
+      { 
+        userId, 
+        deviceId, 
+        jti: refreshJti,
+        iat: Math.floor(now / 1000),
+        exp: Math.floor(now / 1000) + (30 * 24 * 60 * 60) // 30日後
+      },
       config.jwt.secret,
       {
-        expiresIn: this.REFRESH_TOKEN_EXPIRES_IN,
+        noTimestamp: true,
       }
     );
 
@@ -296,6 +321,12 @@ export class AuthService {
         deviceId,
         expiresAt: refreshTokenExpiresAt,
       },
+    });
+
+    console.log('Auth.generateTokens - Tokens created:', {
+      accessTokenPart: accessToken.substring(0, 50) + '...',
+      refreshTokenPart: refreshTokenValue.substring(0, 50) + '...',
+      expiresIn: 3600
     });
 
     return {

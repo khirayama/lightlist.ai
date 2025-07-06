@@ -103,15 +103,29 @@ export function createSDK(config: SDKConfig) {
         try {
           const refreshToken = authService.getRefreshToken();
           if (refreshToken) {
+            console.log('onUnauthorized - Attempting token refresh');
             await authService.refresh(refreshToken);
+            console.log('onUnauthorized - Token refresh successful');
+          } else {
+            console.log('onUnauthorized - No refresh token available');
+            // リフレッシュトークンがない場合はエラーをthrow（リトライを防ぐ）
+            throw new Error('No refresh token available for automatic refresh');
           }
         } catch (error) {
+          console.log('onUnauthorized - Token refresh failed:', error);
           // リフレッシュに失敗した場合、トークンをクリア
-          await authService.logout();
+          try {
+            await authService.logout();
+          } catch (logoutError) {
+            console.log('onUnauthorized - Logout also failed:', logoutError);
+          }
           throw error;
         } finally {
           isRefreshing = false;
         }
+      } else {
+        console.log('onUnauthorized - Skipping refresh (no authService or already refreshing)');
+        throw new Error('Authentication service not available for refresh');
       }
     }
   });

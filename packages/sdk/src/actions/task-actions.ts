@@ -260,6 +260,11 @@ export class TaskActionsImpl implements TaskActions {
   }
 
   private convertErrorToAppError(error: unknown): AppError {
+    // 既にAppErrorの場合はそのまま返す
+    if (error && typeof error === 'object' && 'type' in error && 'code' in error && 'message' in error) {
+      return error as AppError;
+    }
+
     if (error instanceof Error) {
       const status = (error as any).status;
       

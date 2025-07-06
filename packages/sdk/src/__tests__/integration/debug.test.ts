@@ -6,7 +6,8 @@ import {
   generateTestUser,
   TestStorage,
   INTEGRATION_CONFIG,
-  apiRequest
+  apiRequest,
+  healthCheckRequest
 } from './setup';
 
 describe('デバッグテスト', () => {
@@ -46,19 +47,21 @@ describe('デバッグテスト', () => {
   });
 
   it('APIサーバーのヘルスチェックが成功する', async () => {
-    const response = await apiRequest('/health');
+    const response = await healthCheckRequest();
     console.log('Health check status:', response.status);
     
-    // ヘルスチェックエンドポイントが何らかのエラーを返す場合、レスポンスが返されることを確認
-    expect(response.status).toBeGreaterThan(0);
+    // ヘルスチェックエンドポイントが正常に動作することを確認
+    expect(response.status).toBe(200);
+    expect(response.ok).toBe(true);
     
-    if (response.ok) {
-      const data = await response.json();
-      console.log('Health check response:', data);
-      expect(data.data.status).toBe('healthy');
-    } else {
-      console.log('Health check endpoint returned error:', response.status);
-    }
+    const data = await response.json();
+    console.log('Health check response:', data);
+    expect(data.data.status).toBe('healthy');
+    expect(data.data.timestamp).toBeDefined();
+    expect(data.data.database).toBe('connected');
+    expect(data.data.services).toBeDefined();
+    expect(data.data.services.auth).toBe('ok');
+    expect(data.data.services.collaborative).toBe('ok');
   });
 
   it('直接APIを呼び出してユーザー登録を確認', async () => {

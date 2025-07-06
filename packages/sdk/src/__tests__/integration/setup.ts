@@ -153,6 +153,16 @@ export async function apiRequest(
   });
 }
 
+// ヘルスチェック専用リクエストヘルパー（APIプレフィックスなし）
+export async function healthCheckRequest(): Promise<Response> {
+  const url = `${API_BASE_URL}/health`;
+  return fetch(url, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+}
+
 // 統合テスト設定
 export const INTEGRATION_CONFIG = {
   API_BASE_URL: `${API_BASE_URL}/api`, // APIプレフィックスを追加

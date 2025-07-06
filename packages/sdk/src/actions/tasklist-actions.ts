@@ -246,7 +246,7 @@ export class TaskListActionsImpl implements TaskListActions {
     console.log('TaskListActions - convertErrorToAppError input:', error);
     
     // 既にAppErrorの場合はそのまま返す
-    if (error && typeof error === 'object' && 'type' in error) {
+    if (error && typeof error === 'object' && 'type' in error && 'code' in error && 'message' in error) {
       console.log('TaskListActions - Already AppError, returning as-is');
       return error as AppError;
     }

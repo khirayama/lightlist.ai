@@ -66,8 +66,14 @@ export class AuthActionsImpl implements AuthActions {
 
   async bootstrap(): Promise<ActionResult<void>> {
     return this.executeWithErrorHandling(async () => {
-      // Bootstrap logic: initialize store with user data
-      this.initializeStoreData();
+      // 認証状態をチェック
+      const accessToken = this.authService.getAccessToken();
+      
+      if (accessToken) {
+        // 認証されている場合のみストアを初期化
+        this.initializeStoreData();
+      }
+      // 認証されていない場合は何もしない（ストアはクリアしない）
     });
   }
 
@@ -139,6 +145,11 @@ export class AuthActionsImpl implements AuthActions {
   }
 
   private convertErrorToAppError(error: unknown): AppError {
+    // 既にAppErrorの場合はそのまま返す
+    if (error && typeof error === 'object' && 'type' in error && 'code' in error && 'message' in error) {
+      return error as AppError;
+    }
+
     if (error instanceof Error) {
       const status = (error as any).status;
       

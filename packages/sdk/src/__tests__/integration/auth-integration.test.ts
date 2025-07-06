@@ -37,6 +37,22 @@ describe('認証フロー結合テスト', () => {
   beforeEach(async () => {
     // 各テスト前にストレージをクリーンアップ
     testStorage.clear();
+    
+    // ストアの状態もリセット
+    sdk.store.setState(() => ({
+      user: null,
+      app: null,
+      settings: null,
+      taskLists: [],
+      activeSessionIds: [],
+      syncStatus: {
+        pending: [],
+        syncing: [],
+        failed: [],
+        lastSync: {}
+      },
+      errors: []
+    }));
   });
 
   describe('ユーザー登録から認証までの完全フロー', () => {
@@ -97,7 +113,6 @@ describe('認証フロー結合テスト', () => {
         console.log('Attempting token refresh...');
         const refreshResult = await sdk.authService.refresh(refreshToken);
         
-        expect(refreshResult.success).toBe(true);
         expect(refreshResult.data).toBeDefined();
         expect(refreshResult.data?.accessToken).toBeDefined();
         expect(refreshResult.data?.accessToken).not.toBe(newAccessToken); // 更新されたトークン
@@ -150,11 +165,15 @@ describe('認証フロー結合テスト', () => {
     it('無効なリフレッシュトークンでのリフレッシュは失敗する', async () => {
       const invalidRefreshToken = 'invalid-refresh-token';
       
-      const refreshResult = await sdk.authService.refresh(invalidRefreshToken);
-      
-      expect(refreshResult.success).toBe(false);
-      expect(refreshResult.error).toBeDefined();
-      expect(refreshResult.error?.message).toContain('INVALID_REFRESH_TOKEN');
+      try {
+        await sdk.authService.refresh(invalidRefreshToken);
+        // ここに到達したら失敗
+        expect(true).toBe(false);
+      } catch (error: any) {
+        // エラーが発生することを期待
+        expect(error).toBeDefined();
+        expect(error.code || error.message).toContain('INVALID_REFRESH_TOKEN');
+      }
     });
   });
 

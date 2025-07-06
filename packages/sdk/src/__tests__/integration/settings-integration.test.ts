@@ -207,14 +207,14 @@ describe('設定管理結合テスト', () => {
       expect(settingsResult.success).toBe(false);
       expect(settingsResult.error).toBeDefined();
       // より汎用的なエラーチェック（実際のAPIエラーメッセージに依存）
-      expect(settingsResult.error?.type).toBe('network');
+      expect(settingsResult.error?.type).toBe('auth');
       
       // App設定取得も失敗することを確認
       const appResult = await sdk.actions.settings.getApp();
       console.log('App settings error:', appResult.error);
       expect(appResult.success).toBe(false);
       expect(appResult.error).toBeDefined();
-      expect(appResult.error?.type).toBe('network');
+      expect(appResult.error?.type).toBe('auth');
     });
 
     it('無効な設定値での更新は失敗する', async () => {

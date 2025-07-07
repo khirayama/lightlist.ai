@@ -3,6 +3,8 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   test: {
     environment: 'node',
+    // グローバルセットアップ・ティアダウンの設定
+    globalSetup: ['./src/__tests__/global-setup.ts'],
     // 統合テストの並行実行を制御（ポート競合を回避）
     poolOptions: {
       threads: {

@@ -1,11 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { createSDK } from '../../index';
 import { 
-  startApiServer, 
-  stopApiServer, 
   generateTestUser,
   TestStorage,
-  INTEGRATION_CONFIG
+  getApiServerInfo
 } from './setup';
 
 describe('認証フロー結合テスト', () => {
@@ -13,25 +11,23 @@ describe('認証フロー結合テスト', () => {
   let testStorage: TestStorage;
 
   beforeAll(async () => {
-    // APIサーバーを起動
-    await startApiServer();
+    // APIサーバー情報を取得（グローバルセットアップで起動済み）
+    const apiServerInfo = await getApiServerInfo();
     
     // テスト用ストレージを作成
     testStorage = new TestStorage();
     
     // SDKを初期化（TestStorageを使用）
     sdk = createSDK({
-      apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
-      apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT,
+      apiUrl: apiServerInfo.apiBaseUrl,
+      apiTimeout: 10000,
       storage: testStorage
     });
-  }, INTEGRATION_CONFIG.SETUP_TIMEOUT);
+  });
 
   afterAll(async () => {
     // モックをクリア
     vi.unstubAllGlobals();
-    // APIサーバーを停止
-    await stopApiServer();
   });
 
   beforeEach(async () => {

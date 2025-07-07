@@ -1,11 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { createSDK } from '../../index';
 import { 
-  startApiServer, 
-  stopApiServer, 
   generateTestUser,
   TestStorage,
-  INTEGRATION_CONFIG
+  getApiServerInfo
 } from './setup';
 
 describe('共同編集機能結合テスト', () => {
@@ -15,8 +13,8 @@ describe('共同編集機能結合テスト', () => {
   let testStorageB: TestStorage;
 
   beforeAll(async () => {
-    // APIサーバーを起動
-    await startApiServer();
+    // APIサーバー情報を取得（グローバルセットアップで起動済み）
+    const apiServerInfo = await getApiServerInfo();
     
     // 各ユーザー用のテストストレージを作成
     testStorageA = new TestStorage();
@@ -24,23 +22,21 @@ describe('共同編集機能結合テスト', () => {
     
     // 両方のユーザー用SDKを初期化（TestStorageを使用）
     sdkUserA = createSDK({
-      apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
-      apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT,
+      apiUrl: apiServerInfo.apiBaseUrl,
+      apiTimeout: 10000,
       storage: testStorageA
     });
     
     sdkUserB = createSDK({
-      apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
-      apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT,
+      apiUrl: apiServerInfo.apiBaseUrl,
+      apiTimeout: 10000,
       storage: testStorageB
     });
-  }, INTEGRATION_CONFIG.SETUP_TIMEOUT);
+  });
 
   afterAll(async () => {
     // モックをクリア
     vi.unstubAllGlobals();
-    // APIサーバーを停止
-    await stopApiServer();
   });
 
   beforeEach(async () => {

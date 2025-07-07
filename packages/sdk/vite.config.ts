@@ -5,15 +5,18 @@ export default defineConfig({
     environment: 'node',
     // グローバルセットアップ・ティアダウンの設定
     globalSetup: ['./src/__tests__/global-setup.ts'],
-    // 統合テストの並行実行を制御（ポート競合を回避）
+    // 完全にシーケンシャルな実行（並行実行を完全に無効化）
+    pool: 'forks',
     poolOptions: {
-      threads: {
-        singleThread: true,
+      forks: {
+        singleFork: true,
       },
     },
-    // 統合テストのタイムアウトを延長
-    testTimeout: 30000,
-    hookTimeout: 60000,
+    // 統合テストのタイムアウトを大幅に延長
+    testTimeout: 60000,
+    hookTimeout: 120000,
+    // テスト間の分離を強化
+    isolate: true,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

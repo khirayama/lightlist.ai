@@ -5,7 +5,7 @@ import {
   TestStorage,
   apiRequest,
   healthCheckRequest,
-  getApiServerInfo
+  getApiServerInfoWithRetry
 } from './setup';
 
 describe('デバッグテスト', () => {
@@ -13,8 +13,8 @@ describe('デバッグテスト', () => {
   let testStorage: TestStorage;
 
   beforeAll(async () => {
-    // APIサーバー情報を取得（グローバルセットアップで起動済み）
-    const apiServerInfo = await getApiServerInfo();
+    // APIサーバー情報を取得（リトライ機能付き）
+    const apiServerInfo = await getApiServerInfoWithRetry();
     
     // テスト用ストレージを作成
     testStorage = new TestStorage();

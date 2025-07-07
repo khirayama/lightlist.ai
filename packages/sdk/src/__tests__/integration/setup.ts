@@ -1,124 +1,37 @@
-import { spawn, ChildProcess } from 'child_process';
-import { join } from 'path';
-import { setTimeout } from 'timers/promises';
-
-let apiServer: ChildProcess | null = null;
-let isServerInitialized = false;
-const API_PORT = 3002; // 3001の代わりに3002を使用
-const API_BASE_URL = `http://localhost:${API_PORT}`;
-
-// APIサーバーの起動ヘルパー（全テストスイートで一度だけ実行）
-export async function startApiServer(): Promise<void> {
-  if (isServerInitialized) {
-    console.log('API server already initialized');
-    return;
-  }
-
-  // 既存のプロセスをチェックして停止
-  try {
-    const { execSync } = require('child_process');
-    execSync(`lsof -ti:${API_PORT} | xargs kill -9 2>/dev/null || true`, { stdio: 'ignore' });
-    await setTimeout(2000); // 停止処理を待機
-  } catch (error) {
-    // プロセス停止エラーは無視
-  }
-
-  console.log('Starting API server for integration tests...');
-  
-  // API サーバーのディレクトリパス
-  const apiPath = join(__dirname, '../../../../../apps/api');
-  
-  // APIサーバーを起動（テスト用データベースを使用）
-  apiServer = spawn('npm', ['run', 'dev'], {
-    cwd: apiPath,
-    env: {
-      ...process.env,
-      NODE_ENV: 'test',
-      PORT: API_PORT.toString(),
-      DATABASE_URL: 'postgresql://lightlist_user:lightlist_password@localhost:5435/lightlist_test_db?schema=public'
-    },
-    stdio: 'pipe' // ログを制御するため
-  });
-
-  let serverReady = false;
-  
-  // サーバーの出力を監視
-  if (apiServer.stdout) {
-    apiServer.stdout.on('data', (data) => {
-      const output = data.toString();
-      if (output.includes('Server running on port')) {
-        serverReady = true;
-      }
-      // デバッグモード時のみログ出力
-      if (process.env.DEBUG_INTEGRATION) {
-        console.log(`API Server: ${output}`);
-      }
-    });
-  }
-
-  if (apiServer.stderr) {
-    apiServer.stderr.on('data', (data) => {
-      const output = data.toString();
-      // エラーは常に表示
-      console.error(`API Server Error: ${output}`);
-    });
-  }
-
-  // サーバーの起動を待機（最大30秒）
-  const maxWaitTime = 30000;
-  const checkInterval = 500;
+// APIサーバー情報を取得するヘルパー（グローバルセットアップで設定された情報を使用）
+export async function getApiServerInfo() {
+  // APIサーバーの初期化を待機（最大10秒）
+  const maxWaitTime = 10000;
+  const checkInterval = 100;
   let waitedTime = 0;
   
-  while (!serverReady && waitedTime < maxWaitTime) {
-    await setTimeout(checkInterval);
-    waitedTime += checkInterval;
+  while (waitedTime < maxWaitTime) {
+    // まずグローバル変数から取得を試行
+    const apiServerInfo = (globalThis as any).__API_SERVER_INFO__;
+    if (apiServerInfo) {
+      return apiServerInfo;
+    }
     
-    // ヘルスチェックも試行
+    // グローバル変数が利用できない場合、ファイルから読み込みを試行
     try {
-      const response = await fetch(`${API_BASE_URL}/health`);
-      if (response.ok) {
-        serverReady = true;
-        break;
+      const fs = require('fs');
+      const path = require('path');
+      const configPath = path.join(__dirname, '../api-server-config.json');
+      if (fs.existsSync(configPath)) {
+        const configData = fs.readFileSync(configPath, 'utf8');
+        const parsedInfo = JSON.parse(configData);
+        return parsedInfo;
       }
     } catch (error) {
-      // まだサーバーが起動していない
+      // ファイル読み込みに失敗した場合は続行
     }
+    
+    await new Promise(resolve => setTimeout(resolve, checkInterval));
+    waitedTime += checkInterval;
   }
-
-  if (!serverReady) {
-    throw new Error('API server failed to start within 30 seconds');
-  }
-
-  isServerInitialized = true;
-  console.log('API server started successfully');
+  
+  throw new Error('API server info not found. Make sure global setup is properly configured.');
 }
-
-// APIサーバーの停止ヘルパー（全テストスイート完了後に一度だけ実行）
-export async function stopApiServer(): Promise<void> {
-  if (!apiServer || !isServerInitialized) {
-    return;
-  }
-
-  console.log('Stopping API server...');
-  
-  // Graceful shutdown を試行
-  apiServer.kill('SIGTERM');
-  
-  // 5秒待ってもプロセスが終了しない場合は強制終了
-  await setTimeout(5000);
-  
-  if (!apiServer.killed) {
-    console.log('Forcing API server shutdown...');
-    apiServer.kill('SIGKILL');
-  }
-  
-  apiServer = null;
-  isServerInitialized = false;
-  console.log('API server stopped');
-}
-
-// Note: cleanTestDatabase関数は削除されました
-// 各テストで独立したユーザーを使用するため、データベースクリーンアップは不要です
 
 // テスト用ユーザーデータ生成（各テストで独立したユーザーを作成）
 export function generateTestUser(suffix = '') {
@@ -137,7 +50,8 @@ export async function apiRequest(
   options: RequestInit = {}, 
   token?: string
 ): Promise<Response> {
-  const url = `${API_BASE_URL}/api${endpoint}`;
+  const apiServerInfo = await getApiServerInfo();
+  const url = `${apiServerInfo.apiBaseUrl}${endpoint}`;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...((options.headers as Record<string, string>) || {})
@@ -155,21 +69,14 @@ export async function apiRequest(
 
 // ヘルスチェック専用リクエストヘルパー（APIプレフィックスなし）
 export async function healthCheckRequest(): Promise<Response> {
-  const url = `${API_BASE_URL}/health`;
+  const apiServerInfo = await getApiServerInfo();
+  const url = `${apiServerInfo.baseUrl}/health`;
   return fetch(url, {
     headers: {
       'Content-Type': 'application/json'
     }
   });
 }
-
-// 統合テスト設定
-export const INTEGRATION_CONFIG = {
-  API_BASE_URL: `${API_BASE_URL}/api`, // APIプレフィックスを追加
-  API_TIMEOUT: 10000,
-  SETUP_TIMEOUT: 30000,
-  TEST_TIMEOUT: 15000
-} as const;
 
 // テスト用のストレージ実装
 export class TestStorage {
@@ -197,81 +104,10 @@ export class TestStorage {
   }
 }
 
-// テスト用SDK初期化ヘルパー
-export function createTestSDK(config: { apiUrl: string; apiTimeout?: number }) {
-  // 動的インポートを使用してモジュールを読み込み
-  const { StoreImpl } = require('../../store/implementation');
-  const { AuthServiceImpl } = require('../../services/auth.service');
-  const { SettingsServiceImpl } = require('../../services/settings.service');
-  const { CollaborativeServiceImpl } = require('../../services/collaborative.service');
-  const { ShareServiceImpl } = require('../../services/share.service');
-  const { ActionsImpl } = require('../../actions/actions');
-  const { HttpClientImpl } = require('../../services/base/http-client');
+// 統合テスト設定
+export const INTEGRATION_CONFIG = {
+  API_TIMEOUT: 10000,
+  SETUP_TIMEOUT: 30000,
+  TEST_TIMEOUT: 15000
+} as const;
 
-  const store = new StoreImpl({});
-  const storage = new TestStorage();
-
-  // AuthServiceを先に作成
-  let authService: any;
-  let isRefreshing = false;
-  
-  // HttpClientを設定
-  const httpClient = new HttpClientImpl({
-    baseUrl: config.apiUrl,
-    timeout: config.apiTimeout || 10000,
-    retries: 3,
-    getAuthToken: async () => {
-      if (authService) {
-        return authService.getAccessToken();
-      }
-      return null;
-    },
-    getDeviceId: () => {
-      if (authService) {
-        return authService.getDeviceId();
-      }
-      return null;
-    },
-    onUnauthorized: async () => {
-      if (authService && !isRefreshing) {
-        isRefreshing = true;
-        try {
-          const refreshToken = authService.getRefreshToken();
-          if (refreshToken) {
-            await authService.refresh(refreshToken);
-          }
-        } catch (error) {
-          await authService.logout();
-          throw error;
-        } finally {
-          isRefreshing = false;
-        }
-      }
-    }
-  });
-
-  // AuthServiceを初期化
-  authService = new AuthServiceImpl(httpClient, storage);
-  
-  const settingsService = new SettingsServiceImpl(httpClient);
-  const collaborativeService = new CollaborativeServiceImpl(httpClient);
-  const shareService = new ShareServiceImpl(httpClient);
-
-  const actions = new ActionsImpl(
-    authService,
-    settingsService,
-    collaborativeService,
-    shareService,
-    store
-  );
-
-  return {
-    actions,
-    store,
-    httpClient,
-    authService,
-    testStorage: storage
-  };
-}
-
-export { API_BASE_URL };

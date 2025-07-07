@@ -52,7 +52,7 @@ export class ShareServiceImpl extends ServiceBase {
           id: task.id,
           text: task.text,
           completed: task.completed,
-          date: task.date,
+          ...(task.date && { date: task.date }), // undefinedの場合はプロパティ自体を除外
           taskListId: response.data.taskList.id,
           createdAt: new Date().toISOString(), // ダミー値
           updatedAt: new Date().toISOString(), // ダミー値

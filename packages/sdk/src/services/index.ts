@@ -24,6 +24,11 @@ export interface AuthService {
   deleteUser(): Promise<ApiResponse<void>>;
   updateEmail(credential: AuthCredential): Promise<ApiResponse<void>>;
   updatePassword(credential: AuthCredential): Promise<ApiResponse<void>>;
+  
+  // トークン取得メソッド（bootstrap時の認証状態確認に使用）
+  getAccessToken(): string | null;
+  getRefreshToken(): string | null;
+  getDeviceId(): string | null;
 }
 
 // 設定サービス（タスクリストの初期データ取得も含む）

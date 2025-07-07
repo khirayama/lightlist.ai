@@ -3,7 +3,8 @@ import { createSDK } from '../../index';
 import { 
   generateTestUser,
   TestStorage,
-  getApiServerInfo
+  getApiServerInfo,
+  INTEGRATION_CONFIG
 } from './setup';
 
 describe('認証フロー結合テスト', () => {

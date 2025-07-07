@@ -117,8 +117,9 @@ describe('エラーハンドリング結合テスト', () => {
       expect(result1.success).toBe(true);
       
       // リトライ設定でSDKを再作成（短いタイムアウトでテスト）
+      const apiServerInfo = await getApiServerInfo();
       const sdkWithRetry = createSDK({
-        apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
+        apiUrl: apiServerInfo.apiBaseUrl,
         apiTimeout: 1000, // 短いタイムアウト
         retries: 2,
         storage: testStorage
@@ -191,8 +192,9 @@ describe('エラーハンドリング結合テスト', () => {
   describe('タイムアウト処理', () => {
     it('タイムアウト設定が適切に動作する', async () => {
       // 非常に短いタイムアウトでSDKを作成
+      const apiServerInfo = await getApiServerInfo();
       const sdkWithTimeout = createSDK({
-        apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
+        apiUrl: apiServerInfo.apiBaseUrl,
         apiTimeout: 1, // 1ミリ秒（必ずタイムアウトする）
         retries: 0, // リトライなし
         storage: testStorage

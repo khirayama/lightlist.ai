@@ -27,7 +27,7 @@ export class ActionsImpl implements Actions {
     store: Store
   ) {
     // 各Actionsクラスのインスタンスを作成
-    this.auth = new AuthActionsImpl(authService, store);
+    this.auth = new AuthActionsImpl(authService, settingsService, store);
     this.settings = new SettingsActionsImpl(settingsService, store);
     this.taskLists = new TaskListActionsImpl(collaborativeService, settingsService, store);
     this.tasks = new TaskActionsImpl(collaborativeService, store);

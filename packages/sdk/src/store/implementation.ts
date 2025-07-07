@@ -8,6 +8,7 @@ const createInitialState = (): StoreState => ({
   app: null,
   settings: null,
   taskLists: [],
+  taskListOrder: [],
   activeSessionIds: [],
   syncStatus: {
     pending: [],

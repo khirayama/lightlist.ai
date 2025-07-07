@@ -4,6 +4,7 @@ import { AuthActionsImpl } from '../auth-actions';
 import { 
   setupActionsTests, 
   mockAuthService, 
+  mockSettingsService,
   mockStore, 
   mockAuthSession, 
   mockAppError,
@@ -20,7 +21,7 @@ describe('AuthActions', () => {
   setupActionsTests();
 
   beforeEach(() => {
-    authActions = new AuthActionsImpl(mockAuthService, mockStore);
+    authActions = new AuthActionsImpl(mockAuthService, mockSettingsService, mockStore);
   });
 
   describe('register', () => {
@@ -174,17 +175,67 @@ describe('AuthActions', () => {
   });
 
   describe('bootstrap', () => {
-    it('ブートストラップが成功し、ストアが初期化される', async () => {
+    it('認証済みの場合、ブートストラップが成功し、ストアが初期化される', async () => {
+      // Arrange
+      mockAuthService.getAccessToken.mockReturnValue('valid-access-token');
+      
       // Act
       const result = await authActions.bootstrap();
 
       // Assert
       expectActionSuccess(result);
       
+      // アクセストークンが確認される
+      expect(mockAuthService.getAccessToken).toHaveBeenCalledTimes(1);
+      
+      // 初期データが取得される
+      expect(mockSettingsService.getSettings).toHaveBeenCalledTimes(1);
+      expect(mockSettingsService.getApp).toHaveBeenCalledTimes(1);
+      expect(mockSettingsService.getTaskListOrder).toHaveBeenCalledTimes(1);
+      
       // Store の初期化が確認される
       expect(mockStore.setState).toHaveBeenCalledWith(
         expect.any(Function)
       );
+    });
+
+    it('未認証の場合、ブートストラップが成功するが、ストアは初期化されない', async () => {
+      // Arrange
+      mockAuthService.getAccessToken.mockReturnValue(null);
+      
+      // Act
+      const result = await authActions.bootstrap();
+
+      // Assert
+      expectActionSuccess(result);
+      
+      // アクセストークンが確認される
+      expect(mockAuthService.getAccessToken).toHaveBeenCalledTimes(1);
+      
+      // 初期データが取得されない
+      expect(mockSettingsService.getSettings).not.toHaveBeenCalled();
+      expect(mockSettingsService.getApp).not.toHaveBeenCalled();
+      expect(mockSettingsService.getTaskListOrder).not.toHaveBeenCalled();
+      
+      // Store の初期化も行われない
+      expect(mockStore.setState).not.toHaveBeenCalled();
+    });
+
+    it('認証済みだが初期データ取得でエラーが発生した場合、エラーを返す', async () => {
+      // Arrange
+      mockAuthService.getAccessToken.mockReturnValue('valid-access-token');
+      mockSettingsService.getSettings.mockRejectedValue(new Error('Settings fetch failed'));
+      
+      // Act
+      const result = await authActions.bootstrap();
+
+      // Assert
+      const error = expectActionFailure(result);
+      expect(error.type).toBe('network');
+      expect(error.message).toContain('Settings fetch failed');
+      
+      // 初期データ取得が試みられる
+      expect(mockSettingsService.getSettings).toHaveBeenCalledTimes(1);
     });
   });
 });

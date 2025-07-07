@@ -248,10 +248,8 @@ export class HttpClientImpl implements HttpClient {
       const token = await this.config.getAuthToken();
       if (token) {
         headers.Authorization = `Bearer ${token}`;
-      } else {
-        // トークンがない場合は空のAuthorizationヘッダーを設定（401エラーを確実に発生させる）
-        headers.Authorization = `Bearer `;
       }
+      // トークンがない場合はAuthorizationヘッダーを設定しない
     }
 
     if (this.config.getDeviceId) {

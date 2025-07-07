@@ -3,7 +3,8 @@ import { createSDK } from '../../index';
 import { 
   generateTestUser,
   TestStorage,
-  getApiServerInfo
+  getApiServerInfo,
+  INTEGRATION_CONFIG
 } from './setup';
 
 describe('E2Eシナリオテスト', () => {
@@ -224,8 +225,9 @@ describe('E2Eシナリオテスト', () => {
       // ユーザーAの操作
       vi.stubGlobal('window', { localStorage: storageA });
       
+      const apiServerInfo = await getApiServerInfo();
       const sdkA = createSDK({
-        apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
+        apiUrl: apiServerInfo.apiBaseUrl,
         apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT,
         storage: storageA
       });
@@ -245,8 +247,9 @@ describe('E2Eシナリオテスト', () => {
       // ユーザーBの操作（新しいSDKインスタンスを作成）
       vi.stubGlobal('window', { localStorage: storageB });
       
+      const apiServerInfo2 = await getApiServerInfo();
       const sdkB = createSDK({
-        apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
+        apiUrl: apiServerInfo2.apiBaseUrl,
         apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT,
         storage: storageB
       });
@@ -314,8 +317,9 @@ describe('E2Eシナリオテスト', () => {
       console.log('✅ Tokens stored properly');
       
       // 新しいSDKインスタンスを作成（アプリ再起動をシミュレート）
+      const apiServerInfo3 = await getApiServerInfo();
       const newSdk = createSDK({
-        apiUrl: INTEGRATION_CONFIG.API_BASE_URL,
+        apiUrl: apiServerInfo3.apiBaseUrl,
         apiTimeout: INTEGRATION_CONFIG.API_TIMEOUT,
         storage: testStorage
       });

@@ -115,7 +115,10 @@ describe('ShareService', () => {
         const shareToken = 'share-token-123';
         
         mockHttpClient.get.mockResolvedValue({
-          data: mockSharedTaskList,
+          data: {
+            taskList: mockSharedTaskList,
+            isReadOnly: true
+          },
           message: 'Shared task list retrieved successfully'
         });
 
@@ -123,7 +126,19 @@ describe('ShareService', () => {
         const result = await shareService.getSharedTaskList(shareToken);
 
         // Assert
-        expect(result.data).toEqual(mockSharedTaskList);
+        expect(result.data).toEqual(expect.objectContaining({
+          id: mockSharedTaskList.id,
+          name: mockSharedTaskList.name,
+          background: mockSharedTaskList.background,
+          tasks: expect.arrayContaining([
+            expect.objectContaining({
+              id: mockSharedTaskList.tasks[0].id,
+              text: mockSharedTaskList.tasks[0].text,
+              completed: mockSharedTaskList.tasks[0].completed,
+              taskListId: mockSharedTaskList.tasks[0].taskListId
+            })
+          ])
+        }));
         expect(result.message).toBe('Shared task list retrieved successfully');
         expect(mockHttpClient.get).toHaveBeenCalledWith('/share/share-token-123');
       });
@@ -169,7 +184,9 @@ describe('ShareService', () => {
         };
         
         mockHttpClient.post.mockResolvedValue({
-          data: copiedTaskList,
+          data: {
+            taskList: copiedTaskList
+          },
           message: 'Task list copied successfully'
         });
 
@@ -213,7 +230,10 @@ describe('ShareService', () => {
       ];
 
       mockHttpClient.get.mockResolvedValue({
-        data: { id: 'list-123', name: 'Test', tasks: [], background: '#FF0000', createdAt: '2024-01-01T10:00:00Z', updatedAt: '2024-01-01T10:00:00Z' },
+        data: {
+          taskList: { id: 'list-123', name: 'Test', tasks: [], background: '#FF0000' },
+          isReadOnly: true
+        },
         message: 'Success'
       });
 

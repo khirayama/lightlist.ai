@@ -67,6 +67,7 @@ export interface StoreState {
   app: AppSettings | null;
   settings: UserSettings | null;
   taskLists: TaskList[];
+  taskListOrder: string[]; // タスクリストの並び順（API設計書: GET /app/taskListOrder）
   activeSessionIds: string[];
   syncStatus: SyncStatus;
   errors: AppError[];

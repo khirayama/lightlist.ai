@@ -1,11 +1,12 @@
 import { AuthActions } from '../index';
-import { AuthService } from '../services';
+import { AuthService, SettingsService } from '../services';
 import { Store } from '../store';
 import { AuthCredential, AuthSession, ActionResult, AppError, User } from '../types';
 
 export class AuthActionsImpl implements AuthActions {
   constructor(
     private authService: AuthService,
+    private settingsService: SettingsService,
     private store: Store
   ) {}
 
@@ -71,7 +72,7 @@ export class AuthActionsImpl implements AuthActions {
       
       if (accessToken) {
         // 認証されている場合のみストアを初期化
-        this.initializeStoreData();
+        await this.initializeStoreData();
       }
       // 認証されていない場合は何もしない（ストアはクリアしない）
     });
@@ -128,11 +129,31 @@ export class AuthActionsImpl implements AuthActions {
     }));
   }
 
-  private initializeStoreData(): void {
-    this.store.setState((state) => ({
-      ...state,
-      // 初期データの読み込み処理
-    }));
+  private async initializeStoreData(): Promise<void> {
+    try {
+      // 並列で初期データを取得
+      const [settingsResponse, appResponse, taskListOrderResponse] = await Promise.all([
+        this.settingsService.getSettings(),
+        this.settingsService.getApp(),
+        this.settingsService.getTaskListOrder()
+      ]);
+
+      // ストアに初期データを設定
+      this.store.setState((state) => ({
+        ...state,
+        settings: settingsResponse.data,
+        app: appResponse.data,
+        taskListOrder: taskListOrderResponse.data
+      }));
+    } catch (error) {
+      // エラーが発生した場合は、エラーをストアに記録
+      const appError = this.convertErrorToAppError(error);
+      this.store.setState((state) => ({
+        ...state,
+        errors: [...state.errors, appError]
+      }));
+      throw appError;
+    }
   }
 
   private createUser(email: string): User {

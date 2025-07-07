@@ -68,6 +68,7 @@ export const mockStoreState: StoreState = {
   app: mockAppSettings,
   settings: mockUserSettings,
   taskLists: [mockTaskList],
+  taskListOrder: ['mock-tasklist-id'],
   activeSessionIds: [],
   syncStatus: {
     pending: [],
@@ -88,7 +89,8 @@ export const mockAuthService = {
   updatePassword: vi.fn(),
   sendPasswordResetRequest: vi.fn(),
   resetPassword: vi.fn(),
-  bootstrap: vi.fn()
+  bootstrap: vi.fn(),
+  getAccessToken: vi.fn()
 } as any;
 
 export const mockSettingsService = {
@@ -192,6 +194,7 @@ export function setupActionsTests() {
     mockAuthService.login.mockResolvedValue(createApiResponse(mockAuthSession));
     mockAuthService.logout.mockResolvedValue(createApiResponse(undefined));
     mockAuthService.bootstrap.mockResolvedValue(createApiResponse(undefined));
+    mockAuthService.getAccessToken.mockReturnValue('mock-access-token');
     
     mockSettingsService.getSettings.mockResolvedValue(createApiResponse(mockUserSettings));
     // updateSettings と updateApp のモックは各テストで個別に設定

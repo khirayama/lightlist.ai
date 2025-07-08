@@ -1,21 +1,14 @@
 import { spawn, ChildProcess } from 'child_process';
 import { join } from 'path';
 import { setTimeout } from 'timers/promises';
-import { TestSemaphore } from './utils/semaphore';
-import { sharedStateManager } from './utils/shared-state';
+import { testSyncManager } from './utils/test-sync';
 
 let apiServer: ChildProcess | null = null;
 const API_PORT = 3002; // 3001の代わりに3002を使用
 const API_BASE_URL = `http://localhost:${API_PORT}`;
 
-// APIサーバー起動完了を管理するセマフォ
-const serverReadySemaphore = new TestSemaphore();
-
 export default async function globalSetup() {
   console.log('🚀 Starting global setup - API server initialization...');
-  
-  // 共有状態管理を初期化
-  sharedStateManager.initialize();
   
   // 既存のプロセスをチェックして停止
   try {
@@ -67,14 +60,14 @@ export default async function globalSetup() {
     });
   }
 
-  // サーバーの起動を待機（強化されたロジック）
-  const maxWaitTime = 45000; // 45秒に延長
-  const checkInterval = 500;
+  // サーバーの起動を待機（最適化されたロジック）
+  const maxWaitTime = 20000; // 20秒に短縮
+  const checkInterval = 300; // 300msに短縮
   let waitedTime = 0;
   let consecutiveSuccesses = 0;
-  const requiredSuccesses = 3; // 連続成功回数
+  const requiredSuccesses = 2; // 連続成功回数を2回に削減
   
-  console.log('Starting enhanced server readiness check...');
+  console.log('Starting server readiness check...');
   
   while (!serverReady && waitedTime < maxWaitTime) {
     await setTimeout(checkInterval);
@@ -83,12 +76,12 @@ export default async function globalSetup() {
     try {
       // ヘルスチェックエンドポイント
       const healthResponse = await fetch(`${API_BASE_URL}/health`, {
-        signal: AbortSignal.timeout(5000)
+        signal: AbortSignal.timeout(3000) // 3秒に短縮
       });
       
       // APIエンドポイントチェック
       const apiResponse = await fetch(`${API_BASE_URL}/api/health`, {
-        signal: AbortSignal.timeout(5000)
+        signal: AbortSignal.timeout(3000) // 3秒に短縮
       });
       
       if (healthResponse.ok && apiResponse.ok) {
@@ -101,15 +94,9 @@ export default async function globalSetup() {
           break;
         }
       } else {
-        if (consecutiveSuccesses > 0) {
-          console.log(`Health check failed, resetting consecutive count (was ${consecutiveSuccesses})`);
-        }
         consecutiveSuccesses = 0;
       }
     } catch (error) {
-      if (consecutiveSuccesses > 0) {
-        console.log(`Health check error, resetting consecutive count (was ${consecutiveSuccesses}):`, error.message);
-      }
       consecutiveSuccesses = 0;
     }
   }
@@ -126,16 +113,11 @@ export default async function globalSetup() {
     apiBaseUrl: `${API_BASE_URL}/api`
   };
   
-  // セマフォにシグナルを送信（サーバー起動完了を通知）
-  serverReadySemaphore.signal();
+  // 統合クラスにサーバー情報を設定
+  testSyncManager.setReady(apiServerInfo);
   
-  // 共有状態管理にサーバー情報を設定
-  sharedStateManager.setReady(apiServerInfo);
-  
-  // グローバル変数としてAPIサーバーの情報、セマフォ、共有状態管理を保存
+  // グローバル変数としてAPIサーバーの情報を保存
   (globalThis as any).__API_SERVER_INFO__ = apiServerInfo;
-  (globalThis as any).__SERVER_READY_SEMAPHORE__ = serverReadySemaphore;
-  (globalThis as any).__SHARED_STATE_MANAGER__ = sharedStateManager;
   
   // ファイルにも保存（フォールバック用）
   const fs = require('fs');
@@ -168,13 +150,12 @@ export default async function globalSetup() {
     apiServer = null;
     console.log('✅ Global teardown completed - API server stopped');
     
-    // 共有状態管理をリセット
-    sharedStateManager.reset();
+    // 統合クラスをリセット
+    testSyncManager.reset();
     
     // グローバル変数をクリア
     delete (globalThis as any).__API_SERVER_INFO__;
-    delete (globalThis as any).__SERVER_READY_SEMAPHORE__;
-    delete (globalThis as any).__SHARED_STATE_MANAGER__;
+    delete (globalThis as any).__TEST_SYNC_MANAGER__;
     
     // 設定ファイルも削除
     try {

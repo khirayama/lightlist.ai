@@ -8,8 +8,14 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "vitest",
+    "test:unit": "vitest --config vitest.config.ts",
+    "test:integration": "vitest --config vitest.integration.config.ts",
     "test:watch": "vitest --watch",
+    "test:watch:unit": "vitest --config vitest.config.ts --watch",
+    "test:watch:integration": "vitest --config vitest.integration.config.ts --watch",
     "test:coverage": "vitest --coverage",
+    "test:coverage:unit": "vitest --config vitest.config.ts --coverage",
+    "test:coverage:integration": "vitest --config vitest.integration.config.ts --coverage",
     "check": "tsc --noEmit"
   },
   "dependencies": {

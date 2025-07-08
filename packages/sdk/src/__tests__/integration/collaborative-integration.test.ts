@@ -30,7 +30,7 @@ describe('共同編集機能結合テスト', () => {
         
         expect(createResult.success).toBe(true);
         expect(createResult.data).toBeDefined();
-        expect(createResult.data?.name).toContain('collaborative-create-confirm-tasklist');
+        expect(createResult.data?.name).toContain('collaborative-create-confirm_tasklist');
         
         const taskListId = createResult.data!.id;
         console.log('Created task list:', taskListId);

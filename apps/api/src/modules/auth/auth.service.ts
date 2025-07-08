@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { config } from '@/config';
 import prisma from '@/config/database';
 import { JwtPayload } from '@/shared/types';
@@ -262,6 +263,28 @@ export class AuthService {
     });
   }
 
+  private static generateUniqueJti(): string {
+    // 高精度時間（ナノ秒）とプロセスIDを組み合わせて確実にユニークなIDを生成
+    const highResTime = process.hrtime.bigint().toString();
+    const processId = process.pid.toString();
+    const cryptoRandom = crypto.randomUUID().replace(/-/g, '');
+    const mathRandom = Math.random().toString(36).substring(2, 15);
+    
+    // より長いランダム文字列を生成して衝突確率を最小化
+    const jti = `${highResTime}.${processId}.${cryptoRandom}.${mathRandom}`;
+    
+    // デバッグログ（本番環境では無効化）
+    if (process.env.NODE_ENV === 'test') {
+      console.log('Generated JTI:', {
+        jti: jti.substring(0, 50) + '...',
+        length: jti.length,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    return jti;
+  }
+
   private static async generateTokens(
     userId: string,
     email: string,
@@ -281,10 +304,10 @@ export class AuthService {
       ...accessTokenPayload,
       iat: Math.floor(now / 1000),
       exp: Math.floor(now / 1000) + 3600, // 1時間後
-      jti: now.toString() // ミリ秒タイムスタンプをJTIとして使用
+      jti: this.generateUniqueJti() // ユニークなJTIを生成
     }, config.jwt.secret);
 
-    const refreshJti = `${now}.${Math.random().toString(36)}`;
+    const refreshJti = this.generateUniqueJti();
     console.log('Auth.generateTokens - Generated refresh jti:', refreshJti);
     
     const refreshTokenValue = jwt.sign(

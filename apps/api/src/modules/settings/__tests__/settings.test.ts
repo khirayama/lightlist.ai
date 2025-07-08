@@ -151,6 +151,52 @@ describe('設定系API', () => {
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('Settings updated successfully');
     });
+
+    it('事前設定後の部分更新で他の値が保持されること（テーマ更新）', async () => {
+      // Step 1: 両方を初期値以外に設定
+      const setupResponse = await request(app)
+        .put('/api/settings')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ theme: 'dark', language: 'en' });
+
+      expect(setupResponse.status).toBe(200);
+      expect(setupResponse.body.data.theme).toBe('dark');
+      expect(setupResponse.body.data.language).toBe('en');
+
+      // Step 2: テーマのみ更新
+      const updateResponse = await request(app)
+        .put('/api/settings')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ theme: 'light' });
+
+      expect(updateResponse.status).toBe(200);
+      expect(updateResponse.body.data.theme).toBe('light');
+      // 言語は前回設定した値が保持されるべき
+      expect(updateResponse.body.data.language).toBe('en');
+    });
+
+    it('事前設定後の部分更新で他の値が保持されること（言語更新）', async () => {
+      // Step 1: 両方を初期値以外に設定
+      const setupResponse = await request(app)
+        .put('/api/settings')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ theme: 'light', language: 'en' });
+
+      expect(setupResponse.status).toBe(200);
+      expect(setupResponse.body.data.theme).toBe('light');
+      expect(setupResponse.body.data.language).toBe('en');
+
+      // Step 2: 言語のみ更新
+      const updateResponse = await request(app)
+        .put('/api/settings')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ language: 'ja' });
+
+      expect(updateResponse.status).toBe(200);
+      expect(updateResponse.body.data.language).toBe('ja');
+      // テーマは前回設定した値が保持されるべき
+      expect(updateResponse.body.data.theme).toBe('light');
+    });
   });
 
   describe('GET /api/app', () => {
@@ -270,6 +316,52 @@ describe('設定系API', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('App settings updated successfully');
+    });
+
+    it('事前設定後の部分更新で他の値が保持されること（taskInsertPosition更新）', async () => {
+      // Step 1: 両方を初期値以外に設定
+      const setupResponse = await request(app)
+        .put('/api/app')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ taskInsertPosition: 'bottom', autoSort: true });
+
+      expect(setupResponse.status).toBe(200);
+      expect(setupResponse.body.data.taskInsertPosition).toBe('bottom');
+      expect(setupResponse.body.data.autoSort).toBe(true);
+
+      // Step 2: taskInsertPositionのみ更新
+      const updateResponse = await request(app)
+        .put('/api/app')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ taskInsertPosition: 'top' });
+
+      expect(updateResponse.status).toBe(200);
+      expect(updateResponse.body.data.taskInsertPosition).toBe('top');
+      // autoSortは前回設定した値が保持されるべき
+      expect(updateResponse.body.data.autoSort).toBe(true);
+    });
+
+    it('事前設定後の部分更新で他の値が保持されること（autoSort更新）', async () => {
+      // Step 1: 両方を初期値以外に設定
+      const setupResponse = await request(app)
+        .put('/api/app')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ taskInsertPosition: 'bottom', autoSort: true });
+
+      expect(setupResponse.status).toBe(200);
+      expect(setupResponse.body.data.taskInsertPosition).toBe('bottom');
+      expect(setupResponse.body.data.autoSort).toBe(true);
+
+      // Step 2: autoSortのみ更新
+      const updateResponse = await request(app)
+        .put('/api/app')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ autoSort: false });
+
+      expect(updateResponse.status).toBe(200);
+      expect(updateResponse.body.data.autoSort).toBe(false);
+      // taskInsertPositionは前回設定した値が保持されるべき
+      expect(updateResponse.body.data.taskInsertPosition).toBe('bottom');
     });
   });
 

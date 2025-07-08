@@ -27,6 +27,12 @@ export const authenticate = (
     req.email = decoded.email;
     next();
   } catch (error) {
+    console.error('JWT verification failed:', {
+      error: error instanceof Error ? error.message : String(error),
+      tokenLength: token.length,
+      tokenStart: token.substring(0, 50) + '...',
+      timestamp: new Date().toISOString()
+    });
     next(error);
   }
 };

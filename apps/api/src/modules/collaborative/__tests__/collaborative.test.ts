@@ -20,8 +20,6 @@ describe('共同編集API', () => {
 
   let userToken: string;
   let userToken2: string;
-  let userId: string;
-  let userId2: string;
   let taskListId: string;
   let taskId: string;
   let appId: string;
@@ -55,14 +53,12 @@ describe('共同編集API', () => {
       where: { email: testUser.email },
       include: { app: true },
     });
-    userId = user?.id || '';
     appId = user?.app?.id || '';
     
     const user2 = await prisma.user.findUnique({
       where: { email: testUser2.email },
       include: { app: true },
     });
-    userId2 = user2?.id || '';
     appId2 = user2?.app?.id || '';
     
     // テスト用タスクリストを作成
@@ -364,15 +360,13 @@ describe('共同編集API', () => {
   describe('PATCH /api/collaborative/sessions/:taskListId', () => {
     it('正常にセッションを維持できること', async () => {
       // セッションを開始
-      const startResponse = await request(app)
+      await request(app)
         .post(`/api/collaborative/sessions/${taskListId}`)
         .set('Authorization', `Bearer ${userToken}`)
         .set('X-Device-ID', testUser.deviceId)
         .send({
           sessionType: 'active',
         });
-
-      const initialExpiresAt = new Date(startResponse.body.data.expiresAt);
 
       // 少し待機
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -637,8 +631,6 @@ describe('共同編集API', () => {
       const currentTaskOrder2 = yMap2.get('taskOrder') as string[] || [];
       yMap2.set('taskOrder', [...currentTaskOrder2, 'user2-task-at-end']);
       
-      const update2 = Y.encodeStateAsUpdate(ydoc2);
-      const updateBase64_2 = Buffer.from(update2).toString('base64');
 
       // ユーザー1が更新を送信
       await request(app)

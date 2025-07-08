@@ -21,8 +21,6 @@ interface UserWithTokens {
 
 export class AuthService {
   private static readonly SALT_ROUNDS = 12;
-  private static readonly ACCESS_TOKEN_EXPIRES_IN = '1h';
-  private static readonly REFRESH_TOKEN_EXPIRES_IN = '30d';
 
   static async register(
     email: string,

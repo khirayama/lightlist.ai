@@ -393,7 +393,7 @@ describe('認証API', () => {
 
     it('パスワードリセットトークンがDBに作成されること', async () => {
       // 先にユーザーを作成
-      const registerResponse = await request(app)
+      await request(app)
         .post('/api/auth/register')
         .send(testUser);
 

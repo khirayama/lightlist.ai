@@ -14,7 +14,6 @@ describe('共有API', () => {
   let userToken: string;
   let userId: string;
   let taskListId: string;
-  let taskId: string;
 
   beforeEach(async () => {
     await cleanDatabase();
@@ -51,7 +50,7 @@ describe('共有API', () => {
     });
     
     // Prismaを直接使用してテスト用タスクを作成
-    const task = await prisma.task.create({
+    await prisma.task.create({
       data: {
         text: 'テスト用タスク',
         date: '2024-01-01',
@@ -59,8 +58,6 @@ describe('共有API', () => {
         completed: false,
       },
     });
-    
-    taskId = task.id;
   }, 30000);
 
   afterEach(async () => {

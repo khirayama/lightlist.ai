@@ -1,5 +1,4 @@
 import crypto from 'crypto';
-import { testSyncManager } from '../utils/test-sync';
 import { createSDK } from '../../index';
 import { vi } from 'vitest';
 
@@ -279,7 +278,7 @@ export class TestResourceManager {
     console.log(`Cleaning up resources for test: ${this.testName}`);
     
     // 共有リンクを削除
-    for (const [taskListId, shareData] of this.createdShares) {
+    for (const [taskListId] of this.createdShares) {
       try {
         await sdk.actions.share.deleteShareLink(taskListId);
         console.log(`Deleted share link: ${taskListId}`);
@@ -299,7 +298,7 @@ export class TestResourceManager {
     }
     
     // タスクリストを削除
-    for (const [taskListId, taskListData] of this.createdTaskLists) {
+    for (const [taskListId] of this.createdTaskLists) {
       try {
         await sdk.actions.taskLists.deleteTaskList(taskListId);
         console.log(`Deleted task list: ${taskListId}`);

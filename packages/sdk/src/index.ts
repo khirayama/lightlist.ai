@@ -82,7 +82,7 @@ export function createSDK(config: SDKConfig) {
   
   // HttpClientを設定（認証トークンの自動設定と401エラー時の自動リフレッシュ）
   const httpClient = new HttpClientImpl({
-    baseUrl: config.apiUrl,
+    baseUrl: config.apiUrl + '/api',
     timeout: config.apiTimeout || 10000,
     retries: 3,
     getAuthToken: async () => {

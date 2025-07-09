@@ -389,7 +389,7 @@ export async function createTestContext(options: TestContextOptions): Promise<Te
   
   // SDKを初期化
   const sdk = createSDK({
-    apiUrl: apiServerInfo.apiBaseUrl,
+    apiUrl: apiServerInfo.baseUrl,
     apiTimeout: sdkOptions.apiTimeout || 10000,
     storage: testStorage,
     ...sdkOptions
@@ -431,7 +431,7 @@ export async function createMultiSDKTestContext(options: TestContextOptions): Pr
     const testStorageSecondary = new TestStorage();
     
     const sdkSecondary = createSDK({
-      apiUrl: mainContext.apiServerInfo.apiBaseUrl,
+      apiUrl: mainContext.apiServerInfo.baseUrl,
       apiTimeout: options.sdkOptions?.apiTimeout || 10000,
       storage: testStorageSecondary,
       ...options.sdkOptions

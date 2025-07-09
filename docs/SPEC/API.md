@@ -28,10 +28,10 @@
 - `GET /settings` - ユーザー設定取得（theme, language）
 - `PUT /settings` - ユーザー設定更新
 - `GET /app` - App設定取得（taskInsertPosition, autoSort）
-- `GET /app/taskListOrder` - タスクリストの並び順取得
 - `PUT /app` - App設定更新
 
 ### 共同編集
+- `POST /collaborative/sessions` - app.taskListOrderをベースに各タスクリストのセッション開始
 - `POST /collaborative/sessions/:taskListId` - セッション開始
 - `GET /collaborative/sessions/:taskListId` - 現在の状態取得
 - `PUT /collaborative/sessions/:taskListId` - Y.js更新送信
@@ -47,6 +47,10 @@
 ### 運用・監視
 - `GET /health` - ヘルスチェック
 - `GET /metrics` - 基本的なメトリクス取得
+
+### 注意事項
+
+- app.taskListOrder、taskLists、tasksの変更は/collaborative/sessionsを通じて行う。そのため不要。
 
 ## 2. リクエスト/レスポンス例
 
@@ -305,12 +309,8 @@
    → 401 Unauthorized の場合、ログイン画面へ
    → 200 OK の場合、次へ
 
-2. GET /app, GET /settings, GET /app/taskListOrder
-   → 全データ取得（app, settings, taskListOrder）
-
-3. taskListOrderから各タスクリストごとに:
-   POST /collaborative/sessions/:taskListId
-   → 編集セッション開始
+2. GET /app, GET /settings, POST /collaborative/sessions
+   → 全データ取得（app, settings, sessions）
 ```
 
 ### ログインフロー
@@ -318,10 +318,7 @@
 1. POST /auth/login
    → accessToken, refreshToken取得
 
-2. GET /bootstrap
-   → 初期データ取得
-
-3. 必要なタスクリストのセッション開始
+2. アプリ起動フローへ
 ```
 
 ### タスク操作フロー

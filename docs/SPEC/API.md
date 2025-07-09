@@ -2,10 +2,11 @@
 
 ## 目次
 
-- [1. APIエンドポイント一覧](#1-apiエンドポイント一覧)
-- [2. リクエスト/レスポンス例](#2-リクエストレスポンス例)
-- [3. ユーザーシナリオごとのAPIコールフロー](#3-ユーザーシナリオごとのapiコールフロー)
-- [4. 共同編集機能のAPIコールフロー](#4-共同編集機能のapiコールフロー)
+- [1. Prismaスキーマ](#1-prismaスキーマ)
+- [2. APIエンドポイント一覧](#2-apiエンドポイント一覧)
+- [3. リクエスト/レスポンス例](#3-リクエストレスポンス例)
+- [4. ユーザーシナリオごとのAPIコールフロー](#4-ユーザーシナリオごとのapiコールフロー)
+- [5. 共同編集機能のAPIコールフロー](#5-共同編集機能のapiコールフロー)
 - [実装上の注意点](#実装上の注意点)
 
 ## 1. Prismaスキーマ
@@ -14,7 +15,7 @@
 
 参照: `@apps/api/prisma/schema.prisma`
 
-## 1. APIエンドポイント一覧
+## 2. APIエンドポイント一覧
 
 ### 認証系
 - `POST /auth/register` - 新規ユーザー登録
@@ -50,9 +51,11 @@
 
 ### 注意事項
 
-- app.taskListOrder、taskLists、tasksの変更は/collaborative/sessionsを通じて行う。そのため不要。
+- すべてのタスクリスト・タスクの作成・更新・削除・取得は/collaborative/sessions経由で行う
+- 個別のCRUDエンドポイント（PUT /tasklists/:id、POST /tasks等）は存在しない
+- データの一貫性はY.jsのCRDTアルゴリズムで保証
 
-## 2. リクエスト/レスポンス例
+## 3. リクエスト/レスポンス例
 
 ### 認証系
 
@@ -176,7 +179,36 @@
 
 ### 共同編集
 
-#### セッション開始
+#### 複数セッション開始
+```json
+// POST /collaborative/sessions
+{
+  "sessionType": "active"  // オプション（デフォルト: "active"）
+}
+
+// Response
+{
+  "data": {
+    "sessions": [
+      {
+        "taskListId": "list1",
+        "sessionId": "session_xxx",
+        "documentState": "base64-encoded-yjs-document",
+        "stateVector": "base64-encoded-state-vector"
+      },
+      {
+        "taskListId": "list2",
+        "sessionId": "session_yyy",
+        "documentState": "base64-encoded-yjs-document",
+        "stateVector": "base64-encoded-state-vector"
+      }
+    ]
+  },
+  "message": "Sessions started successfully"
+}
+```
+
+#### 個別セッション開始
 ```json
 // POST /collaborative/sessions/:taskListId
 {
@@ -301,7 +333,7 @@
 }
 ```
 
-## 3. ユーザーシナリオごとのAPIコールフロー
+## 4. ユーザーシナリオごとのAPIコールフロー
 
 ### アプリ起動フロー
 ```
@@ -309,8 +341,10 @@
    → 401 Unauthorized の場合、ログイン画面へ
    → 200 OK の場合、次へ
 
-2. GET /app, GET /settings, POST /collaborative/sessions
-   → 全データ取得（app, settings, sessions）
+2. GET /app, GET /settings, POST /collaborative/sessions（並列実行）
+   → App設定取得
+   → ユーザー設定取得
+   → app.taskListOrderに基づく全タスクリストのセッション開始
 ```
 
 ### ログインフロー
@@ -355,7 +389,7 @@
   PUT /app
 ```
 
-## 4. 共同編集機能のAPIコールフロー
+## 5. 共同編集機能のAPIコールフロー
 
 ### ユーザーA（最初の編集者）
 ```
@@ -422,21 +456,25 @@
 - JWT設定: 
   - アルゴリズム: RS256
   - アクセストークン: 1時間
-  - リフレッシュトークン: 30日
+  - リフレッシュトークン: 3年
 - レート制限: 1分間100リクエスト（緩い制限）
 - HTTPS必須: 本番環境では全通信をHTTPS化
 
 ### Y.jsドキュメントの管理
-- タスクの順序（taskOrder）のみY.jsで管理
-- タスクの内容（text, completed, date）は通常のDB更新
+- すべてのタスクリスト・タスクデータをY.jsで管理
+- 以下の要素を含む：
+  - taskListOrder（アプリ全体のタスクリスト順序）
+  - タスクリストの全属性（id, name, background）
+  - タスクの全属性（id, text, completed, date, order）
 - セッション開始時にDBから読み込んで初期化
+- 更新はすべてY.js経由で行い、DBと同期
 - 全セッション終了時にドキュメント削除
 
 ### Y.js実装詳細
 - データ構造: Y.Map<string, any>でタスクリストを管理
 - 競合解決: 
-  - タスクの順序: Y.jsのCRDTアルゴリズムで自動マージ
-  - タスクの内容: Last-Writer-Wins（最終更新優先）
+  - すべてのデータ: Y.jsのCRDTアルゴリズムで自動マージ
+  - 同一フィールドの同時更新: Last-Writer-Wins（最終更新優先）
 - エラーハンドリング:
   - Y.jsドキュメント破損時: DBから再初期化
   - ネットワーク切断時: ローカル更新を保持し、再接続時に同期

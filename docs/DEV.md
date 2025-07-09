@@ -160,7 +160,8 @@ DATABASE_URL="postgresql://lightlist_user:lightlist_password@localhost:5432/ligh
 PORT=3001
 NODE_ENV=development
 JWT_SECRET=your-secret-key-here
-JWT_EXPIRES_IN=7d
+JWT_ACCESS_EXPIRES_IN=1h
+JWT_REFRESH_EXPIRES_IN=3y
 API_RATE_LIMIT_MAX=100
 API_RATE_LIMIT_WINDOW_MS=900000
 ```
